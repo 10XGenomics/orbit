@@ -39,6 +39,14 @@ inline string inputOneValue <string> (istringstream &streamIn) {
     };
     return oneV;
 };
+// Make sure -1 gets wrapped to UINT_MAX.  It is nessessary to do it this way
+// in case of older versions of libc.
+template <>
+inline uint inputOneValue <uint> (istringstream &streamIn) {
+    int oneV;
+    streamIn >> oneV;
+    return static_cast<uint>(oneV);
+};
 
 
 template <class parameterType>
