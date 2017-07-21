@@ -43,7 +43,7 @@ inline string inputOneValue <string> (istringstream &streamIn) {
 // in case of older versions of libc.
 template <>
 inline uint inputOneValue <uint> (istringstream &streamIn) {
-    int oneV;
+    int64_t oneV;
     streamIn >> oneV;
     return static_cast<uint>(oneV);
 };
