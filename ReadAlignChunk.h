@@ -23,8 +23,8 @@ public:
     BAMoutput *chunkOutBAMcoord, *chunkOutBAMunsorted, *chunkOutBAMquant;
     Quantifications *chunkQuants;
 
-    istringstream** readInStream;
-    ostringstream*  chunkOutBAMstream;
+    istream** readInStream;
+    ostream*  chunkOutBAMstream;
     ofstream chunkOutBAMfile;
     string chunkOutBAMfileName;
 
