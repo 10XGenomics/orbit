@@ -38,10 +38,9 @@ ReadAlignChunk::ReadAlignChunk(Parameters& Pin, Genome &genomeIn, Transcriptome 
     if (P.outSAMbool) {
         chunkOutBAM=new char [P.chunkOutBAMsizeBytes];
         RA->outBAMarray=chunkOutBAM;
-        strstreambuf *buf = new strstreambuf(chunkOutBAM,P.chunkOutBAMsizeBytes);
+        strstreambuf *buf = new strstreambuf(chunkOutBAM,P.chunkOutBAMsizeBytes,chunkOutBAM);
         chunkOutBAMstream=new ostream(buf);
         RA->outSAMstream=chunkOutBAMstream;
-        RA->outSAMstream->seekp(0,ios::beg);
         chunkOutBAMtotal=0;
     };
 
