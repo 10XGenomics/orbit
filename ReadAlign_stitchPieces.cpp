@@ -15,7 +15,6 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
     //zero-out winBin
     memset(winBin[0],255,sizeof(winBin[0][0])*P.winBinN);
     memset(winBin[1],255,sizeof(winBin[0][0])*P.winBinN);
-    //printf("winBinN %llu\n", P.winBinN);
 
 //     for (uint iWin=0;iWin<nWall;iWin++) {//zero out winBin
 //         if (WC[iWin][WC_gStart]<=WC[iWin][WC_gEnd]) {//otherwise the window is dead
@@ -48,7 +47,6 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
 
             uint aDir   = PC[iP][PC_Dir];
             uint aLength= PC[iP][PC_Length];
-            //printf("aLength %llu\n", aLength);
 
             for (uint iSA=PC[iP][PC_SAstart]; iSA<=PC[iP][PC_SAend]; iSA++) {//scan through all alignments of this piece
                 // going through ordered positions in the suffix array from PC_SAstart to PC_SAend
@@ -70,11 +68,8 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
                     aStr=1-aStr;
                 };
 
-                //printf("a1 %llu\n", a1);
-                //printf("sjgStart %llu\n", mapGen.sjGstart);
 
                 if (a1>=mapGen.sjGstart) {//this is sj align
-                    //printf("sj align\n");
                     uint a1D, aLengthD, a1A, aLengthA, sj1;
                     if (sjAlignSplit(a1, aLength, mapGen, a1D, aLengthD, a1A, aLengthA, sj1)) {//align crosses the junction
 
@@ -88,7 +83,6 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
                         };
                     };
                 } else {//this is a normal genomic read
-                    //printf("normal create extend\n");
                     int addStatus=createExtendWindowsWithAlign(a1, aStr);
                     if (addStatus==EXIT_createExtendWindowsWithAlign_TOO_MANY_WINDOWS) {//too many windows
                         break;
@@ -98,7 +92,6 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
         };//if (PC[iP][PC_Nrep]<=P.winAnchorMultimapNmax) //proceed if anchor
     };//for (uint iP=0; iP<nP; iP++) //scan through all anchor pieces, create alignment windows
 
-    //printf("nw after creates %llu\n", nW);
 
 
     for (uint iWin=0;iWin<nW;iWin++) {//extend windows with flanks
@@ -146,7 +139,6 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
             nWAP[ii]=0;
         };
 
-        //printf("nW checkpoint %llu\n", nW);
 
         for (uint iSA=PC[iP][PC_SAstart]; iSA<=PC[iP][PC_SAend]; iSA++) {//scan through all alignments
 
@@ -189,7 +181,6 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
               };
         };
 
-        //printf("nw checkpoint2 %llu\n", nW);
 
 //         for (uint ii=0;ii<nW;ii++) {//check of some pieces created too many aligns in some windows, and remove those from WA (ie shift nWA indices
 //             if (nWAP[ii]>P.seedNoneLociPerWindow) nWA[ii] -= nWAP[ii];
@@ -212,7 +203,6 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
 //     };
 
 #ifdef COMPILE_FOR_LONG_READS
-//printf("long reads\n");
 uint swWinCovMax=0;
 for (uint iW=0;iW<nW;iW++) {//check each window
     swWinCov[iW]=0;
@@ -278,7 +268,6 @@ std::time(&timeStart);
     uint iW1=0;//index of non-empty windows
     uint trNtotal=0; //total number of recorded transcripts
 
-    //printf("nWindows %llu\n", nW);
 
     for (uint iW=0; iW<nW; iW++) {//transcripts for all windows
 
@@ -347,7 +336,6 @@ std::time(&timeStart);
     };
 
     nW=iW1;//only count windows that had alignments
-    //printf("final nW %llu\n", nW);
 
 //     {//debug
 //         std::time(&timeFinish);

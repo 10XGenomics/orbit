@@ -88,11 +88,6 @@ int ReadAlign::oneRead() {//process one read: load, map, write
         #warning OFF_BEFORE_OUTPUT
         return 0;
     #endif
-    if(trBest != NULL)
-    {
-        //printf("best transcript %llu %llu %llu\n", trBest->Chr, trBest->gStart, trBest->gLength);
-    }
-    //printf("unmapType %u\n", unmapType);
 
     //write out alignments
     //outputAlignments();

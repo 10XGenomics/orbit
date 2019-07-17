@@ -28,9 +28,6 @@ string align_read(Aligner a, char **Read1, char **Qual1, unsigned long long read
     {
         return "";
     }
-    //a.ra->peOverlapMergeMap();
-    //a.ra->multMapSelect();
-    //a.ra->mappedFilter();
     string str = a.ra->outputAlignments();
     return str;
 }
@@ -85,14 +82,12 @@ int main()
         if(lineNum%4 == 1)
         {
             strcpy(curRead[0], line.c_str());
-            //printf("copied %s\n", curRead[0]);
         }
         else if(lineNum%4 == 3)
         {
             char** curQual = (char**)malloc(sizeof(char*));
             curQual[0] = (char*)malloc(500*sizeof(char));
             strcpy(curQual[0], line.c_str());
-            //printf("copied %s\n", curQual[0]);
             printf("read = %s\n", curRead[0]);
             printf("qual = %s\n", curQual[0]);
             string bam_line = align_read(a, curRead, curQual, line.length());

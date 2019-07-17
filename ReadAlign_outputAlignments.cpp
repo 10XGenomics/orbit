@@ -3,7 +3,6 @@
 #include "ErrorWarning.h"
 
 string ReadAlign::outputAlignments() {
-    //printf("Outputting alignment\n");
     outBAMbytes=0;
 
     bool mateMapped[2]={false,false};
@@ -14,14 +13,10 @@ string ReadAlign::outputAlignments() {
 
     std::ostringstream stream;
 
-    //printf("unmap type %d\n", unmapType);
-
     outFilterPassed=true;//only false if the alignment is held for outFilterBySJoutStage
 
-    //printf("go\n");
     if (unmapType==-1) {//output transcripts
         if (P.outFilterBySJoutStage==1) {//filtering by SJout
-            //printf("nTr %llu\n", nTr);
             for (uint iTr=0;iTr<nTr;iTr++) {//check transcript for unannotated junctions
                 for (uint iex=0;iex<trMult[iTr]->nExons-1;iex++) {//check all junctions
                     if (trMult[iTr]->canonSJ[iex]>=0 && trMult[iTr]->sjAnnot[iex]==0) {
@@ -35,7 +30,6 @@ string ReadAlign::outputAlignments() {
                 unmapType=-3; //the read is not conisddred unmapped
                 statsRA.readN--;
                 statsRA.readBases -= readLength[0]+readLength[1];
-                //printf("readnmates %llu\n", P.readNmates);
                 for (uint im=0;im<P.readNmates;im++) {
                    chunkOutFilterBySJoutFiles[im] << readNameMates[im] <<" "<< iReadAll <<" "<< readFilter <<" "<< readFilesIndex;
                    if (!readNameExtra[im].empty())
@@ -51,20 +45,14 @@ string ReadAlign::outputAlignments() {
         };
 
         if (P.outSJfilterReads=="All" || nTr==1) {
-            //printf("nTr2 %llu\n", nTr);
             OutSJ *chunkOutSJ1=new OutSJ (P.limitOutSJcollapsed, P, mapGen);
             uint sjReadStartN=chunkOutSJ1->N;
-            //printf("looping\n");
             for (uint iTr=0;iTr<nTr;iTr++) {//report SJs for all transcripts
-                //printf("start transcript outpuit\n");
                 outputTranscriptSJ (*(trMult[iTr]), nTr, chunkOutSJ1, sjReadStartN);
             };
         };
 
-        //printf("outputAlignment checkpoint1\n");
-
         if (outFilterPassed) {
-            //printf("outFilterPassed\n");
             uint nTrOut=nTr; //number of aligns to output
             bool outSAMfilterYes=true;
             if (P.outSAMfilter.yes) {
@@ -91,7 +79,6 @@ string ReadAlign::outputAlignments() {
                     };
                 };
             };
-            //printf("sub check1\n");
             if (nTr>1) {//multimappers
                 statsRA.mappedReadsM++;
                 unmapType=-1;
@@ -108,26 +95,21 @@ string ReadAlign::outputAlignments() {
             nTrOut=min(P.outSAMmultNmax,nTrOut); //number of to write to SAM/BAM files
 
             soloRead->readBar->getCBandUMI(readNameExtra.at(0));
-            //printf("sub check2\n");
             //write to SAM/BAM
             for (uint iTr=0;iTr<nTrOut;iTr++) {//write all transcripts
-                //printf("writing transcript %llu of %llu\n", iTr, nTrOut);
                 //mateMapped1 = true if a mate is present in this transcript
                 bool mateMapped1[2]={false,false};
                 mateMapped1[trMult[iTr]->exons[0][EX_iFrag]]=true;
                 mateMapped1[trMult[iTr]->exons[trMult[iTr]->nExons-1][EX_iFrag]]=true;
 
                 if (P.outSAMbool && outSAMfilterYes) {//SAM output
-                    //printf("starting sam output\n");
                     outBAMbytes+=outputTranscriptSAM(*(trMult[iTr]), nTr, iTr, (uint) -1, (uint) -1, 0, -1, NULL, &stream);
                     if (P.outSAMunmapped.keepPairs && P.readNmates>1 && ( !mateMapped1[0] || !mateMapped1[1] ) ) {//keep pairs && paired reads && one of the mates not mapped in this transcript
                         outBAMbytes+= outputTranscriptSAM(*(trMult[iTr]), 0, 0, (uint) -1, (uint) -1, 0, 4, mateMapped1, &stream);
                     };
-                    //printf("done sam output\n");
                 };
 
                 if ((P.outBAMunsorted || P.outBAMcoord) && outSAMfilterYes) {//BAM output
-                    //printf("bam output\n");
                     alignBAM(*(trMult[iTr]), nTr, iTr, mapGen.chrStart[trMult[iTr]->Chr], (uint) -1, (uint) -1, 0, -1, NULL, P.outSAMattrOrder,outBAMoneAlign, outBAMoneAlignNbytes);
 
                     if (P.outBAMunsorted) {//unsorted
@@ -140,11 +122,9 @@ string ReadAlign::outputAlignments() {
                                 outBAMunsorted->unsortedOneAlign(outBAMoneAlign[imate], outBAMoneAlignNbytes[imate], (imate>0 || iTr>0) ? 0 : (outBAMoneAlignNbytes[0]+outBAMoneAlignNbytes[1])*2*nTrOut);
                             };
                         };
-                        //printf("done bam\n");
                     };
 
                     if (P.outBAMcoord) {//coordinate sorted
-                        //printf("bam coord\n");
                         for (uint imate=0; imate<P.readNmates; imate++) {//output each mate
                             outBAMcoord->coordOneAlign(outBAMoneAlign[imate], outBAMoneAlignNbytes[imate], (iReadAll<<32) | (iTr<<8) | trMult[iTr]->exons[0][EX_iFrag] );
                         };
@@ -160,16 +140,13 @@ string ReadAlign::outputAlignments() {
                 unmapType=4;
             };
 
-            //printf("sub check3\n");
 
             if (unmapType==4 && P.outSAMunmapped.yes) {//output unmapped end for single-end alignments
                 if (P.outSAMbool && !P.outSAMunmapped.keepPairs && outSAMfilterYes) {
-                    //printf("sam or bam?  the world may never know\n");
                     outBAMbytes+= outputTranscriptSAM(*trBest, 0, 0, (uint) -1, (uint) -1, 0, unmapType, mateMapped, &stream);
                 };
 
                 if ( (P.outBAMcoord || (P.outBAMunsorted && !P.outSAMunmapped.keepPairs) ) && outSAMfilterYes) {//BAM output
-                    //printf("pure-bred bam\n");
                     alignBAM(*trBest, 0, 0, mapGen.chrStart[trBest->Chr], (uint) -1, (uint) -1, 0, unmapType, mateMapped, P.outSAMattrOrder, outBAMoneAlign, outBAMoneAlignNbytes);
                     for (uint imate=0; imate<P.readNmates; imate++) {//alignBAM output is empty for mapped mate, but still need to scan through it
                         if (P.outBAMunsorted && !P.outSAMunmapped.keepPairs) {
@@ -182,7 +159,6 @@ string ReadAlign::outputAlignments() {
                 };
             };
 
-            //printf("sub check4\n");
 
             if (P.outSJfilterReads=="All" || nTr==1) {
                 chunkOutSJ=new OutSJ (P.limitOutSJcollapsed, P, mapGen);
@@ -201,7 +177,6 @@ string ReadAlign::outputAlignments() {
                 chunkTr->geneFullAlignOverlap(nTr, trMult, P.pSolo.strand, readGeneFull);
             };
 
-            //printf("sub check5\n");
 
             //transcripts
             if ( P.quant.trSAM.yes ) {//NOTE: the transcripts are changed by this function (soft-clipping extended), cannot be reused
@@ -213,7 +188,6 @@ string ReadAlign::outputAlignments() {
         };
     };
 
-    //printf("outputAlignment checkpoint 2\n");
 
     if (unmapType>=0) {//unmapped reads
         statsRA.unmappedAll++;
