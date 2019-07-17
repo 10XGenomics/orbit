@@ -1,58 +1,57 @@
-#include <sstream>
-#include <string>
+#include "orbit.h";
 
-#include "Genome.h"
-#include "Parameters.h"
-#include "ReadAlign.h"
-#include "Transcriptome.h"
-#include "Variation.h"
-
-class Aligner
+struct Aligner
 {
     public:
         Parameters *p;
         ReadAlign *ra;
+        Genome *g;
+
+        Aligner(int argInN, char* argIn[])
+        {
+            p = new Parameters();
+            p->inputParameters(argInN, argIn);
+            g = new Genome(*p);
+            g->genomeLoad();
+            Transcriptome *mainTranscriptome = nullptr;
+            g->Var = new Variation(*p, g->chrStart, g->chrNameIndex);
+            ra = new ReadAlign(*p, *g, mainTranscriptome, 0);
+        }
+
+        ~Aligner()
+        {
+            delete ra;
+            delete g;
+            delete p;
+        }
 };
 
-string align_read(Aligner a, char **Read1, char **Qual1, unsigned long long read_length)
+const char* align_read(Aligner* a, char *Read1, char *Qual1, unsigned long long read_length)
 {
-    a.p->readNmates = 1;
-    a.ra->readNmates = 1;
-    a.ra->Read0 = Read1;
-    a.ra->Qual0 = Qual1;
-    a.ra->Lread = read_length;
-    a.ra->readLength[0] = read_length;
-    a.ra->readLength[1] = read_length;
-    int readStatus = a.ra->oneRead();
+    a->p->readNmates = 1;
+    a->ra->readNmates = 1;
+    a->ra->Read0 = &Read1;
+    a->ra->Qual0 = &Qual1;
+    a->ra->Lread = read_length;
+    a->ra->readLength[0] = read_length;
+    a->ra->readLength[1] = read_length;
+    int readStatus = a->ra->oneRead();
     if(readStatus != 0)
     {
         return "";
     }
-    string str = a.ra->outputAlignments();
-    return str;
+    string str = a->ra->outputAlignments();
+    return str.c_str();
 }
 
-Aligner init(int argInN, char* argIn[])
+Aligner* init_aligner(int argc, char* argv[])
 {
-    Parameters *P = (Parameters*)malloc(sizeof(Parameters));
-    new(P) Parameters();
-    P->inputParameters(argInN, argIn);
+    return new Aligner(argc, argv);
+}
 
-    Genome *mainGenome = (Genome*)malloc(sizeof(Genome));
-    new(mainGenome) Genome(*P);
-    mainGenome->genomeLoad();
-
-    Transcriptome *mainTranscriptome = NULL;
-
-    mainGenome->Var = new Variation(*P, mainGenome->chrStart, mainGenome->chrNameIndex);
-
-    ReadAlign *RA = (ReadAlign*)malloc(sizeof(ReadAlign));
-    new(RA) ReadAlign(*P, *mainGenome, mainTranscriptome, 0);
-
-    Aligner res;
-    res.ra = RA;
-    res.p = P;
-    return res;
+void destroy_aligner(Aligner *a)
+{
+    delete a;
 }
 
 int main()
@@ -68,37 +67,31 @@ int main()
             "--outSAMorder", "PairedKeepInputOrder",
     };
     int len = sizeof(arr) / sizeof(arr[0]);
-    Aligner a = init(len, arr);
+    Aligner* a = init_aligner(len, arr);
 
     std::string line;
     std::ifstream infile("1.fastq");
     int lineNum = 0;
-    char** curRead = (char**)malloc(sizeof(char*));
-    curRead[0] = (char*)malloc(500*sizeof(char));
+    char* curRead = (char*)malloc(500*sizeof(char));
     while(std::getline(infile, line))
     {
-        //printf("line %s\n", line.c_str());
-        //printf("lineNum %d\n", lineNum);
         if(lineNum%4 == 1)
         {
-            strcpy(curRead[0], line.c_str());
+            strcpy(curRead, line.c_str());
         }
         else if(lineNum%4 == 3)
         {
-            char** curQual = (char**)malloc(sizeof(char*));
-            curQual[0] = (char*)malloc(500*sizeof(char));
-            strcpy(curQual[0], line.c_str());
-            printf("read = %s\n", curRead[0]);
-            printf("qual = %s\n", curQual[0]);
-            string bam_line = align_read(a, curRead, curQual, line.length());
-            printf("%s\n", bam_line.c_str());
-            free(curQual[0]);
+            char* curQual = (char*)malloc(500*sizeof(char));
+            strcpy(curQual, line.c_str());
+            printf("read = %s\n", curRead);
+            printf("qual = %s\n", curQual);
+            const char* bam_line = align_read(a, curRead, curQual, line.length());
+            printf("%s", bam_line);
             free(curQual);
         }
         lineNum++;
-        if(lineNum == 100) break;
     }
-    free(curRead[0]);
     free(curRead);
+    destroy_aligner(a);
     return 0;
 }

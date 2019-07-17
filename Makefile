@@ -70,6 +70,9 @@ SOURCES := $(wildcard *.cpp) $(wildcard *.c)
 %.o : %.c
 	$(CXX) -c $(CPPFLAGS) $(CFLAGS) $<
 
+orbit.a : $(OBJECTS) orbit.o
+	ar -csru $@ $(OBJECTS)
+
 all: STAR
 
 .PHONY: clean
