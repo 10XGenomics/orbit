@@ -275,7 +275,6 @@ Parameters::Parameters() {//initalize parameters info
 void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters: default, from files, from command line
 
 ///////// Default parameters
-
     #include "parametersDefault.xxd"
     string parString( (const char*) parametersDefault,parametersDefault_len);
     stringstream parStream (parString);
@@ -326,7 +325,6 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
         istringstream parStreamCommandLine(commandLineFile);
         scanAllLines(parStreamCommandLine, 1, 2); //read only initial Command Line parameters
     };
-
 //     need to be careful since runMode and pGe.gDir are not Command-Line-Initial
 //     if (runMode=="genomeGenerate" && outFileNamePrefix=="./") {// for genome generation, output into pGe.gDir
 //         outFileNamePrefix=pGe.gDir;
@@ -851,8 +849,8 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
 
     // openReadFiles depends on twoPass for reading SAM header
     if (runMode=="alignReads" && pGe.gLoad!="Remove" && pGe.gLoad!="LoadAndExit") {//open reads files to check if they are present
-        openReadsFiles();
-
+        //openReadsFiles();
+        readNmates = 2;
         //check sizes of the mate files, if not the same, assume mates are not the same length
         if (readNmates==1) {
             readMatesEqualLengths=true;
@@ -1405,6 +1403,9 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
 
     ////////////////////////////////////////////////
     inOut->logMain << "Finished loading and checking parameters\n" <<flush;
+
+    printf("parameters readNmates %llu\n", readNmates);
+
 };
 
 
@@ -1429,7 +1430,6 @@ int Parameters::scanOneLine (string &lineIn, int inputLevel, int inputLevelReque
     string parIn("");
     lineInStream >> parIn;
     if (parIn=="" || parIn.substr(0,2)=="//" || parIn.substr(0,1)=="#") return 0; //this is a comment
-
     uint iPar;
     for (iPar=0; iPar<parArray.size(); iPar++) {
         if (parIn==parArray[iPar]->nameString) {//
@@ -1451,7 +1451,6 @@ int Parameters::scanOneLine (string &lineIn, int inputLevel, int inputLevelReque
     };
 
     lineInStream.str(lineIn); lineInStream.clear(); lineInStream >> parIn; //get the correct state of stream, past reading parIn
-
     if (iPar==parArray.size()) {//string is not identified
         ostringstream errOut;
         errOut << "EXITING: FATAL INPUT ERROR: unrecognized parameter name \""<< parIn << "\" in input \"" << parameterInputName.at(inputLevel) <<"\"\n";

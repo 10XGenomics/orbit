@@ -48,7 +48,7 @@ void usage(int usageType) {
     exit(0);
 }
 
-
+/*
 int main(int argInN, char* argIn[]) {
     // If no argument is given, or the first argument is either '-h' or '--help', run usage()
     if (argInN == 1) {
@@ -490,4 +490,4 @@ int main(int argInN, char* argIn[]) {
     delete P.inOut; //to close files
 
     return 0;
-};
+};*/

@@ -6,16 +6,16 @@
 
 int ReadAlign::createExtendWindowsWithAlign(uint a1, uint aStr) {
 
-
+    //printf("hiiiii\n");
     uint aBin = (a1 >> P.winBinNbits); //align's bin
     uint iBinLeft=aBin, iBinRight=aBin;
     uintWinBin* wB=winBin[aStr];
     uint iBin=-1, iWin=-1, iWinRight=-1;
-
+    //printf("wB[aBin] %hu, uintWinBinMax %hu\n", wB[aBin], uintWinBinMax);
 
     if (wB[aBin]==uintWinBinMax) {//proceed if there is no window at this bin
         //check neighboring bins
-
+        //printf("window bin\n");
         bool flagMergeLeft=false;
         if (aBin>0) {//merge left only if there are bins on the left
             for (iBin=aBin-1;  iBin >= ( aBin>P.winAnchorDistNbins ? aBin-P.winAnchorDistNbins : 0 );  --iBin) {//go left, find windows in Anchor range
@@ -66,6 +66,7 @@ int ReadAlign::createExtendWindowsWithAlign(uint a1, uint aStr) {
             WC[iWin][WC_Chr]=mapGen.chrBin[aBin >> P.winBinChrNbits];
             WC[iWin][WC_Str]=aStr;
             WC[iWin][WC_gEnd]=WC[iWin][WC_gStart]=aBin;
+            //printf("new window!!!\n");
             ++nW;
             if (nW>=P.alignWindowsPerReadNmax) {
                 nW=P.alignWindowsPerReadNmax-1;

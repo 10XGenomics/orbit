@@ -65,6 +65,8 @@ void ReadAlign::assignAlignToWindow(uint a1, uint aLength, uint aStr, uint aNrep
         };
     };
 
+    //printf("nWA[iW] %llu\n", nWA[iW]);
+
     if (nWA[iW]==P.seedPerWindowNmax) {//too many aligns per window,  re-calcualte min-length, remove the shortest one,
 
         WALrec[iW]=Lread+1;
@@ -75,6 +77,7 @@ void ReadAlign::assignAlignToWindow(uint a1, uint aLength, uint aStr, uint aNrep
 
         if (WALrec[iW]==Lread+1) {//this could happen if there are too many anchors
             mapMarker=MARKER_TOO_MANY_ANCHORS_PER_WINDOW;
+            //printf("too many anchors per window\n");
             nW=0;
             return;
         };
@@ -115,6 +118,7 @@ void ReadAlign::assignAlignToWindow(uint a1, uint aLength, uint aStr, uint aNrep
         };
 
         // now iW is the window to which this align belongs, record it
+        //printf("recording window %llu %llu %llu\n", aRstart, aLength, a1);
         WA[iW][iA][WA_rStart]=aRstart;
         WA[iW][iA][WA_Length]=aLength;
         WA[iW][iA][WA_gStart]=a1;

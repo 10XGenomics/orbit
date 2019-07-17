@@ -148,7 +148,7 @@ void Genome::genomeLoad(){//allocate and load Genome
         ostringstream errOut;
         errOut << "EXITING because of FATAL ERROR: Genome version: " << P1.versionGenome << " is INCOMPATIBLE with running STAR version: "<< STAR_VERSION <<"\n";
         errOut << "SOLUTION: please re-generate genome from scratch with running version of STAR, or with version: " << P.versionGenome <<"\n";
-        exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_GENOME_FILES, P);
+        //exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_GENOME_FILES, P);
     };
 
     //find chr starts from files

@@ -77,7 +77,7 @@ int ReadAlign::mapOneRead() {
                         Lmapped+=L;
                     };//while ( istart*Lstart + Lmapped + P.minLmap < splitR[1][ip] )
                 };//if (flagDirMap || istart>0)
-
+                //printf("Lmapped %llu, %llu\n", Lmapped, L);
                 if (P.seedSearchLmax>0) {//search fixed length. Not very efficient, need to improve
                     // off by default.
                     uint Shift = iDir==0 ? ( splitR[0][ip] + istart*Lstart ) : \
@@ -98,20 +98,25 @@ int ReadAlign::mapOneRead() {
     #endif
 
     if (Lread<P.outFilterMatchNmin) {//read is too short (trimmed too much?)
+        //printf("read too short\n");
         mapMarker=MARKER_READ_TOO_SHORT;
         trBest->rLength=0; //min good piece length
         nW=0;
     } else if (Nsplit==0) {//no good pieces
+        //printf("no good pieces\n");
         mapMarker=MARKER_NO_GOOD_PIECES;
         trBest->rLength=splitR[1][0]; //min good piece length
         nW=0;
     } else if (Nsplit>0 && nA==0) {
+        //printf("not sure what this case is\n");
         mapMarker=MARKER_ALL_PIECES_EXCEED_seedMultimapNmax;
         trBest->rLength=multNminL;
         nW=0;
     } else if (Nsplit>0 && nA>0) {//otherwise there are no good pieces, or all pieces map too many times: read cannot be mapped
 //         qsort((void*) PC, nP, sizeof(uint)*PC_SIZE, funCompareUint2);//sort PC by rStart and length
+        //printf("stitching %llu pieces\n", nP);
         stitchPieces(Read1, Lread);
+        
     };
 
     return 0;

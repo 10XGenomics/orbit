@@ -54,6 +54,12 @@ class ReadAlign {
 
         SoloRead *soloRead; //counts reads per CB per and outputs CB/UMI/gene into file, per thread
 
+        uint readNmates;
+        char **Read0;
+        char **Qual0;
+        void multMapSelect();
+        int mapOneRead();
+        string outputAlignments();
     private:
         Parameters& P; //pointer to the parameters, will be initialized on construction
 
@@ -96,13 +102,13 @@ class ReadAlign {
         vector<string>readNameExtra;
 
         char dummyChar[4096];
-        char** Read0;
-        char** Qual0;
+        //char** Read0;
+        //char** Qual0;
         char** readNameMates;
         char* readName;
         char** Qual1; //modified QSs for scoring
 
-        uint readNmates;
+        //uint readNmates;
         //split
         uint** splitR;
         uint Nsplit;
@@ -156,8 +162,8 @@ class ReadAlign {
         } peOv;//PE  mates overlap/merge/remap structure
 
         void resetN();//resets the counters to 0
-        void multMapSelect();
-        int mapOneRead();
+        //void multMapSelect();
+        //int mapOneRead();
         uint maxMappableLength2strands(uint pieceStart, uint pieceLength, uint iDir, uint iSA1, uint iSA2, uint& maxL, uint iFrag);
         void storeAligns (uint iDir, uint Shift, uint Nrep, uint L, uint indStartEnd[2], uint iFrag);
 
@@ -179,7 +185,7 @@ class ReadAlign {
         void chimericDetectionPEmerged(ReadAlign &seRa);
 //         void chimericDetectionPEmergedTrim();
 
-        void outputAlignments();
+        //string outputAlignments();
         void calcCIGAR(Transcript const &trOut, uint nMates, uint iExMate, uint leftMate);
 
         void stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R);//stitches all seeds in one window: iW
