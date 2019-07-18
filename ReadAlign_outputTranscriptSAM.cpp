@@ -10,6 +10,7 @@ uint ReadAlign::outputTranscriptSAM(Transcript const &trOut, uint nTrOut, uint i
 
     if (unmapType>=0)
     {//unmapped reads: SAM
+        //printf("not a map\n");
         for (uint imate=0;imate<P.readNmates;imate++)
         {//cycle over mates
             if (!mateMapped[imate])
@@ -188,6 +189,7 @@ uint ReadAlign::outputTranscriptSAM(Transcript const &trOut, uint nTrOut, uint i
 //             SJannot=",-1";
         };
 
+        //printf("weird trimming time  %llu %llu %llu %llu %llu %llu\n", trOut.exons[iEx1][EX_R], readLength[leftMate], readLengthOriginal[Mate], trOut.exons[iEx2][EX_R], trOut.exons[iEx2][EX_L], trimL);
         uint trimR1=(trOut.exons[iEx1][EX_R]<readLength[leftMate] ? \
             readLengthOriginal[leftMate] : readLength[leftMate]+1+readLengthOriginal[Mate]) \
             - trOut.exons[iEx2][EX_R]-trOut.exons[iEx2][EX_L] - trimL;

@@ -48,6 +48,7 @@ string ReadAlign::outputAlignments() {
             OutSJ *chunkOutSJ1=new OutSJ (P.limitOutSJcollapsed, P, mapGen);
             uint sjReadStartN=chunkOutSJ1->N;
             for (uint iTr=0;iTr<nTr;iTr++) {//report SJs for all transcripts
+                //printf("outsj stuff\n");
                 outputTranscriptSJ (*(trMult[iTr]), nTr, chunkOutSJ1, sjReadStartN);
             };
         };
@@ -96,6 +97,7 @@ string ReadAlign::outputAlignments() {
 
             soloRead->readBar->getCBandUMI(readNameExtra.at(0));
             //write to SAM/BAM
+            //printf("nTrOut %llu\n", nTrOut);
             for (uint iTr=0;iTr<nTrOut;iTr++) {//write all transcripts
                 //mateMapped1 = true if a mate is present in this transcript
                 bool mateMapped1[2]={false,false};
@@ -103,8 +105,10 @@ string ReadAlign::outputAlignments() {
                 mateMapped1[trMult[iTr]->exons[trMult[iTr]->nExons-1][EX_iFrag]]=true;
 
                 if (P.outSAMbool && outSAMfilterYes) {//SAM output
+                    //printf("samout\n");
                     outBAMbytes+=outputTranscriptSAM(*(trMult[iTr]), nTr, iTr, (uint) -1, (uint) -1, 0, -1, NULL, &stream);
                     if (P.outSAMunmapped.keepPairs && P.readNmates>1 && ( !mateMapped1[0] || !mateMapped1[1] ) ) {//keep pairs && paired reads && one of the mates not mapped in this transcript
+                        //printf("samout no null\n");
                         outBAMbytes+= outputTranscriptSAM(*(trMult[iTr]), 0, 0, (uint) -1, (uint) -1, 0, 4, mateMapped1, &stream);
                     };
                 };
@@ -143,6 +147,7 @@ string ReadAlign::outputAlignments() {
 
             if (unmapType==4 && P.outSAMunmapped.yes) {//output unmapped end for single-end alignments
                 if (P.outSAMbool && !P.outSAMunmapped.keepPairs && outSAMfilterYes) {
+                    //printf("gotcha\n");
                     outBAMbytes+= outputTranscriptSAM(*trBest, 0, 0, (uint) -1, (uint) -1, 0, unmapType, mateMapped, &stream);
                 };
 
@@ -164,6 +169,7 @@ string ReadAlign::outputAlignments() {
                 chunkOutSJ=new OutSJ (P.limitOutSJcollapsed, P, mapGen);
                 uint sjReadStartN=chunkOutSJ->N;
                 for (uint iTr=0;iTr<nTr;iTr++) {//write all transcripts junctions
+                    //printf("second outsj stuff\n");
                     outputTranscriptSJ (*(trMult[iTr]), nTr, chunkOutSJ, sjReadStartN);
                 };
             };
@@ -213,6 +219,7 @@ string ReadAlign::outputAlignments() {
 
         if (P.outSAMbool) {//output SAM
             outBAMbytes+= outputTranscriptSAM(*trBest, 0, 0, (uint) -1, (uint) -1, 0, unmapType, mateMapped, &stream);
+            //printf("how about here?\n");
         };
     };
 

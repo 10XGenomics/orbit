@@ -276,7 +276,9 @@ void ReadAlign::peOverlapSEtoPE(ReadAlign &seRA) {//ReAdAlign: convert SE to PE 
     trBest=trArray;//just to initialize - to the 0th spot in the trArray
     for (uint iW=0; iW<nW; iW++) {//scan windows
         trAll[iW]=trArrayPointer+trNtotal;
+        printf("pe outer\n");
         for (uint iTr=0; iTr<nWinTr[iW]; iTr++) {//scan transcripts
+            printf("pe inner\n");
             ++trNtotal;
             *trAll[iW][iTr]=*trInit;
             trAll[iW][iTr]->peOverlapSEtoPE(peOv.mateStart, *seRA.trAll[iW][iTr]);

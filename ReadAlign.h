@@ -57,9 +57,11 @@ class ReadAlign {
         uint readNmates;
         char **Read0;
         char **Qual0;
+        char **Qual1;
         void multMapSelect();
         int mapOneRead();
         string outputAlignments();
+        void resetN();
     private:
         Parameters& P; //pointer to the parameters, will be initialized on construction
 
@@ -106,7 +108,7 @@ class ReadAlign {
         //char** Qual0;
         char** readNameMates;
         char* readName;
-        char** Qual1; //modified QSs for scoring
+        //char** Qual1; //modified QSs for scoring
 
         //uint readNmates;
         //split
@@ -161,7 +163,7 @@ class ReadAlign {
             uint mateStart[2];//mates starts in the merged read
         } peOv;//PE  mates overlap/merge/remap structure
 
-        void resetN();//resets the counters to 0
+        //void resetN();//resets the counters to 0
         //void multMapSelect();
         //int mapOneRead();
         uint maxMappableLength2strands(uint pieceStart, uint pieceLength, uint iDir, uint iSA1, uint iSA2, uint& maxL, uint iFrag);

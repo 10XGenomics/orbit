@@ -20,7 +20,9 @@ int readLoad(istream& readInStream, Parameters& P, uint iMate, uint& Lread, uint
         exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
     };
 
-    readInStream >> iReadAll >> readFilter >> readFilesIndex; //extract read number
+    //printf("read name is: %s\n", readName);
+
+    //readInStream >> iReadAll >> readFilter >> readFilesIndex; //extract read number
 
     getline(readInStream, readNameExtra);
     if (!readNameExtra.empty()) {
@@ -35,6 +37,7 @@ int readLoad(istream& readInStream, Parameters& P, uint iMate, uint& Lread, uint
 //     readInStream.ignore(DEF_readNameSeqLengthMax,'\n');//ignore the resit of the line - just in case
 
     readInStream.getline(Seq,DEF_readSeqLengthMax+1); //extract sequence
+    //printf("seq is: %s\n", Seq);
 
     Lread=0;
     for (int ii=0; ii<readInStream.gcount()-1; ii++) {

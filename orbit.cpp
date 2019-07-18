@@ -1,4 +1,4 @@
-#include "orbit.h";
+#include "orbit.h"
 
 struct Aligner
 {
@@ -28,13 +28,20 @@ struct Aligner
 
 const char* align_read(Aligner* a, char *Read1, char *Qual1, unsigned long long read_length)
 {
+    a->p->iReadAll++;
+    a->ra->iRead++;
+    //printf("iRead %llu\n", a->ra->iRead);
     a->p->readNmates = 1;
     a->ra->readNmates = 1;
     a->ra->Read0 = &Read1;
     a->ra->Qual0 = &Qual1;
-    a->ra->Lread = read_length;
+    //a->ra->Read1 = &Read1;
+    //a->ra->Qual1 = &Qual1;
+    //a->ra->Lread = read_length;
     a->ra->readLength[0] = read_length;
-    a->ra->readLength[1] = read_length;
+    a->ra->readLengthOriginal[0] = read_length;
+    //a->ra->readLength[1] = read_length;
+    
     int readStatus = a->ra->oneRead();
     if(readStatus != 0)
     {
@@ -85,11 +92,13 @@ int main()
             strcpy(curQual, line.c_str());
             printf("read = %s\n", curRead);
             printf("qual = %s\n", curQual);
+
             const char* bam_line = align_read(a, curRead, curQual, line.length());
             printf("%s", bam_line);
             free(curQual);
         }
         lineNum++;
+        //if(lineNum == 100) break;
     }
     free(curRead);
     destroy_aligner(a);
