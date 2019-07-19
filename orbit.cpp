@@ -1,3 +1,8 @@
+#include "Genome.h"
+#include "Parameters.h"
+#include "ReadAlign.h"
+#include "Transcriptome.h"
+#include "Variation.h"
 #include "orbit.h"
 
 struct Aligner

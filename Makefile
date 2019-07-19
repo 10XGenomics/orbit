@@ -70,7 +70,7 @@ SOURCES := $(wildcard *.cpp) $(wildcard *.c)
 %.o : %.c
 	$(CXX) -c $(CPPFLAGS) $(CFLAGS) $<
 
-orbit.a : $(OBJECTS) orbit.o
+liborbit.a : $(OBJECTS)
 	ar -csru $@ $(OBJECTS)
 
 all: STAR
