@@ -20,11 +20,11 @@ LDFLAGS_gdb := $(LDFLAGS_shared)
 
 COMPTIMEPLACE := -D'COMPILATION_TIME_PLACE="$(shell echo `date` $(HOSTNAME):`pwd`)"'
 
-CXXFLAGS_common := -pipe -std=c++11 -Wall -Wextra -fopenmp $(COMPTIMEPLACE)
+CXXFLAGS_common := -pipe -std=c++11 -Wall -Wextra -fopenmp -fPIC $(COMPTIMEPLACE)
 CXXFLAGS_main := -O3 $(CXXFLAGS_common)
 CXXFLAGS_gdb :=  -O0 -g $(CXXFLAGS_common)
 
-CFLAGS := -O3 -pipe -Wall -Wextra $(CFLAGS)
+CFLAGS := -O3 -pipe -Wall -Wextra -fPIC $(CFLAGS)
 
 
 ##########################################################################################################
@@ -70,14 +70,11 @@ SOURCES := $(wildcard *.cpp) $(wildcard *.c)
 %.o : %.c
 	$(CXX) -c $(CPPFLAGS) $(CFLAGS) $<
 
-liborbit.a : $(OBJECTS)
-	ar -csru $@ $(OBJECTS)
-
 all: STAR
 
 .PHONY: clean
 clean:
-	rm -f *.o STAR STARstatic STARlong Depend.list
+	rm -f *.o *.a STAR STARstatic STARlong Depend.list
 
 .PHONY: CLEAN
 CLEAN:
@@ -118,6 +115,7 @@ STAR : LDFLAGS := $(LDFLAGSextra) $(LDFLAGS_shared) $(LDFLAGS)
 STAR : Depend.list parametersDefault.xxd $(OBJECTS)
 	$(CXX) -o STAR $(CXXFLAGS) $(OBJECTS) $(LDFLAGS)
 
+
 POSIXSHARED : CXXFLAGS := $(CXXFLAGSextra) $(CXXFLAGS_main) -DPOSIX_SHARED_MEM $(CXXFLAGS)
 POSIXSHARED : LDFLAGS := $(LDFLAGSextra) $(LDFLAGS_shared) $(LDFLAGS)
 POSIXSHARED : Depend.list parametersDefault.xxd $(OBJECTS)
@@ -157,5 +155,9 @@ STARlongForMacStatic : CXXFLAGS := -D'COMPILE_FOR_LONG_READS' $(CXXFLAGSextra) $
 STARlongForMacStatic : LDFLAGS := $(LDFLAGSextra) $(LDFLAGS_Mac_static) $(LDFLAGS)
 STARlongForMacStatic : Depend.list parametersDefault.xxd $(OBJECTS)
 	$(CXX) -o STARlong $(CXXFLAGS) $(OBJECTS) $(LDFLAGS)
+
+liborbit.a : CXXFLAGS := $(CXXFLAGSextra) $(CXXFLAGS_main) $(CXXFLAGS)
+liborbit.a : $(OBJECTS) $(STAR)
+	ar -csru $@ $(OBJECTS)
 
 

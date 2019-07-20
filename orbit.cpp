@@ -65,7 +65,7 @@ void destroy_aligner(Aligner *a)
 {
     delete a;
 }
-
+/*
 int main()
 {
     char* arr[] = {
@@ -109,3 +109,4 @@ int main()
     destroy_aligner(a);
     return 0;
 }
+*/
