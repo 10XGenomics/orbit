@@ -52,8 +52,8 @@ const char* align_read(Aligner* a, char *Read1, char *Qual1, unsigned long long 
     {
         return "";
     }
-    string str = a->ra->outputAlignments();
-    return str.c_str();
+    const char* str = a->ra->outputAlignments();
+    return str;
 }
 
 Aligner* init_aligner(int argc, char* argv[])

@@ -2,7 +2,7 @@
 #include "GlobalVariables.h"
 #include "ErrorWarning.h"
 
-string ReadAlign::outputAlignments() {
+const char* ReadAlign::outputAlignments() {
     outBAMbytes=0;
 
     bool mateMapped[2]={false,false};
@@ -11,7 +11,7 @@ string ReadAlign::outputAlignments() {
     vector<uint32> readTranscripts={};
     vector<int32> readGeneExon={};
 
-    std::ostringstream stream;
+    std::stringstream stream;
 
     outFilterPassed=true;//only false if the alignment is held for outFilterBySJoutStage
 
@@ -242,8 +242,15 @@ string ReadAlign::outputAlignments() {
            chunkOutUnmappedReadsStream[1] << readNameExtra[0].substr(qualStart+1) <<"\n";
        };
     };
-    std::string str =  stream.str();
-    return str;
+    std::cout << stream.str() << std::endl;
+    std::stringbuf * pbuf = stream.rdbuf();
+    std::streamsize size = pbuf->pubseekoff(0,stream.end);
+    pbuf->pubseekoff(0,stream.beg);  
+    char *contents = (char*)malloc(size+1);
+    pbuf->sgetn (contents,size);
+    contents[size] = '\0';
+
+    return contents;
 };
 
 
