@@ -9,7 +9,7 @@ class PackedArray {
         bool arrayAllocated; //true if charArray was allocated
     public:
         uint wordLength, length, lengthByte;
-        uint operator [] (uint ii);
+        uint operator [] (uint ii) const;
         char* charArray;
 
     PackedArray();
@@ -20,8 +20,20 @@ class PackedArray {
     void pointArray(char* pointerCharIn);
 //     PackedArray(uint N);
 };
+/*
+uint index(const PackedArray pa, uint ii)
+{
+   uint b=ii*pa.wordLength;
+   uint B=pa.b/8;
+   uint S=pa.b%8;
 
-inline uint PackedArray::operator [] (uint ii) {
+   uint a1 = *((uint*) (pa.charArray+B));
+   a1 = ((a1>>S)<<pa.wordCompLength)>>pa.wordCompLength;
+   return a1;
+
+}*/
+
+inline uint PackedArray::operator [] (uint ii) const {
    uint b=ii*wordLength;
    uint B=b/8;
    uint S=b%8;

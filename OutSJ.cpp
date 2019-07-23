@@ -1,7 +1,7 @@
 #include "OutSJ.h"
 #include "ErrorWarning.h"
 
-OutSJ::OutSJ (uint nSJmax, Parameters &Pin, Genome &genomeIn) : oneSJ(genomeIn), P(Pin), mapGen(genomeIn)  {//do I need P?
+OutSJ::OutSJ (uint nSJmax, Parameters &Pin, const Genome &genomeIn) : oneSJ(genomeIn), P(Pin), mapGen(genomeIn)  {//do I need P?
 
     data = new char [oneSJ.dataSize*nSJmax]; //allocate big array of SJ loci and properties
     memset(data,0,oneSJ.dataSize*nSJmax);
@@ -56,7 +56,7 @@ void OutSJ::collapseSJ() {//collapse junctions. Simple version now: re-sort ever
     N=isj1+1;
 };
 
-Junction::Junction(Genome &genomeIn) : mapGen(genomeIn) {
+Junction::Junction(const Genome &genomeIn) : mapGen(genomeIn) {
 };
 
 //////////////////////////////////////////////////// oneJunctionWrite

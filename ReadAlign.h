@@ -23,7 +23,7 @@ class ReadAlign {
         int oneRead();
 
         //vars
-        Genome &mapGen; //mapped-to-genome structure
+        const Genome &mapGen; //mapped-to-genome structure
 
         uint iRead;
         char **Read1;
@@ -60,7 +60,7 @@ class ReadAlign {
         char **Qual1;
         void multMapSelect();
         int mapOneRead();
-        string outputAlignments();
+        const char* outputAlignments();
         void resetN();
     private:
         Parameters& P; //pointer to the parameters, will be initialized on construction
