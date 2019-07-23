@@ -54,10 +54,8 @@ void BAMoutput::unsortedOneAlign (char *bamIn, uint bamSize, uint bamSize2) {//r
     if (bamSize==0) return; //no output, could happen if one of the mates is not mapped
 
     if (binBytes1+bamSize2 > bamArraySize) {//write out this buffer
-
-        if (g_threadChunks.threadBool) pthread_mutex_lock(&g_threadChunks.mutexOutSAM);
-        bgzf_write(bgzfBAM,bamArray,binBytes1);
-        if (g_threadChunks.threadBool) pthread_mutex_unlock(&g_threadChunks.mutexOutSAM);
+        throw std::runtime_error("Unimplemented!");
+        //bgzf_write(bgzfBAM,bamArray,binBytes1);
 
         binBytes1=0;//rewind the buffer
     };
@@ -68,9 +66,8 @@ void BAMoutput::unsortedOneAlign (char *bamIn, uint bamSize, uint bamSize2) {//r
 };
 
 void BAMoutput::unsortedFlush () {//flush all alignments
-    if (g_threadChunks.threadBool) pthread_mutex_lock(&g_threadChunks.mutexOutSAM);
-    bgzf_write(bgzfBAM,bamArray,binBytes1);
-    if (g_threadChunks.threadBool) pthread_mutex_unlock(&g_threadChunks.mutexOutSAM);
+    throw std::runtime_error("Unimplemented!");
+    //bgzf_write(bgzfBAM,bamArray,binBytes1);
     binBytes1=0;//rewind the buffer
 };
 
@@ -125,7 +122,6 @@ void BAMoutput::coordBins() {//define genomic starts for bins
     nBins=P.outBAMcoordNbins;//this is the true number of bins
 
     //mutex here
-    if (P.runThreadN>1) pthread_mutex_lock(&g_threadChunks.mutexBAMsortBins);
     if (P.outBAMsortingBinStart[0]!=0) {//it's set to 0 only after the bin sizes are determined
         //extract coordinates and sort
         uint *startPos = new uint [binTotalN[0]+1];//array of aligns start positions
@@ -148,8 +144,6 @@ void BAMoutput::coordBins() {//define genomic starts for bins
         };
         delete [] startPos;
     };
-    //mutex here
-    if (P.runThreadN>1) pthread_mutex_unlock(&g_threadChunks.mutexBAMsortBins);
 
     //re-allocate binStart
     uint binTotalNold=binTotalN[0];

@@ -7,8 +7,6 @@
 #include "stringSubstituteAll.h"
 #include SAMTOOLS_BGZF_H
 #include "GlobalVariables.h"
-#include "signalFromBAM.h"
-#include "bamRemoveDuplicates.h"
 
 //for mkfifo
 #include <sys/stat.h>
@@ -56,15 +54,9 @@ Parameters::Parameters() {//initalize parameters info
     parArray.push_back(new ParameterInfoScalar <uint> (-1, -1, "readMapNumber", &readMapNumber));
     parArray.push_back(new ParameterInfoVector <string> (-1, -1, "readNameSeparator", &readNameSeparator));
     //parArray.push_back(new ParameterInfoScalar <string> (-1, -1, "readStrand", &pReads.strandString));
-
-
-    //input from BAM
     parArray.push_back(new ParameterInfoScalar <string> (-1, -1, "inputBAMfile", &inputBAMfile));
-
-    //BAM processing
     parArray.push_back(new ParameterInfoScalar <string> (-1, -1, "bamRemoveDuplicatesType", &removeDuplicates.mode));
     parArray.push_back(new ParameterInfoScalar <uint>   (-1, -1, "bamRemoveDuplicatesMate2basesN", &removeDuplicates.mate2basesN));
-
     //limits
     parArray.push_back(new ParameterInfoScalar <uint>   (-1, -1, "limitGenomeGenerateRAM", &limitGenomeGenerateRAM));
     parArray.push_back(new ParameterInfoScalar <uint>   (-1, -1, "limitIObufferSize", &limitIObufferSize));
@@ -297,7 +289,6 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
         commandLine += string(argIn[0]);
         for (int iarg=1; iarg<argInN; iarg++) {
             string oneArg=string(argIn[iarg]);
-
             if (oneArg=="--version") {//print version and exit
                 std::cout << STAR_VERSION <<std::endl;
                 exit(0);
@@ -471,8 +462,7 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
         exitWithError(errOut.str(), std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
     };
 
-    //threaded or not
-    g_threadChunks.threadBool=(runThreadN>1);
+    //g_threadChunks.threadBool=(runThreadN>1);
 
     //wigOut parameters
     if (outWigType.at(0)=="None") {
@@ -537,40 +527,12 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
     {
         removeDuplicates.yes=true;
         removeDuplicates.markMulti=false;
-    } else if (removeDuplicates.mode!="-")
-    {
-            ostringstream errOut;
-            errOut << "EXITING because of fatal PARAMETERS error: unrecognized option in of --bamRemoveDuplicatesType="<<removeDuplicates.mode<<"\n";
-            errOut << "SOLUTION: use allowed option: - or UniqueIdentical or UniqueIdenticalNotMulti";
-            exitWithError(errOut.str(),std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
     };
 
     if (runMode=="alignReads") {
         inOut->logProgress.open((outFileNamePrefix + "Log.progress.out").c_str());
-    } else if (runMode=="inputAlignmentsFromBAM") {
-        //at the moment, only wiggle output is implemented
-        if (outWigFlags.yes) {
-            *inOut->logStdOut << timeMonthDayTime() << " ..... reading from BAM, output wiggle\n" <<flush;
-            inOut->logMain << timeMonthDayTime()    << " ..... reading from BAM, output wiggle\n" <<flush;
-            string wigOutFileNamePrefix=outFileNamePrefix + "Signal";
-            signalFromBAM(inputBAMfile, wigOutFileNamePrefix, *this);
-            *inOut->logStdOut << timeMonthDayTime() << " ..... done\n" <<flush;
-            inOut->logMain << timeMonthDayTime()    << " ..... done\n" <<flush;
-        } else if (removeDuplicates.mode!="-") {
-            *inOut->logStdOut << timeMonthDayTime() << " ..... reading from BAM, remove duplicates, output BAM\n" <<flush;
-            inOut->logMain << timeMonthDayTime()    << " ..... reading from BAM, remove duplicates, output BAM\n" <<flush;
-            bamRemoveDuplicates(inputBAMfile, (outFileNamePrefix+"Processed.out.bam").c_str(), *this);
-            *inOut->logStdOut << timeMonthDayTime() << " ..... done\n" <<flush;
-            inOut->logMain << timeMonthDayTime()    << " ..... done\n" <<flush;
-        } else {
-            ostringstream errOut;
-            errOut <<"EXITING because of fatal INPUT ERROR: at the moment --runMode inputFromBAM only works with --outWigType bedGraph OR --bamRemoveDuplicatesType Identical"<<"\n";
-            exitWithError(errOut.str(), std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
-        };
-        sysRemoveDir (outFileTmp);
-        exit(0);
-    };
-
+    } 
+    
     outSAMbool=false;
     outBAMunsorted=false;
     outBAMcoord=false;
@@ -601,7 +563,8 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
                 } else {
                     outBAMfileUnsortedName=outFileNamePrefix + "Aligned.out.bam";
                 };
-                inOut->outBAMfileUnsorted = bgzf_open(outBAMfileUnsortedName.c_str(),("w"+to_string((long long) outBAMcompression)).c_str());
+                throw std::runtime_error("Unimplemented!");
+                //inOut->outBAMfileUnsorted = bgzf_open(outBAMfileUnsortedName.c_str(),("w"+to_string((long long) outBAMcompression)).c_str());
             };
             if (outBAMcoord) {
                 if (outStd=="BAM_SortedByCoordinate") {
@@ -609,7 +572,8 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
                 } else {
                     outBAMfileCoordName=outFileNamePrefix + "Aligned.sortedByCoord.out.bam";
                 };
-                inOut->outBAMfileCoord = bgzf_open(outBAMfileCoordName.c_str(),("w"+to_string((long long) outBAMcompression)).c_str());
+                throw std::runtime_error("Unimplemented!");
+                //inOut->outBAMfileCoord = bgzf_open(outBAMfileCoordName.c_str(),("w"+to_string((long long) outBAMcompression)).c_str());
                 if (outBAMsortingThreadN==0) {
                     outBAMsortingThreadNactual=min(6, runThreadN);
                 } else {
@@ -649,7 +613,6 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
 
     if (!outBAMcoord && outWigFlags.yes && runMode=="alignReads") {
         ostringstream errOut;
-        errOut <<"EXITING because of fatal PARAMETER error: generating signal with --outWigType requires sorted BAM\n";
         errOut <<"SOLUTION: re-run STAR with with --outSAMtype BAM SortedByCoordinate, or, id you also need unsroted BAM, with --outSAMtype BAM SortedByCoordinate Unsorted\n";
         exitWithError(errOut.str(), std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
     };
@@ -990,7 +953,8 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
                     } else {
                         outQuantBAMfileName=outFileNamePrefix + "Aligned.toTranscriptome.out.bam";
                     };
-                    inOut->outQuantBAMfile=bgzf_open(outQuantBAMfileName.c_str(),("w"+to_string((long long) quant.trSAM.bamCompression)).c_str());
+                    throw std::runtime_error("Unimplemented!");
+                    //inOut->outQuantBAMfile=bgzf_open(outQuantBAMfileName.c_str(),("w"+to_string((long long) quant.trSAM.bamCompression)).c_str());
                 };
                 if (quant.trSAM.ban=="IndelSoftclipSingleend") {
                     quant.trSAM.indel=false;

@@ -18,11 +18,6 @@ public:
 
     ThreadControl();
 
-    static void* threadRAprocessChunks(void *RAchunk) {
-        ( (ReadAlignChunk*) RAchunk )->processChunks();
-        pthread_exit(0);
-        return NULL;
-    };
 };
 
 #endif
