@@ -40,6 +40,9 @@ const char* align_read(Aligner* a, char *Read1, char *Qual1, unsigned long long 
     a->ra->readNmates = 1;
     a->ra->Read0 = &Read1;
     a->ra->Qual0 = &Qual1;
+    a->ra->readName = (char*)malloc(2);
+    a->ra->readName[0] = 'a';
+    a->ra->readName[1] = '\0';
     //a->ra->Read1 = &Read1;
     //a->ra->Qual1 = &Qual1;
     //a->ra->Lread = read_length;
@@ -48,6 +51,7 @@ const char* align_read(Aligner* a, char *Read1, char *Qual1, unsigned long long 
     //a->ra->readLength[1] = read_length;
     
     int readStatus = a->ra->oneRead();
+    a->ra->readName[1] = '\0';
     if(readStatus != 0)
     {
         return "";

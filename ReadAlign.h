@@ -58,6 +58,8 @@ class ReadAlign {
         char **Read0;
         char **Qual0;
         char **Qual1;
+        char **readNameMates;
+        char *readName;
         void multMapSelect();
         int mapOneRead();
         const char* outputAlignments();
@@ -106,8 +108,8 @@ class ReadAlign {
         char dummyChar[4096];
         //char** Read0;
         //char** Qual0;
-        char** readNameMates;
-        char* readName;
+        //char** readNameMates;
+        //char* readName;
         //char** Qual1; //modified QSs for scoring
 
         //uint readNmates;

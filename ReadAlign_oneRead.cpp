@@ -13,7 +13,7 @@ int ReadAlign::oneRead() {//process one read: load, map, write
     char *val = (char*)malloc(1010);
     //printf("read is: %s\n", Read0[0]);
     //printf("qual is: %s\n", Qual0[0]);
-    sprintf(val, "%s\n%s\n%s\n%s\n", "@a 1 xx", Read0[0], "+", Qual0[0]);
+    sprintf(val, "@%s 1 xx\n%s\n%s\n%s\n", readName, Read0[0], "+", Qual0[0]);
     std::istringstream is(val);
     readStatus[0]=readLoad(is, P, 0, readLength[0], readLengthOriginal[0], readNameMates[0], Read0[0], Read1[0], Qual0[0], Qual1[0], clip3pNtotal[0], clip5pNtotal[0], clip3pAdapterN[0], iReadAll, readFilesIndex, readFilter, readNameExtra[0]);
     if (P.readNmates==2) {//read the 2nd mate
