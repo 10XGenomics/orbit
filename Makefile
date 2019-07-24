@@ -1,8 +1,6 @@
 # user may define these whole flags
-# LDFLAGS
 # CPPFLAGS
 # CXXFLAGS
-# CFLAGS
 
 # or these user-set flags that will be added to standard flags
 CXXFLAGSextra ?=
@@ -17,8 +15,6 @@ COMPTIMEPLACE := -D'COMPILATION_TIME_PLACE="/dev/null"'
 CXXFLAGS_common := -pipe -std=c++11 -Wall -Wextra -fPIC $(COMPTIMEPLACE)
 CXXFLAGS_main := -O3 -g $(CXXFLAGS_common)
 CXXFLAGS_gdb :=  -O0 -g $(CXXFLAGS_common)
-
-CFLAGS := -O3 -pipe -Wall -Wextra -fPIC $(CFLAGS)
 
 
 ##########################################################################################################
@@ -52,51 +48,15 @@ OBJECTS = ParametersChimeric_initialize.o ParametersSolo.o SoloRead.o SoloRead_r
 	ReadAlign_quantTranscriptome.o Quantifications.o Transcriptome_geneCountsAddAlign.o \
 	sjdbLoadFromFiles.o sjdbLoadFromStream.o sjdbPrepare.o sjdbBuildIndex.o sjdbInsertJunctions.o \
 	Parameters_openReadsFiles.o Parameters_closeReadsFiles.o Parameters_readSAMheader.o \
-	bam_cat.o serviceFuns.o GlobalVariables.o \
+	serviceFuns.o GlobalVariables.o \
 	BAMoutput.o BAMfunctions.o ReadAlign_alignBAM.o BAMbinSortByCoordinate.o BAMbinSortUnmapped.o \
 	orbit.o
-
-SOURCES := $(wildcard *.cpp) $(wildcard *.c)
-
 
 %.o : %.cpp
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $<
 
-%.o : %.c
-	$(CXX) -c $(CPPFLAGS) $(CFLAGS) $<
-
-all: STAR
-
-.PHONY: clean
 clean:
-	rm -f *.o *.a Depend.list
-
-.PHONY: CLEAN
-CLEAN:
-	rm -f *.o STAR Depend.list
-	$(MAKE) -C htslib clean
-
-.PHONY: cleanRelease
-cleanRelease:
-	rm -f *.o Depend.list
-	$(MAKE) -C htslib clean
-
-ifneq ($(MAKECMDGOALS),clean)
-ifneq ($(MAKECMDGOALS),cleanRelease)
-ifneq ($(MAKECMDGOALS),CLEAN)
-Depend.list: $(SOURCES) parametersDefault.xxd htslib
-	echo $(SOURCES)
-	'rm' -f ./Depend.list
-	$(CXX) $(CXXFLAGS_common) -MM $^ >> Depend.list
-include Depend.list
-endif
-endif
-endif
-
-htslib : htslib/libhts.a
-
-htslib/libhts.a :
-	$(MAKE) -C htslib lib-static
+	rm -f *.o *.a
 
 parametersDefault.xxd: parametersDefault
 	xxd -i parametersDefault > parametersDefault.xxd
