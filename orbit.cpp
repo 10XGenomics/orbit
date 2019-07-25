@@ -60,6 +60,37 @@ const char* align_read(Aligner* a, char *Read1, char *Qual1, unsigned long long 
     return str;
 }
 
+const char* align_read_pair(Aligner* a, char *Read1, char *Qual1, char *Read2, char *Qual2, unsigned long long read_length)
+{
+    a->p->iReadAll++;
+    a->ra->iRead++;
+    //printf("iRead %llu\n", a->ra->iRead);
+    a->p->readNmates = 2;
+    a->ra->readNmates = 2;
+    a->ra->Read0 = &Read1;
+    a->ra->Qual0 = &Qual1;
+    strcpy(a->ra->Read0[1], Read2);
+    strcpy(a->ra->Qual0[1], Qual2);
+    a->ra->readName = (char*)malloc(2);
+    a->ra->readName[0] = 'a';
+    a->ra->readName[1] = '\0';
+    //a->ra->Read1 = &Read1;
+    //a->ra->Qual1 = &Qual1;
+    //a->ra->Lread = read_length;
+    a->ra->readLength[0] = read_length;
+    a->ra->readLengthOriginal[0] = read_length;
+    //a->ra->readLength[1] = read_length;
+    
+    int readStatus = a->ra->oneRead();
+    a->ra->readName[1] = '\0';
+    if(readStatus != 0)
+    {
+        return "";
+    }
+    const char* str = a->ra->outputAlignments();
+    return str;
+}
+
 Aligner* init_aligner(int argc, char* argv[])
 {
     return new Aligner(argc, argv);
