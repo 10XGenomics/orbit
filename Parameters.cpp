@@ -454,14 +454,14 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
     } else {
         outFileTmp=outTmpDir + "/";
     };
-
+    /*
     if (mkdir (outFileTmp.c_str(),runDirPerm)!=0) {
         ostringstream errOut;
         errOut <<"EXITING because of fatal ERROR: could not make temporary directory: "<< outFileTmp<<"\n";
         errOut <<"SOLUTION: (i) please check the path and writing permissions \n (ii) if you specified --outTmpDir, and this directory exists - please remove it before running STAR\n"<<flush;
         exitWithError(errOut.str(), std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
     };
-
+    */
     //g_threadChunks.threadBool=(runThreadN>1);
 
     //wigOut parameters
