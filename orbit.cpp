@@ -11,9 +11,11 @@ struct Aligner
         Parameters *p;
         ReadAlign *ra;
         Genome *g;
+        int isOriginal;
 
         Aligner(int argInN, char* argIn[])
         {
+            isOriginal = 1;
             p = new Parameters();
             p->inputParameters(argInN, argIn);
             g = new Genome(*p);
@@ -23,13 +25,29 @@ struct Aligner
             ra = new ReadAlign(*p, *g, mainTranscriptome, 0);
         }
 
+        // This constructor is used to construct clones of an existing Aligner
+        // This allows multi-threaded alignment without each thread
+        // constructing its own genome object
+        Aligner(Aligner* og)
+        {
+            isOriginal = 0;
+            p = og->p;
+            g = og->g;
+            Transcriptome *mainTranscriptome = nullptr;
+            ra = new ReadAlign(*p, *g, mainTranscriptome, 0);
+        }
+
         ~Aligner()
         {
             delete ra;
-            delete g;
-            delete p;
+            if(isOriginal)
+            {
+                delete g;
+                delete p;
+            }
         }
 };
+
 
 const char* align_read(Aligner* a, char *Read1, char *Qual1, unsigned long long read_length)
 {
@@ -89,6 +107,11 @@ const char* align_read_pair(Aligner* a, char *Read1, char *Qual1, char *Read2, c
     }
     const char* str = a->ra->outputAlignments();
     return str;
+}
+
+Aligner* init_aligner_clone(Aligner* al)
+{
+    return new Aligner(al);
 }
 
 Aligner* init_aligner(int argc, char* argv[])
