@@ -242,7 +242,6 @@ const char* ReadAlign::outputAlignments() {
            chunkOutUnmappedReadsStream[1] << readNameExtra[0].substr(qualStart+1) <<"\n";
        };
     };
-    std::cout << stream.str() << std::endl;
     std::stringbuf * pbuf = stream.rdbuf();
     std::streamsize size = pbuf->pubseekoff(0,stream.end);
     pbuf->pubseekoff(0,stream.beg);  
