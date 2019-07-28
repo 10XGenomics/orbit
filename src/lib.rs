@@ -156,9 +156,11 @@ impl StarAligner {
         let sam_string = self.aligner.align_read(read, qual);
         self.parse_sam_to_records(sam_string, name)
     }
-    pub fn align_read_pair(&self, name : String, read1 : String, qual1 : String, read2 : String, qual2 : String) -> Vec<bam::Record> {
+    pub fn align_read_pair(&self, name : String, read1 : String, qual1 : String, read2 : String, qual2 : String) -> (Vec<bam::Record>, Vec<bam::Record>) {
         let sam_string = self.aligner.align_read_pair(read1, qual1, read2, qual2);
-        self.parse_sam_to_records(sam_string, name)
+        let full_vec = self.parse_sam_to_records(sam_string, name);
+        // TODO actually partition this 
+        (full_vec, Vec::new())
     }
 
     pub fn align_fastq(&self, fastq_path : &str) -> Result<Vec<bam::Record>, Error> {
