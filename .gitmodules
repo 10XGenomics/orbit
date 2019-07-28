@@ -1,0 +1,4 @@
+[submodule "STAR"]
+	path = STAR
+	url = git@github.com:mkirsche/STAR.git
+	branch = orbit

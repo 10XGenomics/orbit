@@ -1,0 +1,20 @@
+[package]
+name = "orbit"
+version = "0.1.0"
+authors = ["mkirsche"]
+build = "build.rs"
+
+[dependencies]
+libc = "*"
+rust-htslib = { version = "0.24", default-features = false, features = ["serde"] }
+failure = "*"
+failure_derive = "*"
+seq_io = "0.3.0"
+
+[build-dependencies]
+bindgen = ">=0.47"
+skeptic = "*"
+cc = "^1.0"
+
+[dev-dependencies]
+skeptic = "*"
