@@ -27,8 +27,12 @@ pub struct StarSettings {
     multn : usize,
     args : Vec<String>,
 }
+
+/// References to some commonly used reference genomes for testing purposes
 const DEFAULT_REF_2 : &str = "/mnt/opt/refdata_cellranger/GRCh38-3.0.0/star";
 const DEFAULT_REF_1 : &str =  "/mnt/opt/refdata_cellranger/mm10-3.0.0/star";
+
+/// The default value for number of mappings allowed is 1.
 const DEFAULT_MULTN : usize = 1;
 
 impl StarSettings {
