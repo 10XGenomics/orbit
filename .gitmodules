@@ -2,3 +2,7 @@
 	path = STAR
 	url = git@github.com:mkirsche/STAR.git
 	branch = orbit
+[submodule "orbit"]
+	path = orbit
+	url = git@github.com:mkirsche/orbit.git
+	branch = master
