@@ -18,19 +18,24 @@ include!("bindings.rs");
 extern crate rust_htslib;
 use rust_htslib::bam;
 use rust_htslib::bam::header::{Header, HeaderRecord};
-use rust_htslib::bam::{HeaderView, Read};
+use rust_htslib::bam::{HeaderView};
 
 /// StarSettings contains the parameters which will be used for the STAR aligner.
 /// Currently the array of argument strings is passed directly
 pub struct StarSettings {
+    ref_dir : String,
+    multn : usize,
     args : Vec<String>,
 }
+const DEFAULT_REF_2 : &str = "/mnt/opt/refdata_cellranger/GRCh38-3.0.0/star";
+const DEFAULT_REF_1 : &str =  "/mnt/opt/refdata_cellranger/mm10-3.0.0/star";
+const DEFAULT_MULTN : usize = 1;
 
 impl StarSettings {
     pub fn new() -> StarSettings {
         let def_args : Vec<String> = vec![
-            "STAR".to_string(), "--genomeDir".to_string(), "/mnt/opt/refdata_cellranger/mm10-3.0.0/star".to_string(),//"/mnt/opt/refdata_cellranger/GRCh38-3.0.0/star".to_string(),
-            "--outSAMmultNmax".to_string(), "1".to_string(),
+            "STAR".to_string(), "--genomeDir".to_string(), DEFAULT_REF_1.to_string(), 
+            "--outSAMmultNmax".to_string(), DEFAULT_MULTN.to_string(),
             "--runThreadN".to_string(), "1".to_string(),
             "--readNameSeparator".to_string(), "space".to_string(),
             "--outSAMunmapped".to_string(), "Within".to_string(), "KeepPairs".to_string(),
@@ -38,7 +43,33 @@ impl StarSettings {
             "--outStd".to_string(), "SAM".to_string(),
             "--outSAMorder".to_string(), "PairedKeepInputOrder".to_string(),
         ];
-        StarSettings{ args : def_args }
+        StarSettings{ ref_dir : DEFAULT_REF_1.to_string(), multn : DEFAULT_MULTN, args : def_args }
+    }
+    pub fn from_str(reference : &str) -> StarSettings {
+        let mut res = StarSettings::new();
+        res.set_reference(reference);
+        res
+    }
+
+    fn sync_args(&mut self) {
+        for i in 0..self.args.len() {
+            if self.args[i] == "--genomeDir" {
+                self.args[i+1] = self.ref_dir.clone();
+            }
+            else if self.args[i] == "--outSAMmultNmax" {
+                self.args[i+1] = self.multn.to_string();
+            }   
+        }
+    }
+
+    pub fn set_reference(&mut self, new_ref : &str) {
+        self.ref_dir = new_ref.to_string();
+        self.sync_args();
+    }
+
+    pub fn set_multn(&mut self, new_multn : usize) {
+        self.multn = new_multn;
+        self.sync_args();
     }
 }
 
@@ -50,6 +81,11 @@ pub struct StarRawAligner {
 impl StarRawAligner {
     pub fn new() -> StarRawAligner {
         let cur_settings = StarSettings::new();
+        let cur_aligner = init_aligner_rust(&cur_settings.args).unwrap();
+        StarRawAligner { al : cur_aligner, settings : cur_settings }
+    }
+    pub fn from_str(ref_path : &str) -> StarRawAligner {
+        let cur_settings = StarSettings::from_str(ref_path);
         let cur_aligner = init_aligner_rust(&cur_settings.args).unwrap();
         StarRawAligner { al : cur_aligner, settings : cur_settings }
     }
@@ -78,13 +114,30 @@ pub struct StarAligner {
 impl StarAligner {
     pub fn new() -> StarAligner {
         let cur_aligner = StarRawAligner::new();
-        let (cur_header, cur_hv) = generate_header_with_view(&Path::new(&(cur_aligner.settings.args[2])));
+        let (cur_header, cur_hv) = generate_header_with_view(
+            &Path::new(&(cur_aligner.settings.args[2]))
+        );
+
         StarAligner {
             aligner : cur_aligner,
             header : cur_header,
             header_view : cur_hv,
         }
     }
+    pub fn from_str(ref_path : &str) -> StarAligner {
+        let cur_aligner = StarRawAligner::from_str(ref_path);
+        
+        let (cur_header, cur_hv) = generate_header_with_view(
+            &Path::new(&(cur_aligner.settings.args[2]))
+        );
+
+        StarAligner {
+            aligner : cur_aligner,
+            header : cur_header,
+            header_view : cur_hv,
+        }
+    }
+
     pub fn clone(&self) -> StarAligner {
         let cur_aligner = self.aligner.clone();
         let (cur_header, cur_hv) = (self.header.clone(), self.header_view.clone());
@@ -220,7 +273,7 @@ pub fn align_read_pair_rust(al : *mut Aligner, read : String, qual : String, rea
 #[test]
 fn test_align_read()
 {
-    let aligner = StarRawAligner::new();
+    let aligner = StarRawAligner::from_str(DEFAULT_REF_2);
     let read : String = "GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC".to_string();
     let qual : String = "GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG".to_string();
     
@@ -232,7 +285,7 @@ fn test_align_read()
 #[test]
 fn test_align_multiple_reads()
 {
-    let aligner = StarRawAligner::new();    
+    let aligner = StarRawAligner::from_str(DEFAULT_REF_2);
     let read : String = "GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC".to_string();
     let qual : String = "GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG".to_string();
     let read2 : String = "GTATGTCAAGTTGGTGGAGGCCCTTTGTGCTGAACACCAAATCAACCTAATTAAGGTTGATGACAACAAGAAACTAGGAGAATGGGTAGGCCTTTGTA".to_string();
@@ -251,7 +304,7 @@ fn test_align_multiple_reads()
 #[test]
 fn test_raw_clone()
 {
-    let aligner = StarRawAligner::new();
+    let aligner = StarRawAligner::from_str(DEFAULT_REF_2);
     let aligner2 = aligner.clone();
     let read : String = "GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC".to_string();
     let qual : String = "GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG".to_string();
@@ -271,7 +324,7 @@ fn test_raw_clone()
 #[test]
 fn test_header()
 {
-    let aligner = StarAligner::new();
+    let aligner = StarAligner::from_str(DEFAULT_REF_2);
     
     let header_string : String = String::from_utf8(aligner.header.to_bytes()).unwrap();
     assert!(header_string.starts_with("@SQ\tSN:1\tLN:248956422\n"));
@@ -281,7 +334,7 @@ fn test_header()
 #[test]
 fn test_get_record()
 {
-    let aligner = StarAligner::new();
+    let aligner = StarAligner::from_str(DEFAULT_REF_2);
     let read : String = "GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC".to_string();
     let qual : String = "GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG".to_string();
     let name : String = "gatactaga".to_string();
