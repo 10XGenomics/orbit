@@ -168,15 +168,22 @@ impl StarAligner {
         let mut reader = fastq::Reader::from_path(Path::new(fastq_path))?;
         while let Some(cur_record) = reader.next() {
             let record = cur_record?;
-            let seq : String = String::from_utf8(record.seq().to_vec())?;
-            let qual : String = String::from_utf8(record.qual().to_vec())?;
-            let name : String = record.id()?.to_string();
-            let cur = self.align_single_read(name, seq, qual);
+            let cur = self.align_fastq_record(record)?;
             for x in cur {
                 res.push(x);
             }
         }
         Ok(res)
+    }
+
+    pub fn align_fastq_record<R : Record>(&self, record : R) -> Result<Vec<bam::Record>, Error> {
+
+        let seq : String = String::from_utf8(record.seq().to_vec())?;
+        let qual : String = String::from_utf8(record.qual().to_vec())?;
+        let name : String = record.id()?.to_string();
+        let cur = self.align_single_read(name, seq, qual);
+        Ok(cur)
+
     }
 
     fn parse_sam_to_records(&self, sam: String, name : String) -> Vec<bam::Record> {
