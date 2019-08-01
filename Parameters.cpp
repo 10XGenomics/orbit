@@ -447,13 +447,14 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
         errOut << "SOLUTION: use one of the allowed values of --runDirPerm : 'User_RWX' or 'All_RWX' \n";
         exitWithError(errOut.str(),std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
     };
-
+    /*
     if (outTmpDir=="-") {
         outFileTmp=outFileNamePrefix +"_STARtmp/";
         sysRemoveDir (outFileTmp);
     } else {
         outFileTmp=outTmpDir + "/";
     };
+    */
     /*
     if (mkdir (outFileTmp.c_str(),runDirPerm)!=0) {
         ostringstream errOut;
@@ -799,6 +800,7 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
             errOut << "SOLUTION: re-run STAR with --genomeLoad NoSharedMemory ; this is the only option compatible with --twopassMode Basic .\n";
             exitWithError(errOut.str(),std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
         };
+        /*
         twoPass.yes=true;
         twoPass.dir=outFileNamePrefix+"_STARpass1/";
         sysRemoveDir (twoPass.dir);
@@ -808,6 +810,7 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
             errOut <<"SOLUTION: please check the path and writing permissions \n";
             exitWithError(errOut.str(), std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
         };
+        */
     };
 
     // openReadFiles depends on twoPass for reading SAM header
@@ -1249,6 +1252,7 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
             errOut << "SOLUTION: specify pGe.sjdbOverhang>0, ideally readmateLength-1";
             exitWithError(errOut.str(),std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
         };
+        /*
         sjdbInsert.outDir=outFileNamePrefix+"_STARgenome/";
         sysRemoveDir (sjdbInsert.outDir);
         if (mkdir (sjdbInsert.outDir.c_str(),runDirPerm)!=0) {
@@ -1257,6 +1261,7 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
             errOut <<"SOLUTION: please check the path and writing permissions \n";
             exitWithError(errOut.str(), std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
         };
+        */
     };
 
     if (outBAMcoord && limitBAMsortRAM==0) {//check limitBAMsortRAM

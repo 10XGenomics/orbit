@@ -55,6 +55,8 @@ OBJECTS = ParametersChimeric_initialize.o ParametersSolo.o SoloRead.o SoloRead_r
 %.o : %.cpp
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $<
 
+all: liborbit.a
+
 clean:
 	rm -f *.o *.a
 
