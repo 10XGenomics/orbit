@@ -36,6 +36,9 @@ pub const DEFAULT_REF_2 : &str = "/mnt/opt/refdata_cellranger/GRCh38-3.0.0/star"
 const DEFAULT_MULTN : usize = 1;
 
 impl StarSettings {
+    
+    /// This constructor just sets all of the necessary arguments to their defaults, and the
+    /// arguments which can take on different values have separate functions to set them later
     pub fn new() -> StarSettings {
         let def_args : Vec<String> = vec![
             "STAR".to_string(), "--genomeDir".to_string(), DEFAULT_REF_1.to_string(), 
@@ -49,12 +52,16 @@ impl StarSettings {
         ];
         StarSettings{ ref_dir : DEFAULT_REF_1.to_string(), multn : DEFAULT_MULTN, args : def_args }
     }
+
+    /// Create a new StarSettings and immediately sets its reference genome directory to the
+    /// provided value
     pub fn from_str(reference : &str) -> StarSettings {
         let mut res = StarSettings::new();
         res.set_reference(reference);
         res
     }
 
+    /// Update the array of arguments when the arguments' values have changed
     fn sync_args(&mut self) {
         for i in 0..self.args.len() {
             if self.args[i] == "--genomeDir" {
@@ -66,16 +73,19 @@ impl StarSettings {
         }
     }
 
+    /// Set the reference genome directory
     pub fn set_reference(&mut self, new_ref : &str) {
         self.ref_dir = new_ref.to_string();
         self.sync_args();
     }
 
+    /// Set the max number of multimapping reads
     pub fn set_multn(&mut self, new_multn : usize) {
         self.multn = new_multn;
         self.sync_args();
     }
 
+    /// Add the given read group strings to the arguments
     pub fn add_rg(&mut self, rg_tags : Vec<String>) {
         self.args.push("--outSAMattrRGline".to_string());
         for tag in rg_tags {
@@ -84,6 +94,9 @@ impl StarSettings {
     }
 }
 
+/// StarRawAligner is an aligner which interfaces directly with the bindgen-produced orbit
+/// library.  It contains all information necessary to align reads, but does not also contain the
+/// header information needed to produce a BAM file from the alignment records.
 pub struct StarRawAligner {
     al : *mut Aligner,
     pub settings : StarSettings,
@@ -116,12 +129,17 @@ impl StarRawAligner {
     }
 }
 
+/// StarAligner is the main external-facing alignment interface.  It creates a StarRawAligner with
+/// caller-provided settings, and supports read alignment as well as dealing with Fastq records as
+/// input and the output BAM records.
 pub struct StarAligner {
     pub aligner : StarRawAligner,
     pub header : Header,
 }
 
 impl StarAligner {
+
+    /// Creates an aligner with default parameters
     pub fn new() -> StarAligner {
         let cur_aligner = StarRawAligner::new();
         let (cur_header, _cur_hv) = generate_header_with_view(
@@ -133,6 +151,8 @@ impl StarAligner {
             header : cur_header,
         }
     }
+
+    /// Creates an aligner with a given reference genome directory
     pub fn from_str(ref_path : &str) -> StarAligner {
         let cur_aligner = StarRawAligner::from_str(ref_path);
         
@@ -146,6 +166,10 @@ impl StarAligner {
         }
     }
 
+    /// Produces another aligner which shares many key read-only data structures with the first
+    /// one.  When aligning with multiple threads, ther should be one main aligner constructed with
+    /// the functions above, and then each thread should produce a clone to use for its own
+    /// alignment.
     pub fn clone(&self) -> StarAligner {
         let cur_aligner = self.aligner.clone();
         let (cur_header, _cur_hv) = generate_header_with_view(
@@ -158,10 +182,13 @@ impl StarAligner {
         }
     }
 
+    /// Aligns a given read and produces BAM records
     pub fn align_single_read(&self, name : String, read : String, qual : String) -> Vec<bam::Record> {
         let sam_string = self.aligner.align_read(read, qual);
         self.parse_sam_to_records(sam_string, name)
     }
+
+    /// Aligns a given pair of reads and produces BAM records
     pub fn align_read_pair(&self, name : String, read1 : String, qual1 : String, read2 : String, qual2 : String) -> (Vec<bam::Record>, Vec<bam::Record>) {
         let sam_string = self.aligner.align_read_pair(read1, qual1, read2, qual2);
         let full_vec = self.parse_sam_to_records(sam_string, name);
@@ -169,6 +196,7 @@ impl StarAligner {
         (full_vec, Vec::new())
     }
 
+    /// Aligns every read in a Fastq file
     pub fn align_fastq(&self, fastq_path : &str) -> Result<Vec<bam::Record>, Error> {
         let mut res : Vec<bam::Record> = Vec::new();
         let mut reader = fastq::Reader::from_path(Path::new(fastq_path))?;
@@ -182,6 +210,7 @@ impl StarAligner {
         Ok(res)
     }
 
+    /// Aligins the read contained in a single given Fastq record
     pub fn align_fastq_record<R : Record>(&self, record : R) -> Result<Vec<bam::Record>, Error> {
 
         let seq : String = String::from_utf8(record.seq().to_vec())?;
@@ -192,10 +221,14 @@ impl StarAligner {
 
     }
 
+    /// Destructor
     pub fn destroy(&self) {
         self.aligner.destroy();
     }
 
+    /// Given a list of BAM records as a SAM-format string in which records are separated by new
+    /// lines, add the records to a vecotr and append the read name to the beginning of them so
+    /// that they conform with BAM specifications
     fn parse_sam_to_records(&self, sam: String, name : String) -> Vec<bam::Record> {
         let mut records = Vec::new();
         for slc in sam.split("\n") {
@@ -216,6 +249,7 @@ impl StarAligner {
     }
 }
 
+/// Read in the lines from a file and store each line as its own string in a vector
 fn get_lines(path : &Path) -> Vec<String> {
     let mut res : Vec<String> = Vec::new();
     let lines = BufReader::new(File::open(path).unwrap()).lines();
@@ -225,6 +259,8 @@ fn get_lines(path : &Path) -> Vec<String> {
     res
 }
 
+/// Produces a header from the genome reference directory by looking up the contig names and
+/// lengths and formatting them properly
 fn generate_header_with_view(genome_path : &Path) -> (Header, HeaderView) {
     let mut header = Header::new();
     
@@ -241,12 +277,19 @@ fn generate_header_with_view(genome_path : &Path) -> (Header, HeaderView) {
     (header, hv)
 }
 
+/// Given a reference genome contig's name and length, add a corresponding line to the given BAM
+/// header
 fn add_ref_to_bam_header(header: &mut Header, seq_name: &str, seq_len: usize) {
     let mut header_rec = HeaderRecord::new(b"SQ");
     header_rec.push_tag(b"SN", &seq_name);
     header_rec.push_tag(b"LN", &seq_len);
     header.push_record(&header_rec);
 }
+
+/// Below are wrappers for different Orbit functions, but with arguments as datatypes which are
+/// more natural rather than the wrappers around C datatypes.  Each function below makes any
+/// necessary conversions to the inputs, calls the library function, and makes any necessary
+/// conversions to the outputs.
 
 pub fn init_aligner_clone_rust(al : *mut Aligner) -> *mut Aligner
 {
