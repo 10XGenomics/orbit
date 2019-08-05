@@ -8,9 +8,20 @@
 struct Aligner
 {
     public:
+        // p represents the command line parameters and everything
+        // that is calculated firectly from them
         Parameters *p;
+
+        // ra represents the ReadAlign object that is used to make any kind of
+        // alignment queries
         ReadAlign *ra;
+
+        // g is the information contained in the built genome index
         Genome *g;
+
+        // isOriginal is true iff the aligner is initialized with init()
+        // instead of init_clone(), and is used for deciding which members
+        // originated in this instance and can be safely freed upon destruction
         int isOriginal;
 
         Aligner(int argInN, char* argIn[])
@@ -53,7 +64,6 @@ const char* align_read(Aligner* a, char *Read1, char *Qual1, unsigned long long 
 {
     a->p->iReadAll++;
     a->ra->iRead++;
-    //printf("iRead %llu\n", a->ra->iRead);
     a->p->readNmates = 1;
     a->ra->readNmates = 1;
     a->ra->Read0 = &Read1;
@@ -61,12 +71,9 @@ const char* align_read(Aligner* a, char *Read1, char *Qual1, unsigned long long 
     a->ra->readName = (char*)malloc(2);
     a->ra->readName[0] = 'a';
     a->ra->readName[1] = '\0';
-    //a->ra->Read1 = &Read1;
-    //a->ra->Qual1 = &Qual1;
-    //a->ra->Lread = read_length;
     a->ra->readLength[0] = read_length;
     a->ra->readLengthOriginal[0] = read_length;
-    //a->ra->readLength[1] = read_length;
+    
     int readStatus = a->ra->oneRead();
     a->ra->readName[1] = '\0';
     if(readStatus != 0)
@@ -81,7 +88,6 @@ const char* align_read_pair(Aligner* a, char *Read1, char *Qual1, char *Read2, c
 {
     a->p->iReadAll++;
     a->ra->iRead++;
-    //printf("iRead %llu\n", a->ra->iRead);
     a->p->readNmates = 2;
     a->ra->readNmates = 2;
     a->ra->Read0 = &Read1;
@@ -91,12 +97,8 @@ const char* align_read_pair(Aligner* a, char *Read1, char *Qual1, char *Read2, c
     a->ra->readName = (char*)malloc(2);
     a->ra->readName[0] = 'a';
     a->ra->readName[1] = '\0';
-    //a->ra->Read1 = &Read1;
-    //a->ra->Qual1 = &Qual1;
-    //a->ra->Lread = read_length;
     a->ra->readLength[0] = read_length;
     a->ra->readLengthOriginal[0] = read_length;
-    //a->ra->readLength[1] = read_length;
     
     int readStatus = a->ra->oneRead();
     a->ra->readName[1] = '\0';
@@ -122,48 +124,4 @@ void destroy_aligner(Aligner *a)
 {
     delete a;
 }
-/*
-int main()
-{
-    char* arr[] = {
-            "STAR", "--genomeDir", "/mnt/opt/refdata_cellranger/GRCh38-3.0.0/star",
-            "--outSAMmultNmax", "50",
-            "--runThreadN", "1",
-            "--readNameSeparator", "space",
-            "--outSAMunmapped", "Within", "KeepPairs",
-            "--outSAMtype", "SAM",
-            "--outStd", "SAM",
-            "--outSAMorder", "PairedKeepInputOrder",
-    };
-    int len = sizeof(arr) / sizeof(arr[0]);
-    Aligner* a = init_aligner(len, arr);
 
-    std::string line;
-    std::ifstream infile("1.fastq");
-    int lineNum = 0;
-    char* curRead = (char*)malloc(500*sizeof(char));
-    while(std::getline(infile, line))
-    {
-        if(lineNum%4 == 1)
-        {
-            strcpy(curRead, line.c_str());
-        }
-        else if(lineNum%4 == 3)
-        {
-            char* curQual = (char*)malloc(500*sizeof(char));
-            strcpy(curQual, line.c_str());
-            printf("read = %s\n", curRead);
-            printf("qual = %s\n", curQual);
-
-            const char* bam_line = align_read(a, curRead, curQual, line.length());
-            printf("%s", bam_line);
-            free(curQual);
-        }
-        lineNum++;
-        //if(lineNum == 100) break;
-    }
-    free(curRead);
-    destroy_aligner(a);
-    return 0;
-}
-*/
