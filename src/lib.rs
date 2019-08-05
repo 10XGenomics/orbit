@@ -190,10 +190,24 @@ impl StarAligner {
 
     /// Aligns a given pair of reads and produces BAM records
     pub fn align_read_pair(&self, name : String, read1 : String, qual1 : String, read2 : String, qual2 : String) -> (Vec<bam::Record>, Vec<bam::Record>) {
+        let read1_clone = read1.clone();
         let sam_string = self.aligner.align_read_pair(read1, qual1, read2, qual2);
         let full_vec = self.parse_sam_to_records(sam_string, name);
-        // TODO actually partition this 
-        (full_vec, Vec::new())
+
+        // Partition the records into first mate and second mate.  For now, this is being done by
+        // looking at the SEQ field of each and comparing to the first read in the pair.
+        let mut first_vec : Vec<bam::Record> = Vec::new();
+        let mut second_vec : Vec<bam::Record> = Vec::new();
+        for rec in full_vec {
+            if String::from_utf8(rec.seq().as_bytes()).unwrap() == read1_clone {
+                first_vec.push(rec);
+            }
+            else
+            {
+                second_vec.push(rec);
+            }
+        }
+        (first_vec, second_vec)
     }
 
     /// Aligns every read in a Fastq file
@@ -210,7 +224,7 @@ impl StarAligner {
         Ok(res)
     }
 
-    /// Aligins the read contained in a single given Fastq record
+    /// Aligns the read contained in a single given Fastq record
     pub fn align_fastq_record<R : Record>(&self, record : R) -> Result<Vec<bam::Record>, Error> {
 
         let seq : String = String::from_utf8(record.seq().to_vec())?;
@@ -425,7 +439,7 @@ fn test_write_bam()
     for record in res.iter() {
         out.write(&record).unwrap();
     }
-    let bam_wrapped = bam::Reader::from_path(&"test.bam");
+    let bam_wrapped = bam::Reader::from_path(&"test/test.bam");
     match bam_wrapped {
         Ok(v) => println!("working with version: {:?}", v),
         Err(e) => println!("error parsing header: {:?}", e),
@@ -448,12 +462,12 @@ fn test_write_bam()
 fn test_align_fastq()
 {
     let aligner = StarAligner::new();
-    let fastq_path : &str = "full1_sample.fastq";
+    let fastq_path : &str = "test/full1_sample.fastq";
 
     let res : Vec<bam::Record> = aligner.align_fastq(fastq_path).unwrap();
     assert!(res.len() > 0);
 
-    let mut out = bam::Writer::from_path(&"full1_sample.bam", &aligner.header).unwrap();
+    let mut out = bam::Writer::from_path(&"test/full1_sample.bam", &aligner.header).unwrap();
     for record in res.iter() {
         out.write(&record).unwrap();
     }
