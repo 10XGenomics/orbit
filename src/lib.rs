@@ -29,8 +29,8 @@ pub struct StarSettings {
 }
 
 /// References to some commonly used reference genomes for testing purposes
-const DEFAULT_REF_2 : &str = "/mnt/opt/refdata_cellranger/GRCh38-3.0.0/star";
-const DEFAULT_REF_1 : &str =  "/mnt/opt/refdata_cellranger/mm10-3.0.0/star";
+pub const DEFAULT_REF_1 : &str =  "/mnt/opt/refdata_cellranger/mm10-3.0.0/star";
+pub const DEFAULT_REF_2 : &str = "/mnt/opt/refdata_cellranger/GRCh38-3.0.0/star";
 
 /// The default value for number of mappings allowed is 1.
 const DEFAULT_MULTN : usize = 1;
@@ -75,11 +75,18 @@ impl StarSettings {
         self.multn = new_multn;
         self.sync_args();
     }
+
+    pub fn add_rg(&mut self, rg_tags : Vec<String>) {
+        self.args.push("--outSAMattrRGline".to_string());
+        for tag in rg_tags {
+            self.args.push(tag);
+        }
+    }
 }
 
 pub struct StarRawAligner {
     al : *mut Aligner,
-    settings : StarSettings,
+    pub settings : StarSettings,
 }
 
 impl StarRawAligner {
@@ -110,45 +117,44 @@ impl StarRawAligner {
 }
 
 pub struct StarAligner {
-    aligner : StarRawAligner,
-    header : Header,
-    header_view : HeaderView,
+    pub aligner : StarRawAligner,
+    pub header : Header,
 }
 
 impl StarAligner {
     pub fn new() -> StarAligner {
         let cur_aligner = StarRawAligner::new();
-        let (cur_header, cur_hv) = generate_header_with_view(
+        let (cur_header, _cur_hv) = generate_header_with_view(
             &Path::new(&(cur_aligner.settings.args[2]))
         );
 
         StarAligner {
             aligner : cur_aligner,
             header : cur_header,
-            header_view : cur_hv,
         }
     }
     pub fn from_str(ref_path : &str) -> StarAligner {
         let cur_aligner = StarRawAligner::from_str(ref_path);
         
-        let (cur_header, cur_hv) = generate_header_with_view(
+        let (cur_header, _cur_hv) = generate_header_with_view(
             &Path::new(&(cur_aligner.settings.args[2]))
         );
 
         StarAligner {
             aligner : cur_aligner,
             header : cur_header,
-            header_view : cur_hv,
         }
     }
 
     pub fn clone(&self) -> StarAligner {
         let cur_aligner = self.aligner.clone();
-        let (cur_header, cur_hv) = (self.header.clone(), self.header_view.clone());
+        let (cur_header, _cur_hv) = generate_header_with_view(
+            &Path::new(&(cur_aligner.settings.args[2]))
+        );
+
         StarAligner {
             aligner : cur_aligner,
             header : cur_header,
-            header_view : cur_hv
         }
     }
 
@@ -186,14 +192,21 @@ impl StarAligner {
 
     }
 
+    pub fn destroy(&self) {
+        self.aligner.destroy();
+    }
+
     fn parse_sam_to_records(&self, sam: String, name : String) -> Vec<bam::Record> {
         let mut records = Vec::new();
         for slc in sam.split("\n") {
             if slc.len() > 0 {
                 let str = format!("{}{}", name, slc);
                 let record = {
-                    let header_view = &self.header_view;
-                    bam::Record::from_sam(&header_view, str.as_bytes()).unwrap()
+                    let (_, cur_hv) = generate_header_with_view(
+                        &Path::new(&(self.aligner.settings.args[2]))
+                    );
+
+                    bam::Record::from_sam(&cur_hv, str.as_bytes()).unwrap()
                 };
                 records.push(record);
             }

@@ -12,7 +12,7 @@ fn main() {
     assert!(status.success());
     
 
-    println!("cargo:rustc-link-search=orbit/STAR/source");
+    println!("cargo:rustc-link-search=rust-utils-10x/orbit/STAR/source");
     println!("cargo:rustc-link-lib=static=orbit");
     //println!("cargo:rustc-link-search=/mnt/build/toolchains/versions/2.2.6/lib");
     /*
