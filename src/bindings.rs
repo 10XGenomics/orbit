@@ -2,6 +2,11 @@
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct StarRef {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct Aligner {
     _unused: [u8; 0],
 }
@@ -24,7 +29,7 @@ extern "C" {
     ) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    pub fn init_aligner_clone(arg1: *mut Aligner) -> *mut Aligner;
+    pub fn init_aligner_clone(arg1: *const Aligner) -> *mut Aligner;
 }
 extern "C" {
     pub fn init_aligner(
@@ -33,5 +38,17 @@ extern "C" {
     ) -> *mut Aligner;
 }
 extern "C" {
+    pub fn init_star_ref(
+        arg1: ::std::os::raw::c_int,
+        arg2: *mut *mut ::std::os::raw::c_char,
+    ) -> *const StarRef;
+}
+extern "C" {
+    pub fn init_aligner_from_ref(arg1: *const StarRef) -> *mut Aligner;
+}
+extern "C" {
     pub fn destroy_aligner(arg1: *mut Aligner);
+}
+extern "C" {
+    pub fn destroy_ref(arg1: *const StarRef);
 }

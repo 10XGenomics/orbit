@@ -53,6 +53,20 @@ impl StarSettings {
         StarSettings{ ref_dir : DEFAULT_REF_1.to_string(), multn : DEFAULT_MULTN, args : def_args }
     }
 
+    pub fn clone(&self) -> StarSettings {
+        let nref_dir = self.ref_dir.clone();
+        let n_multn = self.multn.clone();
+        let mut nvec = Vec::new();
+        for i in 0..self.args.len() {
+            nvec.push(self.args[i].clone());
+        }
+        StarSettings {
+            ref_dir : nref_dir,
+            multn : n_multn,
+            args : nvec,
+        }
+    }
+
     /// Create a new StarSettings and immediately sets its reference genome directory to the
     /// provided value
     pub fn from_str(reference : &str) -> StarSettings {
@@ -113,6 +127,14 @@ impl StarRawAligner {
         let cur_aligner = init_aligner_rust(&cur_settings.args).unwrap();
         StarRawAligner { al : cur_aligner, settings : cur_settings }
     }
+    pub fn from_settings_and_ref(init_settings : &StarSettings, init_ref : *const StarRef) -> StarRawAligner {
+        let c_aligner = init_aligner_from_ref_rust(init_ref).unwrap();
+        StarRawAligner {
+            al : c_aligner,
+            settings: init_settings.clone(),
+        }
+    }
+
     pub fn clone(&self) -> StarRawAligner {
         // TODO copy settings over
         StarRawAligner { al : init_aligner_clone_rust(self.al), settings : StarSettings::new() }
@@ -156,6 +178,19 @@ impl StarAligner {
     pub fn from_str(ref_path : &str) -> StarAligner {
         let cur_aligner = StarRawAligner::from_str(ref_path);
         
+        let (cur_header, _cur_hv) = generate_header_with_view(
+            &Path::new(&(cur_aligner.settings.args[2]))
+        );
+
+        StarAligner {
+            aligner : cur_aligner,
+            header : cur_header,
+        }
+    }
+
+    // Creates a StarAligner from the arguments plus an already constructed genome/parameters index
+    pub fn from_settings_and_ref(init_settings : &StarSettings, init_ref : *const StarRef) -> StarAligner {
+        let cur_aligner = StarRawAligner::from_settings_and_ref(init_settings, init_ref);
         let (cur_header, _cur_hv) = generate_header_with_view(
             &Path::new(&(cur_aligner.settings.args[2]))
         );
@@ -241,7 +276,7 @@ impl StarAligner {
     }
 
     /// Given a list of BAM records as a SAM-format string in which records are separated by new
-    /// lines, add the records to a vecotr and append the read name to the beginning of them so
+    /// lines, add the records to a vector and append the read name to the beginning of them so
     /// that they conform with BAM specifications
     fn parse_sam_to_records(&self, sam: String, name : String) -> Vec<bam::Record> {
         let mut records = Vec::new();
@@ -305,7 +340,7 @@ fn add_ref_to_bam_header(header: &mut Header, seq_name: &str, seq_len: usize) {
 /// necessary conversions to the inputs, calls the library function, and makes any necessary
 /// conversions to the outputs.
 
-pub fn init_aligner_clone_rust(al : *mut Aligner) -> *mut Aligner
+pub fn init_aligner_clone_rust(al : *const Aligner) -> *mut Aligner
 {
     unsafe{init_aligner_clone(al)}
 }
@@ -321,6 +356,24 @@ pub fn init_aligner_rust(args : &Vec<String>) ->Result<*mut Aligner, Error>
     let c_args = nvec.as_mut_ptr() as *mut *mut c_char;
     let length = nvec.len() as c_int;
     Ok(unsafe{init_aligner(length, c_args)})
+}
+
+pub fn init_ref_rust(args : &Vec<String>) ->Result<*const StarRef, Error>
+{
+    let mut nvec = Vec::new();
+    for x in args.iter() {
+        let cur_string = CString::new(x.as_str())?;
+        nvec.push(cur_string.into_raw());
+    }
+
+    let c_args = nvec.as_mut_ptr() as *mut *mut c_char;
+    let length = nvec.len() as c_int;
+    Ok(unsafe{init_star_ref(length, c_args)})
+}
+
+pub fn init_aligner_from_ref_rust(ref_ptr : *const StarRef) -> Result<*mut Aligner, Error>
+{
+    Ok(unsafe{init_aligner_from_ref(ref_ptr)})
 }
 
 pub fn align_read_rust(al : *mut Aligner, read : String, qual : String) -> Result<String, Error>
@@ -400,8 +453,32 @@ fn test_raw_clone()
     assert!(res == "\t0\t6\t30070474\t255\t98M\t*\t0\t0\tGTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC\tGGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG\tNH:i:1\tHI:i:1\tAS:i:96\tnM:i:0\n");
     assert!(res2 == "\t0\t6\t132816509\t255\t55M396N43M\t*\t0\t0\tGTATGTCAAGTTGGTGGAGGCCCTTTGTGCTGAACACCAAATCAACCTAATTAAGGTTGATGACAACAAGAAACTAGGAGAATGGGTAGGCCTTTGTA\tAGGAGGGGIG.GAGGGGIGGIGIIGGGIIAAGGGGGIGGIIGAGIGIA.GGGGIGGGGGGGGGGGGGGIGIIIIGGGGGGIGGGGIIIGA.G.<.GGG\tNH:i:1\tHI:i:1\tAS:i:98\tnM:i:0\n");
 
+    aligner2.destroy();
     aligner.destroy();
 
+}
+
+#[test]
+fn test_from_params()
+{
+    let settings = StarSettings::from_str(DEFAULT_REF_2);
+    let reference_object = init_ref_rust(&settings.args).unwrap();
+    let aligner = StarRawAligner::from_settings_and_ref(&settings, reference_object);
+    let aligner2 = StarRawAligner::from_settings_and_ref(&settings, reference_object);
+    let read : String = "GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC".to_string();
+    let qual : String = "GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG".to_string();
+    let read2 : String = "GTATGTCAAGTTGGTGGAGGCCCTTTGTGCTGAACACCAAATCAACCTAATTAAGGTTGATGACAACAAGAAACTAGGAGAATGGGTAGGCCTTTGTA".to_string();
+    let qual2 : String = "AGGAGGGGIG.GAGGGGIGGIGIIGGGIIAAGGGGGIGGIIGAGIGIA.GGGGIGGGGGGGGGGGGGGIGIIIIGGGGGGIGGGGIIIGA.G.<.GGG".to_string();
+
+    let res : String = aligner.align_read(read, qual);
+    let res2 : String = aligner2.align_read(read2, qual2);
+    
+    assert!(res == "\t0\t6\t30070474\t255\t98M\t*\t0\t0\tGTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC\tGGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG\tNH:i:1\tHI:i:1\tAS:i:96\tnM:i:0\n");
+    assert!(res2 == "\t0\t6\t132816509\t255\t55M396N43M\t*\t0\t0\tGTATGTCAAGTTGGTGGAGGCCCTTTGTGCTGAACACCAAATCAACCTAATTAAGGTTGATGACAACAAGAAACTAGGAGAATGGGTAGGCCTTTGTA\tAGGAGGGGIG.GAGGGGIGGIGIIGGGIIAAGGGGGIGGIIGAGIGIA.GGGGIGGGGGGGGGGGGGGIGIIIIGGGGGGIGGGGIIIGA.G.<.GGG\tNH:i:1\tHI:i:1\tAS:i:98\tnM:i:0\n");
+
+    aligner.destroy();
+    aligner2.destroy();
+    unsafe{destroy_ref(reference_object);}
 }
 
 #[test]
@@ -431,7 +508,7 @@ fn test_get_record()
 fn test_write_bam()
 {
     let aligner = StarAligner::new();
-    let mut out = bam::Writer::from_path(&"test.bam", &aligner.header).unwrap();
+    let mut out = bam::Writer::from_path(&"test/test.bam", &aligner.header).unwrap();
     let read : String = "GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC".to_string();
     let qual : String = "GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG".to_string();
     let name : String = "gatactaga".to_string();
@@ -447,7 +524,7 @@ fn test_write_bam()
     // The reading portion is commented out because it's failing for unknown reasons, but the BAM
     // file can be read with samtools and pysam.
     /*
-    let mut bam = bam::Reader::from_path(&"test.bam").unwrap();
+    let mut bam = bam::Reader::from_path(&"test/test.bam").unwrap();
     let read_records = bam.records();
     let mut i = 0;
     for r in read_records {

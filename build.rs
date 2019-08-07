@@ -26,8 +26,12 @@ fn main() {
         .whitelist_function("align_read_pair")
         .whitelist_function("init_aligner_clone")
         .whitelist_function("init_aligner")
+        .whitelist_function("init_star_ref")
+        .whitelist_function("init_aligner_from_ref")
         .whitelist_function("destroy_aligner")
+        .whitelist_function("destroy_ref")
         .whitelist_type("Aligner")
+        .whitelist_type("StarRef")
         // Finish the builder and generate the bindings.
         .generate()
         // Unwrap the Result and panic on failure.
