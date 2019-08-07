@@ -40,6 +40,9 @@ extern "C" {
     // destroy_aligner: frees the memory occupied by an aligner
     void destroy_aligner(struct Aligner*);
 
+    //destory_ref: frees the memory occupied by a reference
+    void destroy_ref(const struct StarRef*);
+
 #ifdef __cplusplus
 }
 #endif

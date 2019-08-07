@@ -21,6 +21,11 @@ struct StarRef
             p = pMut;
             g = gMut;
         }
+        ~StarRef()
+        {
+            delete p;
+            delete g;
+        }
 };
 
 struct Aligner
@@ -42,6 +47,7 @@ struct Aligner
 
         Aligner(const StarRef* r)
         {
+            isOriginal = 0;
             ref = r;
             Transcriptome *mainTranscriptome = nullptr;
             ra = new ReadAlign(*(ref->p), *(ref->g), mainTranscriptome, 0);
@@ -146,5 +152,10 @@ Aligner* init_aligner_from_ref(const StarRef* sr)
 void destroy_aligner(Aligner *a)
 {
     delete a;
+}
+
+void destroy_ref(const StarRef* sr)
+{
+    delete sr;
 }
 
