@@ -3,7 +3,7 @@
 #include "Transcript.h"
 #include "ReadAlign.h"
 
-ReadAlign::ReadAlign (Parameters& Pin, Genome &genomeIn, Transcriptome *TrIn, int iChunk)
+ReadAlign::ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcriptome *TrIn, int iChunk)
                     : mapGen(genomeIn), P(Pin), chunkTr(TrIn)
 {
     readNmates=P.readNmates;

@@ -4,7 +4,7 @@
 #include "serviceFuns.cpp"
 
 
-bool inputFeatureUmi(fstream *strIn, int32 featureType, uint32 &feature, uint32 &umi, array<vector<uint64>,2> &sjAll)
+bool inputFeatureUmi(fstream *strIn, int32 featureType, uint32 &feature, uint32 &umi, const array<vector<uint64>,2> &sjAll)
 {
     if (!(*strIn >> umi)) //end of file
         return false;

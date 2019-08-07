@@ -27,7 +27,7 @@ public:
     Junction(const Genome &genomeIn);
     void junctionPointer(char* sjPoint, uint isj);
     void outputStream(ostream &outStream);
-    void collapseOneSJ(char* isj1P, char* isjP, Parameters& P);
+    void collapseOneSJ(char* isj1P, char* isjP, const Parameters& P);
 
 private:
     const Genome &mapGen;
@@ -41,12 +41,12 @@ public:
     uint N; //number of junctions stored
     Junction oneSJ;
 
-    OutSJ(uint nSJmax, Parameters &Pin, const Genome &genomeIn);
+    OutSJ(uint nSJmax, const Parameters &Pin, const Genome &genomeIn);
     void collapseSJ();//collapse the junctions in data
 //     int compareSJ(void* i1, void* i2);
 
 private:
-    Parameters &P;
+    const Parameters &P;
     const Genome &mapGen;
 };
 

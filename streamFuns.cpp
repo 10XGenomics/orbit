@@ -18,7 +18,7 @@ unsigned long long fstreamReadBig(std::ifstream &S, char* A, unsigned long long 
     return C;
 };
 
-void fstreamWriteBig(std::ofstream &S, char* A, unsigned long long N, std::string fileName, std::string errorID, Parameters &P) {
+void fstreamWriteBig(std::ofstream &S, char* A, unsigned long long N, std::string fileName, std::string errorID, const Parameters &P) {
 
     struct statvfs statvfsBuf;
     statvfs(fileName.c_str(), &statvfsBuf);
@@ -58,7 +58,7 @@ void fstreamWriteBig(std::ofstream &S, char* A, unsigned long long N, std::strin
     P.inOut->logMain << " done\n" <<flush;
 };
 
-std::ofstream &ofstrOpen (std::string fileName, std::string errorID, Parameters &P) {//open file 'fileName', generate error if cannot open
+std::ofstream &ofstrOpen (std::string fileName, std::string errorID, const Parameters &P) {//open file 'fileName', generate error if cannot open
     std::ofstream & ofStream = *new std::ofstream(fileName.c_str(), std::fstream::out | std::fstream::trunc);
     if (ofStream.fail()) {//
         ostringstream errOut;
@@ -69,7 +69,7 @@ std::ofstream &ofstrOpen (std::string fileName, std::string errorID, Parameters 
     return ofStream;
 };
 
-std::fstream &fstrOpen (std::string fileName, std::string errorID, Parameters &P) {//open file 'fileName', generate error if cannot open
+std::fstream &fstrOpen (std::string fileName, std::string errorID, const Parameters &P) {//open file 'fileName', generate error if cannot open
     std::fstream &fStream = *new std::fstream(fileName.c_str(), std::fstream::in | std::fstream::out | std::fstream::trunc);
     if (fStream.fail()) {//
         ostringstream errOut;
@@ -80,7 +80,7 @@ std::fstream &fstrOpen (std::string fileName, std::string errorID, Parameters &P
     return fStream;
 };
 
-std::ifstream & ifstrOpen (std::string fileName, std::string errorID, std::string solutionString, Parameters &P) {
+std::ifstream & ifstrOpen (std::string fileName, std::string errorID, std::string solutionString, const Parameters &P) {
     //open file 'fileName', generate error if cannot open
     std::ifstream & ifStream = *new std::ifstream(fileName.c_str());
     if (ifStream.fail()) {//
@@ -95,7 +95,7 @@ std::ifstream & ifstrOpen (std::string fileName, std::string errorID, std::strin
     return ifStream;
 };
 
-ifstream & ifstrOpenGenomeFile (std::string fileName, std::string errorID, Parameters &P) {
+ifstream & ifstrOpenGenomeFile (std::string fileName, std::string errorID, const Parameters &P) {
      //open one of the genome files
      return ifstrOpen(P.pGe.gDir+"/"+fileName, errorID,  "if this file is missing from the genome directory, you will need to *re-generate the genome*", P);
 };

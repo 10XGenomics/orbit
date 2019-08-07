@@ -4,7 +4,7 @@
 #include "ErrorWarning.h"
 #include "TimeFunctions.h"
 
-void exitWithError(string messageOut, ostream &streamOut1, ostream &streamOut2, int errorInt, Parameters &P) {
+void exitWithError(string messageOut, ostream &streamOut1, ostream &streamOut2, int errorInt, const Parameters &P) {
     time_t timeCurrent;
     time( &timeCurrent);
     if (streamOut1.good()) {
@@ -18,7 +18,7 @@ void exitWithError(string messageOut, ostream &streamOut1, ostream &streamOut2, 
     exit(errorInt);
 };
 
-void warningMessage(string messageOut, ostream &streamOut1, ostream &streamOut2, Parameters &P) {
+void warningMessage(string messageOut, ostream &streamOut1, ostream &streamOut2, const Parameters &P) {
     time_t timeCurrent;
     time( &timeCurrent);
     if (streamOut1.good()) {

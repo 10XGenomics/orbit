@@ -30,8 +30,8 @@ class ChimericAlign
         bool stitchingDone;
 
     private:
-        Parameters &P;
-        ParametersChimeric &pCh;
+        const Parameters &P;
+        const ParametersChimeric &pCh;
         const Genome &mapGen;
         ReadAlign *RA;
 

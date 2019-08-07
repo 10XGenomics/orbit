@@ -1,7 +1,7 @@
 #include "OutSJ.h"
 #include "ErrorWarning.h"
 
-OutSJ::OutSJ (uint nSJmax, Parameters &Pin, const Genome &genomeIn) : oneSJ(genomeIn), P(Pin), mapGen(genomeIn)  {//do I need P?
+OutSJ::OutSJ (uint nSJmax, const Parameters &Pin, const Genome &genomeIn) : oneSJ(genomeIn), P(Pin), mapGen(genomeIn)  {//do I need P?
 
     data = new char [oneSJ.dataSize*nSJmax]; //allocate big array of SJ loci and properties
     memset(data,0,oneSJ.dataSize*nSJmax);
@@ -80,7 +80,7 @@ void Junction::outputStream(ostream &outStream) {
             <<"\t"<< *overhangLeft << endl;
 };
 
-void Junction::collapseOneSJ(char* isj1P, char* isjP, Parameters& P) {//collapse isj junction into isj1: increase counts in isj1. choose max overhangs, motif, annot
+void Junction::collapseOneSJ(char* isj1P, char* isjP, const Parameters& P) {//collapse isj junction into isj1: increase counts in isj1. choose max overhangs, motif, annot
     *(uint32*)(isj1P+countUniqueP)   += *(uint32*)(isjP+countUniqueP);
     *(uint32*)(isj1P+countMultipleP) += *(uint32*)(isjP+countMultipleP);
 

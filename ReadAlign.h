@@ -19,7 +19,7 @@
 class ReadAlign {
     public:
          //methods
-        ReadAlign (Parameters& Pin, Genome &genomeIn, Transcriptome *TrIn, int iChunk);//allocate arrays
+        ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcriptome *TrIn, int iChunk);//allocate arrays
         int oneRead();
 
         //vars
@@ -65,7 +65,7 @@ class ReadAlign {
         const char* outputAlignments();
         void resetN();
     private:
-        Parameters& P; //pointer to the parameters, will be initialized on construction
+        const Parameters& P; //pointer to the parameters, will be initialized on construction
 
         //quantification
         Transcriptome *chunkTr;

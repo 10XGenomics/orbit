@@ -6,7 +6,7 @@
 // #include "stitchGapIndel.cpp"
 
 
-intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBstart, uint L, uint iFragB, uint sjAB, Parameters& P, char* R, const Genome &mapGen, Transcript *trA, const uint outFilterMismatchNmaxTotal) {
+intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBstart, uint L, uint iFragB, uint sjAB, const Parameters& P, char* R, const Genome &mapGen, Transcript *trA, const uint outFilterMismatchNmaxTotal) {
     //stitch together A and B, extend in the gap, returns max score
 
     if (trA->nExons>=MAX_N_EXONS)

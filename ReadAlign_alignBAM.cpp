@@ -49,25 +49,25 @@ int reg2bin(int beg, int end)
     return 0;
 };
 
-int bamAttrArrayWrite(int32 attr, const char* tagName, char* attrArray ) {
+int bamAttrArrayWrite(const int32 attr, const char* tagName, char* attrArray ) {
     attrArray[0]=tagName[0];attrArray[1]=tagName[1];
     attrArray[2]='i';
     *( (int32*) (attrArray+3))=attr;
     return 3+sizeof(int32);
 };
-int bamAttrArrayWrite(float attr, const char* tagName, char* attrArray ) {
+int bamAttrArrayWrite(const float attr, const char* tagName, char* attrArray ) {
     attrArray[0]=tagName[0];attrArray[1]=tagName[1];
     attrArray[2]='f';
     *( (float*) (attrArray+3))=attr;
     return 3+sizeof(int32);
 };
-int bamAttrArrayWrite(char attr, const char* tagName, char* attrArray ) {
+int bamAttrArrayWrite(const char attr, const char* tagName, char* attrArray ) {
     attrArray[0]=tagName[0];attrArray[1]=tagName[1];
     attrArray[2]='A';
     attrArray[3]=attr;
     return 3+sizeof(char);
 };
-int bamAttrArrayWrite(string &attr, const char* tagName, char* attrArray ) {
+int bamAttrArrayWrite(const string &attr, const char* tagName, char* attrArray ) {
     attrArray[0]=tagName[0];attrArray[1]=tagName[1];
     attrArray[2]='Z';
     memcpy(attrArray+3,attr.c_str(),attr.size()+1);//copy string data including \0
@@ -134,7 +134,7 @@ int bamAttrArrayWriteSAMtags(string &attrStr, char *attrArray) {//write bam reco
 };
 
 template <typename intType>
-int bamAttrArrayWriteInt(intType xIn, const char* tagName, char* attrArray, Parameters &P) {//adapted from samtools
+int bamAttrArrayWriteInt(intType xIn, const char* tagName, char* attrArray, const Parameters &P) {//adapted from samtools
     attrArray[0]=tagName[0];attrArray[1]=tagName[1];
     #define ATTR_RECORD_INT(_intChar,_intType,_intValue) attrArray[2] = _intChar; *(_intType*)(attrArray+3) = (_intType) _intValue; return 3+sizeof(_intType)
     int64 x = (int64) xIn;

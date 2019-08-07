@@ -9,13 +9,13 @@
 class ChimericSegment
 {//
     public:
-        Parameters &P;
-        ParametersChimeric &pCh;
+        const Parameters &P;
+        const ParametersChimeric &pCh;
 
         Transcript  &align;     //alignment
         uint roS,roE,str;     //start/end/strand in original read coordinates
 
-        ChimericSegment(Parameters &Pin, Transcript &alignIn); //allocate
+        ChimericSegment(const Parameters &Pin, Transcript &alignIn); //allocate
         bool segmentCheck();//check if chimeric segment is good
     private:
 };

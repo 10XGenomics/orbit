@@ -30,7 +30,7 @@ const char* ReadAlign::outputAlignments() {
                 unmapType=-3; //the read is not conisddred unmapped
                 statsRA.readN--;
                 statsRA.readBases -= readLength[0]+readLength[1];
-                for (uint im=0;im<P.readNmates;im++) {
+                for (uint im=0;im<readNmates;im++) {
                    chunkOutFilterBySJoutFiles[im] << readNameMates[im] <<" "<< iReadAll <<" "<< readFilter <<" "<< readFilesIndex;
                    if (!readNameExtra[im].empty())
                        chunkOutFilterBySJoutFiles[im]<<" "<< readNameExtra[im];
@@ -107,7 +107,7 @@ const char* ReadAlign::outputAlignments() {
                 if (P.outSAMbool && outSAMfilterYes) {//SAM output
                     //printf("samout\n");
                     outBAMbytes+=outputTranscriptSAM(*(trMult[iTr]), nTr, iTr, (uint) -1, (uint) -1, 0, -1, NULL, &stream);
-                    if (P.outSAMunmapped.keepPairs && P.readNmates>1 && ( !mateMapped1[0] || !mateMapped1[1] ) ) {//keep pairs && paired reads && one of the mates not mapped in this transcript
+                    if (P.outSAMunmapped.keepPairs && readNmates>1 && ( !mateMapped1[0] || !mateMapped1[1] ) ) {//keep pairs && paired reads && one of the mates not mapped in this transcript
                         //printf("samout no null\n");
                         outBAMbytes+= outputTranscriptSAM(*(trMult[iTr]), 0, 0, (uint) -1, (uint) -1, 0, 4, mateMapped1, &stream);
                     };
@@ -117,19 +117,19 @@ const char* ReadAlign::outputAlignments() {
                     alignBAM(*(trMult[iTr]), nTr, iTr, mapGen.chrStart[trMult[iTr]->Chr], (uint) -1, (uint) -1, 0, -1, NULL, P.outSAMattrOrder,outBAMoneAlign, outBAMoneAlignNbytes);
 
                     if (P.outBAMunsorted) {//unsorted
-                        for (uint imate=0; imate<P.readNmates; imate++) {//output each mate
+                        for (uint imate=0; imate<readNmates; imate++) {//output each mate
                             outBAMunsorted->unsortedOneAlign(outBAMoneAlign[imate], outBAMoneAlignNbytes[imate], (imate>0 || iTr>0) ? 0 : (outBAMoneAlignNbytes[0]+outBAMoneAlignNbytes[1])*2*nTrOut);
                         };
-                        if (P.outSAMunmapped.keepPairs && P.readNmates>1 && ( !mateMapped1[0] || !mateMapped1[1] ) ) {//keep pairs && paired reads && one of the mates not mapped in this transcript
+                        if (P.outSAMunmapped.keepPairs && readNmates>1 && ( !mateMapped1[0] || !mateMapped1[1] ) ) {//keep pairs && paired reads && one of the mates not mapped in this transcript
                             alignBAM(*trMult[iTr], 0, 0, mapGen.chrStart[trMult[iTr]->Chr], (uint) -1, (uint) -1, 0, 4, mateMapped1, P.outSAMattrOrder, outBAMoneAlign, outBAMoneAlignNbytes);
-                            for (uint imate=0; imate<P.readNmates; imate++) {//output each mate
+                            for (uint imate=0; imate<readNmates; imate++) {//output each mate
                                 outBAMunsorted->unsortedOneAlign(outBAMoneAlign[imate], outBAMoneAlignNbytes[imate], (imate>0 || iTr>0) ? 0 : (outBAMoneAlignNbytes[0]+outBAMoneAlignNbytes[1])*2*nTrOut);
                             };
                         };
                     };
 
                     if (P.outBAMcoord) {//coordinate sorted
-                        for (uint imate=0; imate<P.readNmates; imate++) {//output each mate
+                        for (uint imate=0; imate<readNmates; imate++) {//output each mate
                             outBAMcoord->coordOneAlign(outBAMoneAlign[imate], outBAMoneAlignNbytes[imate], (iReadAll<<32) | (iTr<<8) | trMult[iTr]->exons[0][EX_iFrag] );
                         };
                     };
@@ -140,7 +140,7 @@ const char* ReadAlign::outputAlignments() {
             mateMapped[trBest->exons[0][EX_iFrag]]=true;
             mateMapped[trBest->exons[trBest->nExons-1][EX_iFrag]]=true;
 
-            if (P.readNmates>1 && !(mateMapped[0] && mateMapped[1]) ) {
+            if (readNmates>1 && !(mateMapped[0] && mateMapped[1]) ) {
                 unmapType=4;
             };
 
@@ -153,7 +153,7 @@ const char* ReadAlign::outputAlignments() {
 
                 if ( (P.outBAMcoord || (P.outBAMunsorted && !P.outSAMunmapped.keepPairs) ) && outSAMfilterYes) {//BAM output
                     alignBAM(*trBest, 0, 0, mapGen.chrStart[trBest->Chr], (uint) -1, (uint) -1, 0, unmapType, mateMapped, P.outSAMattrOrder, outBAMoneAlign, outBAMoneAlignNbytes);
-                    for (uint imate=0; imate<P.readNmates; imate++) {//alignBAM output is empty for mapped mate, but still need to scan through it
+                    for (uint imate=0; imate<readNmates; imate++) {//alignBAM output is empty for mapped mate, but still need to scan through it
                         if (P.outBAMunsorted && !P.outSAMunmapped.keepPairs) {
                             outBAMunsorted->unsortedOneAlign(outBAMoneAlign[imate], outBAMoneAlignNbytes[imate], imate>0 ? 0 : outBAMoneAlignNbytes[0]+outBAMoneAlignNbytes[1]);
                         };
@@ -204,7 +204,7 @@ const char* ReadAlign::outputAlignments() {
     if ( P.outSAMunmapped.within && unmapType>=0 && unmapType<4 ) {//output unmapped within && unmapped read && both mates unmapped
         if (P.outBAMcoord || P.outBAMunsorted || P.quant.trSAM.bamYes) {//BAM output
             alignBAM(*trBest, 0, 0, mapGen.chrStart[trBest->Chr], (uint) -1, (uint) -1, 0, unmapType, mateMapped, P.outSAMattrOrder, outBAMoneAlign, outBAMoneAlignNbytes);
-            for (uint imate=0; imate<P.readNmates; imate++) {//output each mate
+            for (uint imate=0; imate<readNmates; imate++) {//output each mate
                 if (P.outBAMunsorted) {
                     outBAMunsorted->unsortedOneAlign(outBAMoneAlign[imate], outBAMoneAlignNbytes[imate], imate>0 ? 0 : outBAMoneAlignNbytes[0]+outBAMoneAlignNbytes[1]);
                 };
@@ -224,9 +224,9 @@ const char* ReadAlign::outputAlignments() {
     };
 
     if (unmapType>=0 && P.outReadsUnmapped=="Fastx" ){//output to fasta/q files
-       for (uint im=0;im<P.readNmates;im++) {
+       for (uint im=0;im<readNmates;im++) {
            chunkOutUnmappedReadsStream[im] << readNameMates[im]  <<" "<<im<<":"<< readFilter <<": "<< readNameExtra[im];
-           if (P.readNmates>1)
+           if (readNmates>1)
                chunkOutUnmappedReadsStream[im] <<" "<< int(mateMapped[0]) <<  int(mateMapped[1]);
            chunkOutUnmappedReadsStream[im] <<"\n";
            chunkOutUnmappedReadsStream[im] << Read0[im] <<"\n";

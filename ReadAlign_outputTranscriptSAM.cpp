@@ -11,12 +11,12 @@ uint ReadAlign::outputTranscriptSAM(Transcript const &trOut, uint nTrOut, uint i
     if (unmapType>=0)
     {//unmapped reads: SAM
         //printf("not a map\n");
-        for (uint imate=0;imate<P.readNmates;imate++)
+        for (uint imate=0;imate<readNmates;imate++)
         {//cycle over mates
             if (!mateMapped[imate])
             {
                 uint16 samFLAG=0x4;
-                if (P.readNmates==2)
+                if (readNmates==2)
                 {//paired read
                     samFLAG|=0x1 + (imate==0 ? 0x40 : 0x80);
                     if (mateMapped[1-imate])
@@ -62,7 +62,7 @@ uint ReadAlign::outputTranscriptSAM(Transcript const &trOut, uint nTrOut, uint i
     };//if (unmapType>=0 && outStream != NULL) //unmapped reads: SAM
 
 
-    bool flagPaired = P.readNmates==2;
+    bool flagPaired = readNmates==2;
     string CIGAR;
 
     //for SAM output need to split mates

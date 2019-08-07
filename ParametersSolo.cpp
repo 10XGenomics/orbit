@@ -21,23 +21,20 @@ void ParametersSolo::initialize(Parameters *pPin)
             ostringstream errOut;
             errOut << "EXITING because of fatal PARAMETERS error: UMI length is too long: --soloUMIlen="<<umiL<<"\n";
             errOut << "SOLUTION: UMI length cannot be longer than 16";
-            exitWithError(errOut.str(),std::cerr, pP->inOut->logMain, EXIT_CODE_PARAMETER, *pP);
         };
         if (cbL > 31) {
             ostringstream errOut;
             errOut << "EXITING because of fatal PARAMETERS error: CB length is too long: --soloCBlen="<<cbL<<"\n";
             errOut << "SOLUTION: CB length cannot be longer than 31";
-            exitWithError(errOut.str(),std::cerr, pP->inOut->logMain, EXIT_CODE_PARAMETER, *pP);
         };
         type=1;
         if (bL==1)
             bL=cbL+umiL;
-        pP->readNmates=1; //output mates TODO: check that readNmatesIn==2       
+        //pP->readNmates=1; //output mates TODO: check that readNmatesIn==2       
     } else  {
         ostringstream errOut;
         errOut << "EXITING because of fatal PARAMETERS error: unrecognized option in --soloType="<<typeStr<<"\n";
         errOut << "SOLUTION: use allowed option: None or Droplet";
-        exitWithError(errOut.str(),std::cerr, pP->inOut->logMain, EXIT_CODE_PARAMETER, *pP);
     };
 
     if (strandStr=="Unstranded") {
@@ -50,7 +47,6 @@ void ParametersSolo::initialize(Parameters *pPin)
         ostringstream errOut;
         errOut << "EXITING because of fatal PARAMETERS error: unrecognized option in --soloStrand="<<strandStr<<"\n";
         errOut << "SOLUTION: use allowed option: Unstranded OR Forward OR Reverse";
-        exitWithError(errOut.str(),std::cerr, pP->inOut->logMain, EXIT_CODE_PARAMETER, *pP);
     };
 
     featureInd.resize(featureNames.size(),-1);
@@ -72,7 +68,6 @@ void ParametersSolo::initialize(Parameters *pPin)
             errOut <<featureNames[0]<< "   OR   ";
             for (auto &fname : featureNames)
                 errOut << fname <<" ";
-            exitWithError(errOut.str(),std::cerr, pP->inOut->logMain, EXIT_CODE_PARAMETER, *pP);
         };
     };
 
@@ -93,7 +88,6 @@ void ParametersSolo::initialize(Parameters *pPin)
         } else {
             ostringstream errOut;
             errOut << "EXITING because of fatal PARAMETERS error: unrecognized option in --soloUMIdedup="<<umiDedup[ii]<<"\n";
-            exitWithError(errOut.str(),std::cerr, pP->inOut->logMain, EXIT_CODE_PARAMETER, *pP);
         };
     };
     ///////////// finished parameters input
@@ -105,7 +99,6 @@ void ParametersSolo::initialize(Parameters *pPin)
             ostringstream errOut;
             errOut << "EXITING because of fatal OUTPUT FILE error: could not create Solo output directory"<<dir1<<"\n";
             errOut << "SOLUTION: check the path and permisssions";
-            exitWithError(errOut.str(),std::cerr, pP->inOut->logMain, EXIT_CODE_PARAMETER, *pP);
         };
     };
 
@@ -121,7 +114,6 @@ void ParametersSolo::initialize(Parameters *pPin)
             ostringstream errOut;
             errOut << "EXITING because of FATAL ERROR in INPUT parameters: --soloCBwhitelist is not defined\n";
             errOut << "SOLUTION: in --soloCBwhitelist specify path to and name of the whitelist file, or None for CB demultiplexing without whitelist \n";
-            exitWithError(errOut.str(),std::cerr, pP->inOut->logMain, EXIT_CODE_INPUT_FILES, *pP);
     } else if (soloCBwhitelist=="None") {
         cbWLyes=false;
     } else {
@@ -133,7 +125,6 @@ void ParametersSolo::initialize(Parameters *pPin)
                 ostringstream errOut;
                 errOut << "EXITING because of FATAL ERROR in input CB whitelist file: "<< soloCBwhitelist <<" the total length of barcode sequence is "  << seq1.size() << " not equal to expected " <<bL <<"\n"  ;
                 errOut << "SOLUTION: make sure that the barcode read is the second in --readFilesIn and check that is has the correct formatting\n";
-                exitWithError(errOut.str(),std::cerr, pP->inOut->logMain, EXIT_CODE_INPUT_FILES, *pP);
             };
             uint64 cb1;
             //convert to 2-bit format
@@ -152,19 +143,21 @@ void ParametersSolo::initialize(Parameters *pPin)
     //qsort(cbWL.data(),cbWL.size(),sizeof(uint64),funCompareNumbers<uint64>);
 
     if (!pP->quant.trSAM.yes) {
-        pP->quant.yes = true;
-        pP->quant.trSAM.yes = true;
-        pP->quant.trSAM.bamYes = false;
-        pP->quant.trSAM.bamCompression = -2;
-        pP->quant.trSAM.indel = true;
-        pP->quant.trSAM.softClip = true;
-        pP->inOut->logMain << "Turning on Genomic->Transcriptomic coordinate conversion for STARsolo\n";
+        printf("warning: trying to set quant.trSam variables but Parameters is const\n");
+        //pP->quant.yes = true;
+        //pP->quant.trSAM.yes = true;
+        //pP->quant.trSAM.bamYes = false;
+        //pP->quant.trSAM.bamCompression = -2;
+        //pP->quant.trSAM.indel = true;
+        //pP->quant.trSAM.softClip = true;
+        //pP->inOut->logMain << "Turning on Genomic->Transcriptomic coordinate conversion for STARsolo\n";
     };
     
     if (featureYes[2])
-        pP->quant.geneFull.yes=true;
+        printf("warning: trying to set quant.geneFull.yes but Parameters is const\n");
+    //    pP->quant.geneFull.yes=true;
 
     time_t rawTime;
     time(&rawTime);
-    pP->inOut->logMain << timeMonthDayTime(rawTime) << "Finished reading CB whitelist sequences: " << cbWL.size() <<endl;
+    //pP->inOut->logMain << timeMonthDayTime(rawTime) << "Finished reading CB whitelist sequences: " << cbWL.size() <<endl;
 };

@@ -1,7 +1,7 @@
 #include "SoloReadBarcode.h"
 #include "streamFuns.h"
 
-SoloReadBarcode::SoloReadBarcode(Parameters &Pin) : P(Pin), pSolo(P.pSolo)
+SoloReadBarcode::SoloReadBarcode(const Parameters &Pin) : P(Pin), pSolo(P.pSolo)
 {
     if (pSolo.type==0)
         return;
