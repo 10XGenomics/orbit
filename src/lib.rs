@@ -20,12 +20,15 @@ use rust_htslib::bam;
 use rust_htslib::bam::header::{Header, HeaderRecord};
 use rust_htslib::bam::{HeaderView};
 
+pub struct RefStruct{ pub sr : *const StarRef }
+unsafe impl Sync for RefStruct {}
+
 /// StarSettings contains the parameters which will be used for the STAR aligner.
 /// Currently the array of argument strings is passed directly
 pub struct StarSettings {
     ref_dir : String,
     multn : usize,
-    args : Vec<String>,
+    pub args : Vec<String>,
 }
 
 /// References to some commonly used reference genomes for testing purposes
