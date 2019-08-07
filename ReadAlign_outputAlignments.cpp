@@ -14,7 +14,6 @@ const char* ReadAlign::outputAlignments() {
     std::stringstream stream;
 
     outFilterPassed=true;//only false if the alignment is held for outFilterBySJoutStage
-
     if (unmapType==-1) {//output transcripts
         if (P.outFilterBySJoutStage==1) {//filtering by SJout
             for (uint iTr=0;iTr<nTr;iTr++) {//check transcript for unannotated junctions
@@ -94,7 +93,6 @@ const char* ReadAlign::outputAlignments() {
             };
 
             nTrOut=min(P.outSAMmultNmax,nTrOut); //number of to write to SAM/BAM files
-
             soloRead->readBar->getCBandUMI(readNameExtra.at(0));
             //write to SAM/BAM
             //printf("nTrOut %llu\n", nTrOut);
@@ -147,7 +145,6 @@ const char* ReadAlign::outputAlignments() {
 
             if (unmapType==4 && P.outSAMunmapped.yes) {//output unmapped end for single-end alignments
                 if (P.outSAMbool && !P.outSAMunmapped.keepPairs && outSAMfilterYes) {
-                    //printf("gotcha\n");
                     outBAMbytes+= outputTranscriptSAM(*trBest, 0, 0, (uint) -1, (uint) -1, 0, unmapType, mateMapped, &stream);
                 };
 
@@ -169,7 +166,6 @@ const char* ReadAlign::outputAlignments() {
                 chunkOutSJ=new OutSJ (P.limitOutSJcollapsed, P, mapGen);
                 uint sjReadStartN=chunkOutSJ->N;
                 for (uint iTr=0;iTr<nTr;iTr++) {//write all transcripts junctions
-                    //printf("second outsj stuff\n");
                     outputTranscriptSJ (*(trMult[iTr]), nTr, chunkOutSJ, sjReadStartN);
                 };
             };

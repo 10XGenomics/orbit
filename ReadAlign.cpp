@@ -6,6 +6,8 @@
 ReadAlign::ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcriptome *TrIn, int iChunk)
                     : mapGen(genomeIn), P(Pin), chunkTr(TrIn)
 {
+    iRead = 0;
+    readFilesIndex = 0;
     readNmates=P.readNmates;
     winBin = new uintWinBin* [2];
     winBin[0] = new uintWinBin [P.winBinN];

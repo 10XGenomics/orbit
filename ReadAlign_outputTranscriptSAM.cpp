@@ -10,7 +10,7 @@ uint ReadAlign::outputTranscriptSAM(Transcript const &trOut, uint nTrOut, uint i
 
     if (unmapType>=0)
     {//unmapped reads: SAM
-        //printf("not a map\n");
+        //printf("not a map %llu\n", readNmates);
         for (uint imate=0;imate<readNmates;imate++)
         {//cycle over mates
             if (!mateMapped[imate])
@@ -37,20 +37,16 @@ uint ReadAlign::outputTranscriptSAM(Transcript const &trOut, uint nTrOut, uint i
                 {//mapped mate is not primary, keep unmapped mate for each pair, hence need to mark some as not primary
                     samFLAG|=0x100;
                 };
-
                 *outStream << readName+1 <<"\t"<< samFLAG \
                         <<"\t"<< '*' <<"\t"<< '0' <<"\t"<< '0' <<"\t"<< '*';
-
                 if (mateMapped[1-imate]) {//mate is mapped
                     *outStream <<"\t"<< mapGen.chrName[trOut.Chr] <<"\t"<< trOut.exons[0][EX_G] + 1 - mapGen.chrStart[trOut.Chr];
                 } else {
                     *outStream <<"\t"<< '*' <<"\t"<< '0';
                 };
-
                 *outStream <<"\t"<< '0' <<"\t"<< Read0[imate] <<"\t"<< (readFileType==2 ? Qual0[imate]:"*") \
                         <<"\tNH:i:0" <<"\tHI:i:0" <<"\tAS:i:"<<trOut.maxScore <<"\tnM:i:"<<trOut.nMM<<"\tuT:A:" <<unmapType;
                 if (!P.outSAMattrRG.empty()) *outStream<< "\tRG:Z:" <<P.outSAMattrRG.at(readFilesIndex);
-
                 if (P.readFilesTypeN==10 && !readNameExtra[imate].empty()) {//SAM files as input - output extra attributes
                     *outStream << "\t" <<readNameExtra[imate];
                 };

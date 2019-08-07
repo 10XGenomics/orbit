@@ -94,7 +94,6 @@ const char* align_read(Aligner* a, char *Read1, char *Qual1, unsigned long long 
     a->ra->readName[1] = '\0';
     a->ra->readLength[0] = read_length;
     a->ra->readLengthOriginal[0] = read_length;
-    
     int readStatus = a->ra->oneRead();
     a->ra->readName[1] = '\0';
     if(readStatus != 0)
