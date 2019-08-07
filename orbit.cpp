@@ -79,7 +79,6 @@ struct Aligner
 
 const char* align_read(Aligner* a, char *Read1, char *Qual1, unsigned long long read_length)
 {
-    printf("aligning read\n");
     a->ra->iRead++;
     a->ra->readNmates = 1;
     a->ra->Read0 = &Read1;
