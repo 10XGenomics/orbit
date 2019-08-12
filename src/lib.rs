@@ -5,7 +5,7 @@ use failure::Error;
 
 use seq_io::fastq;
 use seq_io::fastq::Record;
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::io::BufReader;
 use std::io::prelude::*;
 use std::fs::File;
@@ -313,7 +313,7 @@ fn get_lines(path : &Path) -> Vec<String> {
 
 /// Produces a header from the genome reference directory by looking up the contig names and
 /// lengths and formatting them properly
-fn generate_header_with_view(genome_path : &Path) -> (Header, HeaderView) {
+pub fn generate_header_with_view(genome_path : &Path) -> (Header, HeaderView) {
     let mut header = Header::new();
     
     let contig_names_path = genome_path.join(Path::new("chrName.txt"));
@@ -387,7 +387,10 @@ pub fn align_read_rust(al : *mut Aligner, read : String, qual : String) -> Resul
     let read_ptr = c_read.as_ptr() as *mut c_char;
     let qual_ptr = c_qual.as_ptr() as *mut c_char;
     let res : *const c_char = unsafe{align_read(al, read_ptr, qual_ptr, length)};
-    let string_res : String = unsafe{CString::from_raw(res as *mut c_char).into_string()?};
+    if res.is_null() {
+    }
+    let string_res : String = unsafe{CStr::from_ptr(res).to_str().expect("utf failure").to_string()};
+    unsafe{libc::free(res as *mut libc::c_void);}
     Ok(string_res)
 }
 
@@ -405,7 +408,8 @@ pub fn align_read_pair_rust(al : *mut Aligner, read : String, qual : String, rea
     let qual_ptr2 = c_qual2.as_ptr() as *mut c_char;
 
     let res : *const c_char = unsafe{align_read_pair(al, read_ptr, qual_ptr, read_ptr2, qual_ptr2, length)};
-    let string_res : String = unsafe{CString::from_raw(res as *mut c_char).into_string()?};
+    let string_res : String = unsafe{CStr::from_ptr(res).to_str().expect("utf failure").to_string()};
+    unsafe{libc::free(res as *mut libc::c_void);}
     Ok(string_res)
 }
 
