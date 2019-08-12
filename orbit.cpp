@@ -98,7 +98,7 @@ const char* align_read(Aligner* a, char *Read1, char *Qual1, unsigned long long 
     a->ra->readName[1] = '\0';
     if(readStatus != 0)
     {
-        return "";
+        return nullptr;
     }
     const char* str = a->ra->outputAlignments();
     return str;
@@ -122,7 +122,7 @@ const char* align_read_pair(Aligner* a, char *Read1, char *Qual1, char *Read2, c
     a->ra->readName[1] = '\0';
     if(readStatus != 0)
     {
-        return "";
+        return nullptr;
     }
     const char* str = a->ra->outputAlignments();
     return str;

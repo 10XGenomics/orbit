@@ -50,6 +50,7 @@ const char* ReadAlign::outputAlignments() {
                 //printf("outsj stuff\n");
                 outputTranscriptSJ (*(trMult[iTr]), nTr, chunkOutSJ1, sjReadStartN);
             };
+            delete chunkOutSJ1;
         };
 
         if (outFilterPassed) {
@@ -168,6 +169,7 @@ const char* ReadAlign::outputAlignments() {
                 for (uint iTr=0;iTr<nTr;iTr++) {//write all transcripts junctions
                     outputTranscriptSJ (*(trMult[iTr]), nTr, chunkOutSJ, sjReadStartN);
                 };
+                delete chunkOutSJ;
             };
             
             //genes

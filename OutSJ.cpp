@@ -8,6 +8,9 @@ OutSJ::OutSJ (uint nSJmax, const Parameters &Pin, const Genome &genomeIn) : oneS
     N=0;//initialize the counter
 };
 
+OutSJ::~OutSJ() {
+    delete[] data;
+}
 
 int compareSJ(const void* i1, const void* i2) {//compare SJs from the data structure
     uint s1=*( (uint*)i1 );

@@ -280,7 +280,6 @@ void Genome::genomeLoad(){//allocate and load Genome
         shmStart = (char*) sharedMemory->GetMapped();
         shmNG= (uint*) (shmStart+SHM_sizeG);
         shmNSA= (uint*) (shmStart+SHM_sizeSA);
-
         if (!sharedMemory->IsAllocator()) {
             // genome is in shared memory or being loaded
             // wait for the process that will populate it

@@ -80,7 +80,6 @@ int readLoad(istream& readInStream, const Parameters& P, uint iMate, uint& Lread
 //         exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
 //     };
 //     LreadOriginal=Lread;
-
     LreadOriginal=Lread;
     if ( Lread>(P.clip5pNbases[iMate]+P.clip3pNbases[iMate]) ) {
         Lread=Lread-(P.clip5pNbases[iMate]+P.clip3pNbases[iMate]);
