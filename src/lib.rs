@@ -139,8 +139,7 @@ impl StarRawAligner {
     }
 
     pub fn clone(&self) -> StarRawAligner {
-        // TODO copy settings over
-        StarRawAligner { al : init_aligner_clone_rust(self.al), settings : StarSettings::new() }
+        StarRawAligner { al : init_aligner_clone_rust(self.al), settings : self.settings.clone() }
     }
 
     pub fn align_read(&self, read : String, qual : String) -> String {
