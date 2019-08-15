@@ -42,6 +42,7 @@ public:
     Junction oneSJ;
 
     OutSJ(uint nSJmax, const Parameters &Pin, const Genome &genomeIn);
+    ~OutSJ();
     void collapseSJ();//collapse the junctions in data
 //     int compareSJ(void* i1, void* i2);
 
