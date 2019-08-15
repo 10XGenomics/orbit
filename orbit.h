@@ -7,12 +7,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    //StarRef: A separate struct for the parameters and genome information.
-    //This is so that this can be built in the main thread and declared as
-    //const to ensure safe access by the other threads
+    // StarRef: A separate struct for the parameters and genome information.
+    // This is so that this can be built in the main thread and declared as
+    // const to ensure safe access by the other threads
     struct StarRef;
 
-    // Aligner: a built index to which individual reads can be aligned
+    // Aligner: all constructed alignment object which is used to align
+    // individual reads/read pairs through the functions below
     struct Aligner;
 
     // align_read: align an individual read and get a string of BAM records
@@ -24,6 +25,7 @@ extern "C" {
     // init_aligner_clone: create an aligner from the same reference as an
     // existing aligner, sharing key structures with it and saving memory in
     // multi-threaded applications
+    // NOTE: this function is deprecated in favor of a StarRef-based workflow
     struct Aligner* init_aligner_clone(const struct Aligner*);
 
     // init_aligner: initialize an aligner given the array of parameters which
@@ -40,7 +42,7 @@ extern "C" {
     // destroy_aligner: frees the memory occupied by an aligner
     void destroy_aligner(struct Aligner*);
 
-    //destory_ref: frees the memory occupied by a reference
+    //destroy_ref: frees the memory occupied by a reference
     void destroy_ref(const struct StarRef*);
 
 #ifdef __cplusplus
