@@ -11,8 +11,6 @@ use std::path::Path;
 use std::sync::Arc;
 
 use failure::Error;
-use seq_io::fastq;
-use seq_io::fastq::Record;
 use rust_htslib::bam;
 use rust_htslib::bam::header::{Header, HeaderRecord};
 use rust_htslib::bam::{HeaderView};
@@ -210,27 +208,6 @@ impl StarAligner {
     pub fn align_read_pair_sam(&mut self, _name: &[u8], read1: &[u8], qual1: &[u8], read2: &[u8], qual2: &[u8]) -> String {
         align_read_pair_rust(self.aligner, read1, qual1, read2, qual2, &mut self.aln_buf).unwrap();
         String::from_utf8(self.aln_buf.clone()).unwrap()
-    }
-
-    /// Aligns every read in a Fastq file
-    pub fn align_fastq(&mut self, fastq_path: &str) -> Result<Vec<bam::Record>, Error> {
-        let mut res : Vec<bam::Record> = Vec::new();
-        let mut reader = fastq::Reader::from_path(Path::new(fastq_path))?;
-        while let Some(cur_record) = reader.next() {
-            let record = cur_record?;
-            let cur = self.align_fastq_record(record)?;
-            for x in cur {
-                res.push(x);
-            }
-        }
-        Ok(res)
-    }
-
-    /// Aligns the read contained in a single given Fastq record
-    pub fn align_fastq_record<R : Record>(&mut self, record : R) -> Result<Vec<bam::Record>, Error> {
-        let cur = self.align_read(record.id()?.as_bytes(), record.seq(), record.qual());
-        Ok(cur)
-
     }
 
     /// Given a list of BAM records as a SAM-format string in which records are separated by new

@@ -29,15 +29,6 @@ extern "C" {
     ) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    pub fn init_aligner_clone(arg1: *const Aligner) -> *mut Aligner;
-}
-extern "C" {
-    pub fn init_aligner(
-        arg1: ::std::os::raw::c_int,
-        arg2: *mut *mut ::std::os::raw::c_char,
-    ) -> *mut Aligner;
-}
-extern "C" {
     pub fn init_star_ref(
         arg1: ::std::os::raw::c_int,
         arg2: *mut *mut ::std::os::raw::c_char,
