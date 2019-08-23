@@ -1,0 +1,14 @@
+### STAR   --runMode genomeGenerate   --runThreadN 1   --genomeDir /mnt/home/rudy/repositories/cellranger/dev/reference_buildscripts/ercc92/star   --genomeFastaFiles /mnt/home/rudy/repositories/cellranger/dev/reference_buildscripts/ercc92/fasta/genome.fa      --genomeSAindexNbases 7   --genomeChrBinNbits 9   --genomeSAsparseD 1   --sjdbGTFfile /mnt/home/rudy/repositories/cellranger/dev/reference_buildscripts/ercc92/genes/genes.gtf
+versionGenome	20201
+genomeFastaFiles	/mnt/home/rudy/repositories/cellranger/dev/reference_buildscripts/ercc92/fasta/genome.fa 
+genomeSAindexNbases	7
+genomeChrBinNbits	9
+genomeSAsparseD	1
+sjdbOverhang	100
+sjdbFileChrStartEnd	- 
+sjdbGTFfile	/mnt/home/rudy/repositories/cellranger/dev/reference_buildscripts/ercc92/genes/genes.gtf
+sjdbGTFchrPrefix	-
+sjdbGTFfeatureExon	exon
+sjdbGTFtagExonParentTranscript	transcript_id
+sjdbGTFtagExonParentGene	gene_id
+sjdbInsertSave	Basic

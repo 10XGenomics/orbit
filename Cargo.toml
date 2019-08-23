@@ -2,6 +2,7 @@
 name = "orbit"
 version = "0.1.0"
 authors = ["mkirsche"]
+edition = "2018"
 build = "build.rs"
 
 [dependencies]
@@ -15,6 +16,7 @@ seq_io = "0.3.0"
 bindgen = ">=0.47"
 skeptic = "*"
 cc = "^1.0"
+fs-utils = "*"
 
 [dev-dependencies]
 skeptic = "*"

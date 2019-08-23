@@ -1,0 +1,17 @@
+{
+    "fasta_hash": "53bbb07f31a43eb1c620a5a68cf74a41930f4c83", 
+    "genomes": [
+        "ercc92"
+    ], 
+    "gtf_hash": "0b5fdc0cd313d690830214df9ed1d7c24e857180", 
+    "input_fasta_files": [
+        "ercc92.fa"
+    ], 
+    "input_gtf_files": [
+        "ercc92.gtf"
+    ], 
+    "mem_gb": 16, 
+    "mkref_version": "", 
+    "threads": 2, 
+    "version": "1.2.0"
+}

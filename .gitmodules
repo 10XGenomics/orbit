@@ -1,4 +1,4 @@
 [submodule "STAR"]
-	path = STAR
-	url = git@github.com:mkirsche/STAR.git
-	branch = orbit
+        path = STAR
+        url = git@github.com:10XGenomics/STAR.git
+        branch = orbit
