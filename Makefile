@@ -1,6 +1,7 @@
 # user may define these whole flags
 # CPPFLAGS
 # CXXFLAGS
+UNAME := $(shell uname)
 
 # or these user-set flags that will be added to standard flags
 CXXFLAGSextra ?=
@@ -12,7 +13,13 @@ CXX ?=
 
 COMPTIMEPLACE := -D'COMPILATION_TIME_PLACE="/dev/null"'
 
-CXXFLAGS_common := -pipe -std=c++11 -Wall -Wextra -fPIC $(COMPTIMEPLACE)
+ifeq ($(UNAME), Darwin)
+	CXXFLAGS_extra := -D'COMPILE_FOR_MAC'
+else
+	CXXFLAGS_extra :=
+endif
+CXXFLAGS_common := -pipe -std=c++11 -Wall -Wextra -fPIC $(CXXFLAGS_extra) $(COMPTIMEPLACE)
+
 CXXFLAGS_main := -O3 -g $(CXXFLAGS_common)
 CXXFLAGS_gdb :=  -O0 -g $(CXXFLAGS_common)
 
