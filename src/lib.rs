@@ -1,3 +1,5 @@
+// Copyright (c) 2019 10x Genomics, Inc. All rights reserved.
+
 use std::ffi::{CStr, CString};
 use std::io::BufReader;
 use std::io::prelude::*;

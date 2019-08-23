@@ -1,6 +1,6 @@
 # Orbit
 
-Orbit is a wrapper around STAR written in Rust.  Given a built STAR genome 
+Orbit is a wrapper around STAR written in Rust.  Given a built STAR genome
 index, Orbit can be used to align individual reads or pairs of reads and get
 BAM-format alignment records as output.
 
