@@ -43,6 +43,7 @@ const char* ReadAlign::outputAlignments() {
             };
         };
 
+        /*
         if (P.outSJfilterReads=="All" || nTr==1) {
             OutSJ *chunkOutSJ1=new OutSJ (P.limitOutSJcollapsed, P, mapGen);
             uint sjReadStartN=chunkOutSJ1->N;
@@ -52,6 +53,7 @@ const char* ReadAlign::outputAlignments() {
             };
             delete chunkOutSJ1;
         };
+        */
 
         if (outFilterPassed) {
             uint nTrOut=nTr; //number of aligns to output
@@ -162,7 +164,7 @@ const char* ReadAlign::outputAlignments() {
                 };
             };
 
-
+            /*
             if (P.outSJfilterReads=="All" || nTr==1) {
                 chunkOutSJ=new OutSJ (P.limitOutSJcollapsed, P, mapGen);
                 uint sjReadStartN=chunkOutSJ->N;
@@ -171,7 +173,8 @@ const char* ReadAlign::outputAlignments() {
                 };
                 delete chunkOutSJ;
             };
-            
+            */
+
             //genes
             if ( P.quant.geCount.yes ) {
                 chunkTr->geneCountsAddAlign(nTr, trMult, readGeneExon);
