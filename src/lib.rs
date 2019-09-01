@@ -463,6 +463,7 @@ mod test {
         */
     }
 
+    /*
     #[test]
     fn test_align_fastq()
     {
@@ -480,4 +481,5 @@ mod test {
             out.write(&record).unwrap();
         }
     }
+    */
 }
