@@ -245,12 +245,11 @@ impl Drop for StarAligner {
 
 /// Read in the lines from a file and store each line as its own string in a vector
 fn get_lines(path : &Path) -> Vec<String> {
-    let mut res : Vec<String> = Vec::new();
-    let lines = BufReader::new(File::open(path).unwrap()).lines();
-    for x in lines {
-        res.push(x.unwrap());
-    }
-    res
+    let file = match File::open(&path) {
+        Err(error) => panic!("error: {}: {}", path.display(), error),
+        Ok(file) => file,
+    };
+    BufReader::new(file).lines().map(|line| line.unwrap()).collect()
 }
 
 /// Produces a header from the genome reference directory by looking up the contig names and
