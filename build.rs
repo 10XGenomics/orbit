@@ -36,26 +36,22 @@ fn main() {
     println!("cargo:rustc-link-search=native={}", out_src.display());
     println!("cargo:rustc-link-lib=static=orbit");
 
-    match env::var("CXX") {
+    let libcxx = match env::var("CXX") {
         Ok(cxx) => {
-            let cxx = Path::new(&cxx).file_name().unwrap().to_str().unwrap();
-            if cxx.contains("clang++") {
-                println!("cargo:rustc-link-lib=dylib=c++");
-            } else if cxx.contains("g++") {
-                println!("cargo:rustc-link-lib=dylib=stdc++");
-            } else {
-                panic!("unknown compiler: {}", cxx);
+            match Path::new(&cxx).file_name().unwrap().to_str().unwrap() {
+                s if s.contains("clang++") => "c++",
+                s if s.contains("g++") => "stdc++",
+                s => panic!("unknown compiler: {}", s),
             }
         }
         Err(_) => {
-            let target = env::var("TARGET").unwrap();
-            if target.contains("darwin") {
-                println!("cargo:rustc-link-lib=dylib=c++");
-            } else if target.contains("linux") {
-                println!("cargo:rustc-link-lib=dylib=stdc++");
-            } else {
-                panic!("unknown target: {}", target);
+            match env::var("TARGET") {
+                Ok(ref s) if s.contains("darwin") => "c++",
+                Ok(ref s) if s.contains("linux") => "stdc++",
+                Ok(ref s) => panic!("unknown target: {}", s),
+                Err(_) => panic!("TARGET is undefined"),
             }
         }
-    }
+    };
+    println!("cargo:rustc-link-lib=dylib={}", libcxx);
 }
