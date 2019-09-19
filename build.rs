@@ -2,6 +2,7 @@
 
 use fs_utils::copy::copy_directory;
 use std::env;
+use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -34,5 +35,14 @@ fn main() {
     let out_src = out.join("STAR").join("source");
     println!("cargo:rustc-link-search=native={}", out_src.display());
     println!("cargo:rustc-link-lib=static=orbit");
-    println!("cargo:rustc-link-lib=dylib=c++");
+
+    let env_cxx = env::var("CXX").unwrap();
+    let cxx = Path::new(&env_cxx).file_name().unwrap().to_str().unwrap();
+    if cxx.contains("clang++") {
+        println!("cargo:rustc-link-lib=dylib=c++");
+    } else if cxx.contains("g++") {
+        println!("cargo:rustc-link-lib=dylib=stdc++");
+    } else {
+        panic!("unknown compiler: {}", cxx);
+    }
 }
