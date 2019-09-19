@@ -6,7 +6,6 @@ use std::path::PathBuf;
 use std::process::Command;
 
 fn main() {
-
     let out = PathBuf::from(env::var("OUT_DIR").unwrap());
     if !out.join("STAR").exists() {
         copy_directory("STAR", &out).unwrap();
@@ -26,11 +25,12 @@ fn main() {
         .arg("liborbit.a")
         .status()
         .unwrap()
-        .success() != true
+        .success()
+        != true
     {
         panic!("failed to build STAR");
     }
-    
+
     let out_src = out.join("STAR").join("source");
     println!("cargo:rustc-link-search=native={}", out_src.display());
     println!("cargo:rustc-link-lib=static=orbit");
