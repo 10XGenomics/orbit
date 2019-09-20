@@ -406,6 +406,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn test_align_read() {
         let settings = StarSettings::new(DEFAULT_REF_2);
         let reference = StarReference::load(settings).unwrap();
@@ -419,6 +420,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn test_align_multiple_reads() {
         let settings = StarSettings::new(DEFAULT_REF_2);
         let reference = StarReference::load(settings).unwrap();
@@ -447,6 +449,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn test_get_record() {
         let settings = StarSettings::new(DEFAULT_REF_2);
         let reference = StarReference::load(settings).unwrap();
@@ -461,6 +464,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn test_write_bam() {
         let settings = StarSettings::new(DEFAULT_REF_1);
         let reference = StarReference::load(settings).unwrap();
