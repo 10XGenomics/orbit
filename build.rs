@@ -3,7 +3,6 @@
 use fs_utils::copy::copy_directory;
 use std::env;
 use std::path::Path;
-use std::path::PathBuf;
 use std::process::Command;
 
 fn libcxx() -> &'static str {
@@ -27,10 +26,13 @@ fn libcxx() -> &'static str {
 }
 
 fn main() {
-    let out = PathBuf::from(env::var("OUT_DIR").unwrap());
-    if !out.join("STAR").exists() {
-        copy_directory("STAR", &out).unwrap();
-    }
+    let out = env::var("OUT_DIR").unwrap();
+    let out_source = format!("{}/source", out);
+    match copy_directory("STAR/source", &out) {
+        Ok(_) => (),
+        Err(fs_utils::copy::Error::DestinationDirectoryExists(_)) => (),
+        e => panic!(e),
+    };
 
     let mut cfg = cc::Build::new();
     cfg.warnings(false).static_flag(true).pic(true);
@@ -40,9 +42,9 @@ fn main() {
     println!("cflag: {:?}", cflags_env);
     let cc_cflags = cflags_env.to_string_lossy().replace("-O0", "");
     if Command::new("make")
-        .current_dir(out.join("STAR/source"))
+        .current_dir(&out_source)
         .arg(format!("CC={}", cc_path.display()))
-        .arg(format!("CFLAGS={}", cc_cflags))
+        .arg(format!("CFLAGS={}", &cc_cflags))
         .arg("liborbit.a")
         .status()
         .unwrap()
@@ -51,8 +53,13 @@ fn main() {
         panic!("failed to build STAR");
     }
 
-    let out_src = out.join("STAR").join("source");
-    println!("cargo:rustc-link-search=native={}", out_src.display());
+    let from = format!("{}/liborbit.a", &out_source);
+    let to = format!("{}/liborbit.a", &out);
+    std::fs::rename(&from, &to).expect(&format!("{}: {}", from, to));
+
+    std::fs::remove_dir_all(&out_source).expect(&out_source);
+
+    println!("cargo:rustc-link-search=native={}", &out);
     println!("cargo:rustc-link-lib=static=orbit");
     println!("cargo:rustc-link-lib=dylib={}", libcxx());
 }
