@@ -8,17 +8,21 @@ use std::process::Command;
 
 fn libcxx() -> &'static str {
     match env::var("CXX") {
-        Ok(cxx) => match Path::new(&cxx).file_name().unwrap().to_str().unwrap() {
-            s if s.contains("clang++") => "c++",
-            s if s.contains("g++") => "stdc++",
-            s => panic!("unknown compiler: {}", s),
-        },
-        Err(_) => match env::var("TARGET") {
-            Ok(ref s) if s.contains("darwin") => "c++",
-            Ok(ref s) if s.contains("linux") => "stdc++",
-            Ok(ref s) => panic!("unknown target: {}", s),
-            Err(_) => panic!("TARGET is undefined"),
-        },
+        Ok(cxx) => {
+            match Path::new(&cxx).file_name().unwrap().to_str().unwrap() {
+                s if s.contains("clang++") => "c++",
+                s if s.contains("g++") => "stdc++",
+                s => panic!("unknown compiler: {}", s),
+            }
+        }
+        Err(_) => {
+            match env::var("TARGET") {
+                Ok(ref s) if s.contains("darwin") => "c++",
+                Ok(ref s) if s.contains("linux") => "stdc++",
+                Ok(ref s) => panic!("unknown target: {}", s),
+                Err(_) => panic!("TARGET is undefined"),
+            }
+        }
     }
 }
 
@@ -42,8 +46,7 @@ fn main() {
         .arg("liborbit.a")
         .status()
         .unwrap()
-        .success()
-        != true
+        .success() != true
     {
         panic!("failed to build STAR");
     }
