@@ -235,11 +235,10 @@ impl StarAligner {
     /// lines, add the records to a vector and append the read name to the beginning of them so
     /// that they conform with BAM specifications
     fn parse_sam_to_records(&mut self, name: &[u8]) -> Vec<bam::Record> {
-        self.sam_buf.clear();
-
         let mut records = Vec::new();
         for slc in self.aln_buf.split(|c| *c == b'\n') {
             if slc.len() > 0 {
+                self.sam_buf.clear();
                 self.sam_buf.extend_from_slice(name);
                 self.sam_buf.extend_from_slice(slc);
                 let record =
