@@ -103,7 +103,7 @@ pub struct StarSettings {
 
 /// Set the --outSAMmultNmax parameter of STAR.
 /// Max number of multiple alignments for a read that will be output to the SAM/BAM files.
-const DEFAULT_MULTN: usize = 1;
+const DEFAULT_MULTN: usize = 10;
 
 impl StarSettings {
     /// This constructor just sets all of the necessary arguments to their defaults, and the
