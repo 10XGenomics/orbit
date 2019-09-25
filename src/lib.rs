@@ -101,7 +101,8 @@ pub struct StarSettings {
     args: Vec<String>,
 }
 
-/// The default value for number of mappings allowed is 1.
+/// Set the --outSAMmultNmax parameter of STAR.
+/// Max number of multiple alignments for a read that will be output to the SAM/BAM files.
 const DEFAULT_MULTN: usize = 1;
 
 impl StarSettings {
@@ -386,6 +387,9 @@ mod test {
     const ERCC_READ_2: &'static [u8] = b"GGAGACGAATTGCCAGAATTATTAACTGCGCAGTTAGGGCAGCGTCTGAGGAAGTTTGCTGCGGTTTCGCCTTGACCGCGGGAAGGAGACATAACGATAG";
     const ERCC_QUAL_2: &'static [u8] = b"????????????????????????????????????????????????????????????????????????????????????????????????????";
 
+    const ERCC_READ_3: &'static [u8] = b"AACTTAATGGACGGG";
+    const ERCC_QUAL_3: &'static [u8] = b"???????????????";
+
     #[test]
     fn test_ercc_align() {
         let settings = StarSettings::new(ERCC_REF);
@@ -399,8 +403,21 @@ mod test {
         println!("{:?}", recs);
 
         let recs = aligner.align_read(NAME, ERCC_READ_2, ERCC_QUAL_2);
+        assert_eq!(recs.len(), 1);
         assert_eq!(recs[0].tid(), 0);
         assert_eq!(recs[0].pos(), 500);
+        println!("{:?}", recs);
+
+        let recs = aligner.align_read(NAME, ERCC_READ_3, ERCC_QUAL_3);
+        assert_eq!(recs.len(), 2);
+        assert_eq!(recs[0].flags(), 0);
+        assert_eq!(recs[0].tid(), 39);
+        assert_eq!(recs[0].pos(), 27);
+        assert_eq!(recs[0].mapq(), 3);
+        assert_eq!(recs[1].flags(), 0x110); // REVERSE,SECONDARY
+        assert_eq!(recs[1].tid(), 72);
+        assert_eq!(recs[1].pos(), 553);
+        assert_eq!(recs[1].mapq(), 3);
         println!("{:?}", recs);
     }
 
