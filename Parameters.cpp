@@ -263,6 +263,18 @@ Parameters::Parameters() {//initalize parameters info
 
 };
 
+Parameters::~Parameters() {
+    // TODO cleanup sjNovel*? clip3pAdapterSeqNum?
+    for (auto *p : parArray) {
+        if (p != nullptr) {
+            delete p;
+        }
+    }
+    if (inOut != nullptr) {
+        delete inOut;
+    }
+}
+
 
 void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters: default, from files, from command line
 
