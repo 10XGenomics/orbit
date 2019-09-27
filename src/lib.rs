@@ -97,13 +97,13 @@ impl StarReference {
 #[derive(Clone)]
 pub struct StarSettings {
     reference_path: String,
-    multn: usize,
+    multn: isize,
     args: Vec<String>,
 }
 
 /// Set the --outSAMmultNmax parameter of STAR.
 /// Max number of multiple alignments for a read that will be output to the SAM/BAM files.
-const DEFAULT_MULTN: usize = 10;
+const DEFAULT_MULTN: isize = -1;
 
 impl StarSettings {
     /// This constructor just sets all of the necessary arguments to their defaults, and the
@@ -148,7 +148,7 @@ impl StarSettings {
     }
 
     /// Set the max number of multimapping reads
-    pub fn set_multn(&mut self, new_multn: usize) {
+    pub fn set_multn(&mut self, new_multn: isize) {
         self.multn = new_multn;
         self.sync_args();
     }
