@@ -486,7 +486,7 @@ mod test {
         let reference = StarReference::load(settings).unwrap();
         let mut aligner = reference.get_aligner();
 
-        let mut out = bam::Writer::from_path(&"test/test.bam", &reference.header()).unwrap();
+        let mut out = bam::Writer::from_path(&"test/test.bam", &reference.header(), bam::Format::BAM).unwrap();
         let read = b"GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC";
         let qual = b"GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG";
         let name = b"gatactaga";

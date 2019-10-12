@@ -7,7 +7,7 @@ build = "build.rs"
 
 [dependencies]
 libc = "*"
-rust-htslib = { version = "0.24", default-features = false, features = ["serde"] }
+rust-htslib = { version = "0.26", default-features = false, features = ["serde"] }
 failure = "*"
 
 [build-dependencies]
