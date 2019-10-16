@@ -171,6 +171,8 @@ pub struct StarAligner {
     aln_buf: Vec<u8>,
 }
 
+unsafe impl Send for StarAligner {}
+
 impl StarAligner {
     fn new(reference: Arc<InnerStarReference>) -> StarAligner {
         let aligner = unsafe { bindings::init_aligner_from_ref(reference.as_ref().reference) };
@@ -420,6 +422,38 @@ mod test {
         assert_eq!(recs[1].mapq(), 3);
         println!("{:?}", recs);
     }
+
+
+    #[test]
+    fn test_multithreaded_alignment() {
+
+        let settings = StarSettings::new(ERCC_REF);
+        let reference = StarReference::load(settings).unwrap();
+        let mut aligner1 = reference.get_aligner();
+        let mut aligner2 = reference.get_aligner();
+
+        let t1 = std::thread::spawn(move || {
+            for _ in 0 .. 100000 {
+                let recs = aligner1.align_read(NAME, ERCC_READ_1, ERCC_QUAL_1);
+                assert_eq!(recs.len(), 1);
+                assert_eq!(recs[0].pos(), 50);
+                assert_eq!(recs[0].tid(), 0);
+            }
+        });
+
+        let t2 = std::thread::spawn(move || {
+            for _ in 0 .. 100000 {
+                let recs = aligner2.align_read(NAME, ERCC_READ_2, ERCC_QUAL_2);
+                assert_eq!(recs.len(), 1);
+                assert_eq!(recs[0].pos(), 500);
+                assert_eq!(recs[0].tid(), 0);
+            }
+        });
+
+        assert!(t1.join().is_ok());
+        assert!(t2.join().is_ok());
+    }
+
 
     #[test]
     #[ignore]
