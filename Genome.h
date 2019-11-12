@@ -48,7 +48,7 @@ class Genome {
         SharedMemory * sharedMemory;
 
         Genome (Parameters &Pin );
-        //~Genome();
+        ~Genome();
 
         void freeMemory();
         void genomeLoad();
