@@ -23,8 +23,8 @@ struct StarRef
         }
         ~StarRef()
         {
-            delete p;
             delete g;
+            delete p;
         }
 };
 

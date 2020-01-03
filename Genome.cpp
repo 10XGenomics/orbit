@@ -126,7 +126,8 @@ void Genome::genomeLoad(){//allocate and load Genome
         parFile.clear();
         parFile.seekg(0,ios::beg);//rewind
 
-
+        // free P1.inOut first to avoid resource leak
+        delete P1.inOut;
         P1.inOut = P.inOut;
         P1.scanAllLines(parFile,3,-1);
         parFile.close();
@@ -546,6 +547,9 @@ void Genome::genomeLoad(){//allocate and load Genome
 
     P.winBinChrNbits=pGe.gChrBinNbits-P.winBinNbits;
     P.winBinN = nGenome/(1LLU << P.winBinNbits)+1;//this may be chenaged later
+
+    // reset P1.inOut here to avoid double-free (of P.inOut later)
+    P1.inOut = nullptr;
 };
 
 

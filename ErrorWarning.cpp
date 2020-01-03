@@ -13,7 +13,6 @@ void exitWithError(string messageOut, ostream &streamOut1, ostream &streamOut2, 
     if (streamOut2.good()) {
         streamOut2 << "\n" << messageOut << endl << timeMonthDayTime(timeCurrent) <<" ...... FATAL ERROR, exiting\n"  <<flush;
     };
-    delete P.inOut; //to close files
 //     if (P.runThreadN>1) pthread_mutex_unlock(&g_threadChunks.mutexError);
     exit(errorInt);
 };
