@@ -85,13 +85,12 @@ struct Aligner
 
 const char* align_read(Aligner* a, char *Read1, char *Qual1, unsigned long long read_length)
 {
+    static char qname[] = "a";
     a->ra->iRead++;
     a->ra->readNmates = 1;
     a->ra->Read0 = &Read1;
     a->ra->Qual0 = &Qual1;
-    a->ra->readName = (char*)malloc(2);
-    a->ra->readName[0] = 'a';
-    a->ra->readName[1] = '\0';
+    a->ra->readName = qname;
     a->ra->readLength[0] = read_length;
     a->ra->readLengthOriginal[0] = read_length;
     int readStatus = a->ra->oneRead();
