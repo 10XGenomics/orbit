@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include "BAMoutput.h"
 #include <sys/stat.h>
 #include "GlobalVariables.h"

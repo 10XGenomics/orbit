@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include "IncludeDefine.h"
 #include "Parameters.h"
 #include "ErrorWarning.h"

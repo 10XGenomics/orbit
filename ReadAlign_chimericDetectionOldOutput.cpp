@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include "ReadAlign.h"
 #include "BAMfunctions.h"
 

@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include "BAMfunctions.h"
 #include "htslib/htslib/kstring.h"
 
