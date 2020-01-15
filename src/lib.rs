@@ -63,6 +63,11 @@ impl StarReference {
 
         let reference = unsafe { bindings::init_star_ref(length, c_args) };
 
+        // recover stray CStrings to prevent leaked memory
+        nvec.into_iter().for_each(|ptr| unsafe {
+            CString::from_raw(ptr);
+        });
+
         let inner = InnerStarReference {
             reference,
             header,
@@ -423,17 +428,15 @@ mod test {
         println!("{:?}", recs);
     }
 
-
     #[test]
     fn test_multithreaded_alignment() {
-
         let settings = StarSettings::new(ERCC_REF);
         let reference = StarReference::load(settings).unwrap();
         let mut aligner1 = reference.get_aligner();
         let mut aligner2 = reference.get_aligner();
 
         let t1 = std::thread::spawn(move || {
-            for _ in 0 .. 100000 {
+            for _ in 0..100000 {
                 let recs = aligner1.align_read(NAME, ERCC_READ_1, ERCC_QUAL_1);
                 assert_eq!(recs.len(), 1);
                 assert_eq!(recs[0].pos(), 50);
@@ -442,7 +445,7 @@ mod test {
         });
 
         let t2 = std::thread::spawn(move || {
-            for _ in 0 .. 100000 {
+            for _ in 0..100000 {
                 let recs = aligner2.align_read(NAME, ERCC_READ_2, ERCC_QUAL_2);
                 assert_eq!(recs.len(), 1);
                 assert_eq!(recs[0].pos(), 500);
@@ -453,7 +456,6 @@ mod test {
         assert!(t1.join().is_ok());
         assert!(t2.join().is_ok());
     }
-
 
     #[test]
     #[ignore]
@@ -520,7 +522,9 @@ mod test {
         let reference = StarReference::load(settings).unwrap();
         let mut aligner = reference.get_aligner();
 
-        let mut out = bam::Writer::from_path(&"test/test.bam", &reference.header(), bam::Format::BAM).unwrap();
+        let mut out =
+            bam::Writer::from_path(&"test/test.bam", &reference.header(), bam::Format::BAM)
+                .unwrap();
         let read = b"GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC";
         let qual = b"GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG";
         let name = b"gatactaga";
