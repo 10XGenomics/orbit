@@ -43,7 +43,7 @@ Genome::~Genome()
 void Genome::freeMemory(){//free big chunks of memory used by genome and suffix array
 
     if (pGe.gLoad=="NoSharedMemory") {//can deallocate only for non-shared memory
-        delete[] G1;
+        if (G1 != NULL) delete[] G1;
         G1=NULL;
         SA.deallocateArray();
         SApass2.deallocateArray();
