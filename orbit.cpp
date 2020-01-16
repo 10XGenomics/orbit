@@ -105,15 +105,14 @@ const char* align_read(Aligner* a, char *Read1, char *Qual1, unsigned long long 
 
 const char* align_read_pair(Aligner* a, char *Read1, char *Qual1, char *Read2, char *Qual2, unsigned long long read_length)
 {
+    static char qname[] = "a";
     a->ra->iRead++;
     a->ra->readNmates = 2;
     a->ra->Read0 = &Read1;
     a->ra->Qual0 = &Qual1;
     strcpy(a->ra->Read0[1], Read2);
     strcpy(a->ra->Qual0[1], Qual2);
-    a->ra->readName = (char*)malloc(2);
-    a->ra->readName[0] = 'a';
-    a->ra->readName[1] = '\0';
+    a->ra->readName = qname;
     a->ra->readLength[0] = read_length;
     a->ra->readLengthOriginal[0] = read_length;
     
