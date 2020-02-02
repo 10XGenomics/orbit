@@ -107,16 +107,6 @@ uint32 Transcriptome::quantAlign (Transcript &aG, Transcript *aTall, vector<uint
                     aTall[nAtr].Chr = tr1;
                     aTall[nAtr].Str = trStr[tr1]==1 ? aG.Str : 1-aG.Str; //TODO strandedness
                     ++nAtr;
-                    if (P.pSolo.strand==-1 || (int32) aTall[nAtr-1].Str == P.pSolo.strand) {//correct strand
-                        readTranscripts.push_back(tr1);
-                        readTrGenes.insert(trGene[tr1]);
-//                         {//find the distance to 3'
-//                             uint64 distTTS=trLen[tr1]-(aTall[nAtr].exons[aTall[nAtr].nExons-1][EX_G] + aTall[nAtr].exons[aTall[nAtr].nExons-1][EX_L]);
-//                             cout <<"\t"<< distTTS;
-//     //                         if (distTTS>100000)
-//     //                             cerr << distTTS <<"\t"<< trLen[tr1] << "\n";
-//                         };                        
-                    };
                 };
         };
     } while (trEmax[tr1]>=aGend && tr1>0);

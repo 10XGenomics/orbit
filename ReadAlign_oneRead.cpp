@@ -76,30 +76,14 @@ int ReadAlign::oneRead() {//process one read: load, map, write
         Qual1[1][Lread-ii-1]=Qual1[0][ii];
     };
 
-    //printf("nicely done\n");
-
-    statsRA.readN++;
-    statsRA.readBases += readLength[0]+readLength[1];
-
     //max number of mismatches allowed for this read
     outFilterMismatchNmaxTotal=min(P.outFilterMismatchNmax, (uint) (P.outFilterMismatchNoverReadLmax*(readLength[0]+readLength[1])));
     //printf("about to map!\n");
     //map the read
     mapOneRead();
     //printf("best %llu\n", trBest->gStart);
-    peOverlapMergeMap();
     multMapSelect();
     mappedFilter();
-
-    if (!peOv.yes) {//if the alignment was not mates merged - otherwise the chimeric detection was already done
-        chimericDetection();
-    };
-
-    if (P.pCh.out.bam && chimRecord) {//chimeric alignment was recorded in main BAM files, and it contains the representative portion, so non-chimeric aligmnent is not output
-        return 0;
-    };
-
-    waspMap();
 
     #ifdef OFF_BEFORE_OUTPUT
         #warning OFF_BEFORE_OUTPUT

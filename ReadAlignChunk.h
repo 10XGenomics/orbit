@@ -4,10 +4,7 @@
 #include "IncludeDefine.h"
 #include "Parameters.h"
 #include "ReadAlign.h"
-#include "OutSJ.h"
 #include "Transcriptome.h"
-#include "BAMoutput.h"
-#include "Quantifications.h"
 
 class ReadAlignChunk {//chunk of reads and alignments
 public:
@@ -18,10 +15,6 @@ public:
 
     char **chunkIn; //space for the chunk of input reads
     char *chunkOutBAM, *chunkOutBAM1;//space for the chunk of output SAM
-    OutSJ *chunkOutSJ, *chunkOutSJ1;
-
-    BAMoutput *chunkOutBAMcoord, *chunkOutBAMunsorted, *chunkOutBAMquant;
-    Quantifications *chunkQuants;
 
     istream** readInStream;
     ostream*  chunkOutBAMstream;

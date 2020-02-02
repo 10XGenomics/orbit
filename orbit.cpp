@@ -2,7 +2,7 @@
 #include "Parameters.h"
 #include "ReadAlign.h"
 #include "Transcriptome.h"
-#include "Variation.h"
+
 #include "orbit.h"
 
 struct StarRef
@@ -17,7 +17,7 @@ struct StarRef
             //pMut->readNmates = 1;
             Genome* gMut = new Genome(*pMut);
             gMut->genomeLoad();
-            gMut->Var = new Variation(*pMut, gMut->chrStart, gMut->chrNameIndex);
+            gMut->Var = NULL; //new Variation(*pMut, gMut->chrStart, gMut->chrNameIndex);
             p = pMut;
             g = gMut;
         }

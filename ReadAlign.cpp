@@ -78,9 +78,6 @@ ReadAlign::ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcripto
     resetN();
     //chim
     chunkOutChimJunction = new fstream;
-    chimDet = new ChimericDetection(P, trAll, nWinTr, Read1, mapGen, chunkOutChimJunction, this);
-    //solo
-    soloRead = new SoloRead (P, iChunk);
 };
 
 void ReadAlign::resetN () {//reset resets the counters to 0 for a new read
