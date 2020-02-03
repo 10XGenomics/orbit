@@ -37,7 +37,7 @@ fn main() {
         .cpp(true)
         .static_flag(true)
         .pic(true)
-        .cpp_set_stdlib(Some(libcxx()))
+        .cpp_link_stdlib(Some(libcxx()))
         .define("COMPILATION_TIME_PLACE", "\"build.rs\"")
         .file("STAR/source/orbit.cpp")
         .file("STAR/source/InOutStreams.cpp")
