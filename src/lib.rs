@@ -178,6 +178,12 @@ pub struct StarAligner {
 
 unsafe impl Send for StarAligner {}
 
+/// A container for the primary and secondary alignments
+pub struct StarAlignment {
+    pub primary: bam::Record,
+    pub secondary: Vec<bam::Record>,
+}
+
 impl StarAligner {
     fn new(reference: Arc<InnerStarReference>) -> StarAligner {
         let aligner = unsafe { bindings::init_aligner_from_ref(reference.as_ref().reference) };
@@ -190,7 +196,7 @@ impl StarAligner {
     }
 
     /// Aligns a given read and produces BAM records
-    pub fn align_read(&mut self, name: &[u8], read: &[u8], qual: &[u8]) -> Vec<bam::Record> {
+    pub fn align_read(&mut self, name: &[u8], read: &[u8], qual: &[u8]) -> StarAlignment {
         align_read_rust(self.aligner, read, qual, &mut self.aln_buf).unwrap();
         self.parse_sam_to_records(name)
     }
@@ -209,21 +215,50 @@ impl StarAligner {
         qual1: &[u8],
         read2: &[u8],
         qual2: &[u8],
-    ) -> (Vec<bam::Record>, Vec<bam::Record>) {
+    ) -> (StarAlignment, StarAlignment) {
         align_read_pair_rust(self.aligner, read1, qual1, read2, qual2, &mut self.aln_buf).unwrap();
-        let full_vec = self.parse_sam_to_records(name);
 
-        // Partition the records into first mate and second mate
-        let mut first_vec: Vec<bam::Record> = Vec::new();
-        let mut second_vec: Vec<bam::Record> = Vec::new();
-        for rec in full_vec {
-            if rec.is_first_in_template() {
-                first_vec.push(rec);
-            } else {
-                second_vec.push(rec);
+        let mut primary1: Option<bam::Record> = None;
+        let mut primary2: Option<bam::Record> = None;
+        let mut secondary1 = Vec::new();
+        let mut secondary2 = Vec::new();
+
+        for slc in self.aln_buf.split(|c| *c == b'\n') {
+            if slc.len() > 0 {
+                self.sam_buf.clear();
+                self.sam_buf.extend_from_slice(name);
+                self.sam_buf.extend_from_slice(slc);
+                let record =
+                    bam::Record::from_sam(&self.reference.as_ref().header_view, &self.sam_buf)
+                        .unwrap();
+                let is_primary = !record.is_secondary();
+                let is_first = record.is_first_in_template();
+                if is_primary && is_first && primary1.is_none() {
+                    let _ = primary1.replace(record);
+                } else if is_primary && !is_first && primary2.is_none() {
+                    let _ = primary2.replace(record);
+                } else if is_first {
+                    secondary1.push(record);
+                } else {
+                    secondary2.push(record);
+                }
             }
         }
-        (first_vec, second_vec)
+
+        // if we don't have primary alignments, panic
+        let primary1 = primary1.unwrap();
+        let primary2 = primary2.unwrap();
+
+        (
+            StarAlignment {
+                primary: primary1,
+                secondary: secondary1,
+            },
+            StarAlignment {
+                primary: primary2,
+                secondary: secondary2,
+            },
+        )
     }
 
     /// Aligns a given read and return the resulting SAM string
@@ -242,8 +277,9 @@ impl StarAligner {
     /// Given a list of BAM records as a SAM-format string in which records are separated by new
     /// lines, add the records to a vector and append the read name to the beginning of them so
     /// that they conform with BAM specifications
-    fn parse_sam_to_records(&mut self, name: &[u8]) -> Vec<bam::Record> {
-        let mut records = Vec::new();
+    fn parse_sam_to_records(&mut self, name: &[u8]) -> StarAlignment {
+        let mut primary: Option<bam::Record> = None;
+        let mut secondary = Vec::new();
         for slc in self.aln_buf.split(|c| *c == b'\n') {
             if slc.len() > 0 {
                 self.sam_buf.clear();
@@ -252,11 +288,18 @@ impl StarAligner {
                 let record =
                     bam::Record::from_sam(&self.reference.as_ref().header_view, &self.sam_buf)
                         .unwrap();
-                records.push(record);
+                if primary.is_none() && !record.is_secondary() {
+                    let _ = primary.replace(record);
+                } else {
+                    secondary.push(record);
+                }
             }
         }
 
-        records
+        // if we're missing a primary alignment, panic
+        let primary = primary.unwrap();
+
+        StarAlignment { primary, secondary }
     }
 }
 
@@ -403,29 +446,32 @@ mod test {
         let reference = StarReference::load(settings).unwrap();
         let mut aligner = reference.get_aligner();
 
-        let recs = aligner.align_read(NAME, ERCC_READ_1, ERCC_QUAL_1);
-        assert_eq!(recs.len(), 1);
-        assert_eq!(recs[0].pos(), 50);
-        assert_eq!(recs[0].tid(), 0);
-        println!("{:?}", recs);
+        let StarAlignment { primary, secondary } =
+            aligner.align_read(NAME, ERCC_READ_1, ERCC_QUAL_1);
+        assert_eq!(secondary.len(), 0);
+        assert_eq!(primary.pos(), 50);
+        assert_eq!(primary.tid(), 0);
+        println!("{:?}", primary);
 
-        let recs = aligner.align_read(NAME, ERCC_READ_2, ERCC_QUAL_2);
-        assert_eq!(recs.len(), 1);
-        assert_eq!(recs[0].tid(), 0);
-        assert_eq!(recs[0].pos(), 500);
-        println!("{:?}", recs);
+        let StarAlignment { primary, secondary } =
+            aligner.align_read(NAME, ERCC_READ_2, ERCC_QUAL_2);
+        assert_eq!(secondary.len(), 0);
+        assert_eq!(primary.tid(), 0);
+        assert_eq!(primary.pos(), 500);
+        println!("{:?}", primary);
 
-        let recs = aligner.align_read(NAME, ERCC_READ_3, ERCC_QUAL_3);
-        assert_eq!(recs.len(), 2);
-        assert_eq!(recs[0].flags(), 0);
-        assert_eq!(recs[0].tid(), 39);
-        assert_eq!(recs[0].pos(), 27);
-        assert_eq!(recs[0].mapq(), 3);
-        assert_eq!(recs[1].flags(), 0x110); // REVERSE,SECONDARY
-        assert_eq!(recs[1].tid(), 72);
-        assert_eq!(recs[1].pos(), 553);
-        assert_eq!(recs[1].mapq(), 3);
-        println!("{:?}", recs);
+        let StarAlignment { primary, secondary } =
+            aligner.align_read(NAME, ERCC_READ_3, ERCC_QUAL_3);
+        assert_eq!(secondary.len(), 1);
+        assert_eq!(primary.flags(), 0);
+        assert_eq!(primary.tid(), 39);
+        assert_eq!(primary.pos(), 27);
+        assert_eq!(primary.mapq(), 3);
+        assert_eq!(secondary[0].flags(), 0x110); // REVERSE,SECONDARY
+        assert_eq!(secondary[0].tid(), 72);
+        assert_eq!(secondary[0].pos(), 553);
+        assert_eq!(secondary[0].mapq(), 3);
+        println!("{:?}, {:?}", primary, secondary);
     }
 
     #[test]
@@ -437,19 +483,21 @@ mod test {
 
         let t1 = std::thread::spawn(move || {
             for _ in 0..100000 {
-                let recs = aligner1.align_read(NAME, ERCC_READ_1, ERCC_QUAL_1);
-                assert_eq!(recs.len(), 1);
-                assert_eq!(recs[0].pos(), 50);
-                assert_eq!(recs[0].tid(), 0);
+                let StarAlignment { primary, secondary } =
+                    aligner1.align_read(NAME, ERCC_READ_1, ERCC_QUAL_1);
+                assert_eq!(secondary.len(), 0);
+                assert_eq!(primary.pos(), 50);
+                assert_eq!(primary.tid(), 0);
             }
         });
 
         let t2 = std::thread::spawn(move || {
             for _ in 0..100000 {
-                let recs = aligner2.align_read(NAME, ERCC_READ_2, ERCC_QUAL_2);
-                assert_eq!(recs.len(), 1);
-                assert_eq!(recs[0].pos(), 500);
-                assert_eq!(recs[0].tid(), 0);
+                let StarAlignment { primary, secondary } =
+                    aligner2.align_read(NAME, ERCC_READ_2, ERCC_QUAL_2);
+                assert_eq!(secondary.len(), 0);
+                assert_eq!(primary.pos(), 500);
+                assert_eq!(primary.tid(), 0);
             }
         });
 
@@ -510,9 +558,9 @@ mod test {
         let read = b"GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC";
         let qual = b"GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG";
         let name = b"gatactaga";
-        let res = aligner.align_read(name, read, qual);
-        assert!(res.len() > 0);
-        assert_eq!(res[0].pos(), 30070473);
+        let StarAlignment { primary, secondary } = aligner.align_read(name, read, qual);
+        assert_eq!(secondary.len(), 0);
+        assert_eq!(primary.pos(), 30070473);
     }
 
     #[test]
@@ -528,9 +576,10 @@ mod test {
         let read = b"GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC";
         let qual = b"GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG";
         let name = b"gatactaga";
-        let res = aligner.align_read(name, read, qual);
-        for record in res.iter() {
-            out.write(&record).unwrap();
+        let StarAlignment { primary, secondary } = aligner.align_read(name, read, qual);
+        out.write(&primary).unwrap();
+        for record in &secondary {
+            out.write(record).unwrap();
         }
         let bam_wrapped = bam::Reader::from_path(&"test/test.bam");
         match bam_wrapped {
@@ -549,6 +598,7 @@ mod test {
             i += 1;
         }
         */
+        std::fs::remove_file(&"test/test.bam").unwrap();
     }
 
     /*
