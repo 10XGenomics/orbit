@@ -165,6 +165,16 @@ impl StarSettings {
             self.args.push(tag);
         }
     }
+
+    /// Provide an estimate of the memory usage (in bytes) of the reference
+    pub fn est_mem(&self) -> Result<usize, Error> {
+        let refpath = Path::new(&self.reference_path);
+        ["Genome", "SA", "SAindex"]
+            .iter()
+            .fold(Ok(0usize), |acc, file| {
+                Ok(acc? + std::fs::metadata(refpath.join(file))?.len() as usize)
+            })
+    }
 }
 
 /// StarAligner aligns single reads or read-pairs to the reference it is initialized with, and returns
