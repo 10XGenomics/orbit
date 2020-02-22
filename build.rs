@@ -20,7 +20,6 @@ fn libcxx() -> &'static str {
 }
 
 fn main() {
-
     cc::Build::new()
         .cpp(true)
         .static_flag(true)

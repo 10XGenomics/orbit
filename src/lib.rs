@@ -181,7 +181,6 @@ unsafe impl Send for StarAligner {}
 
 impl StarAligner {
     fn new(reference: Arc<InnerStarReference>) -> StarAligner {
-
         let aligner = unsafe { bindings::init_aligner_from_ref(reference.as_ref().reference) };
         let header_view = reference.as_ref().header_view.clone();
 
@@ -254,9 +253,7 @@ impl StarAligner {
                 self.sam_buf.clear();
                 self.sam_buf.extend_from_slice(name);
                 self.sam_buf.extend_from_slice(slc);
-                let record =
-                    bam::Record::from_sam(&mut self.header_view, &self.sam_buf)
-                        .unwrap();
+                let record = bam::Record::from_sam(&mut self.header_view, &self.sam_buf).unwrap();
                 records.push(record);
             }
         }
