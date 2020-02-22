@@ -2,7 +2,6 @@
 
 use std::env;
 use std::path::Path;
-use std::process::Command;
 
 fn libcxx() -> &'static str {
     match env::var("CXX") {
