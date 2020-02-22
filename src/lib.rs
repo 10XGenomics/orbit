@@ -174,6 +174,7 @@ pub struct StarAligner {
     reference: Arc<InnerStarReference>,
     sam_buf: Vec<u8>,
     aln_buf: Vec<u8>,
+    header_view: HeaderView,
 }
 
 unsafe impl Send for StarAligner {}
@@ -181,11 +182,14 @@ unsafe impl Send for StarAligner {}
 impl StarAligner {
     fn new(reference: Arc<InnerStarReference>) -> StarAligner {
         let aligner = unsafe { bindings::init_aligner_from_ref(reference.as_ref().reference) };
+        let header_view = reference.as_ref().header_view.clone();
+
         StarAligner {
             aligner,
             reference,
             sam_buf: Vec::new(),
             aln_buf: Vec::new(),
+            header_view,
         }
     }
 
@@ -249,9 +253,7 @@ impl StarAligner {
                 self.sam_buf.clear();
                 self.sam_buf.extend_from_slice(name);
                 self.sam_buf.extend_from_slice(slc);
-                let record =
-                    bam::Record::from_sam(&self.reference.as_ref().header_view, &self.sam_buf)
-                        .unwrap();
+                let record = bam::Record::from_sam(&mut self.header_view, &self.sam_buf).unwrap();
                 records.push(record);
             }
         }
