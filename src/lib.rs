@@ -205,7 +205,6 @@ impl StarAligner {
 
     /// Aligns a given read and produces BAM records
     pub fn align_read(&mut self, name: &[u8], read: &[u8], qual: &[u8]) -> Vec<bam::Record> {
-
         // STAR will throw an error on empty reads - so just construct an empty record.
         if read.len() == 0 {
             // Make an unmapped record and return it
