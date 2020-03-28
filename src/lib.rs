@@ -205,6 +205,16 @@ impl StarAligner {
 
     /// Aligns a given read and produces BAM records
     pub fn align_read(&mut self, name: &[u8], read: &[u8], qual: &[u8]) -> Vec<bam::Record> {
+
+        // STAR will throw an error on empty reads - so just construct an empty record.
+        if read.len() == 0 {
+            // Make an unmapped record and return it
+            let mut rec = bam::Record::new();
+            rec.set(name, None, read, qual);
+            rec.set_unmapped();
+            return vec![rec];
+        }
+
         align_read_rust(self.aligner, read, qual, &mut self.aln_buf).unwrap();
         self.parse_sam_to_records(name)
     }
@@ -437,6 +447,19 @@ mod test {
         assert_eq!(recs[1].tid(), 72);
         assert_eq!(recs[1].pos(), 553);
         assert_eq!(recs[1].mapq(), 3);
+        println!("{:?}", recs);
+    }
+
+    #[test]
+    fn test_ercc_align_zero_len() {
+        let settings = StarSettings::new(ERCC_REF);
+        let reference = StarReference::load(settings).unwrap();
+        let mut aligner = reference.get_aligner();
+
+        let recs = aligner.align_read(NAME, b"", b"");
+        assert_eq!(recs.len(), 1);
+        assert!(recs[0].is_unmapped());
+
         println!("{:?}", recs);
     }
 
