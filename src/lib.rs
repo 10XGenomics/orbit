@@ -461,14 +461,21 @@ mod test {
         assert_eq!(zero_base_recs.len(), 1);
         assert!(zero_base_recs[0].is_unmapped());
 
-        println!("zero: {:?}, flags {:#b}", zero_base_recs, zero_base_recs[0].flags());
-
+        println!(
+            "zero: {:?}, flags {:#b}",
+            zero_base_recs,
+            zero_base_recs[0].flags()
+        );
 
         let one_base_recs = aligner.align_read(NAME, b"G", b"D");
         assert_eq!(one_base_recs.len(), 1);
         assert!(one_base_recs[0].is_unmapped());
 
-        println!("one: {:?}, flags {:#b}", one_base_recs, one_base_recs[0].flags());
+        println!(
+            "one: {:?}, flags {:#b}",
+            one_base_recs,
+            one_base_recs[0].flags()
+        );
 
         assert_eq!(zero_base_recs[0].tid(), one_base_recs[0].tid());
         assert_eq!(zero_base_recs[0].pos(), one_base_recs[0].pos());
