@@ -209,6 +209,8 @@ impl StarAligner {
         if read.len() == 0 {
             // Make an unmapped record and return it
             let mut rec = bam::Record::new();
+            rec.set_tid(-1);
+            rec.set_pos(-1);
             rec.set(name, None, read, qual);
             rec.set_unmapped();
             return vec![rec];
@@ -455,11 +457,22 @@ mod test {
         let reference = StarReference::load(settings).unwrap();
         let mut aligner = reference.get_aligner();
 
-        let recs = aligner.align_read(NAME, b"", b"");
-        assert_eq!(recs.len(), 1);
-        assert!(recs[0].is_unmapped());
+        let zero_base_recs = aligner.align_read(NAME, b"", b"");
+        assert_eq!(zero_base_recs.len(), 1);
+        assert!(zero_base_recs[0].is_unmapped());
 
-        println!("{:?}", recs);
+        println!("zero: {:?}, flags {:#b}", zero_base_recs, zero_base_recs[0].flags());
+
+
+        let one_base_recs = aligner.align_read(NAME, b"G", b"D");
+        assert_eq!(one_base_recs.len(), 1);
+        assert!(one_base_recs[0].is_unmapped());
+
+        println!("one: {:?}, flags {:#b}", one_base_recs, one_base_recs[0].flags());
+
+        assert_eq!(zero_base_recs[0].tid(), one_base_recs[0].tid());
+        assert_eq!(zero_base_recs[0].pos(), one_base_recs[0].pos());
+        assert_eq!(zero_base_recs[0].flags(), one_base_recs[0].flags());
     }
 
     #[test]
