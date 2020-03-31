@@ -211,6 +211,8 @@ impl StarAligner {
             let mut rec = bam::Record::new();
             rec.set_tid(-1);
             rec.set_pos(-1);
+            rec.set_mtid(-1);
+            rec.set_mpos(-1);
             rec.set(name, None, read, qual);
             rec.set_unmapped();
             return vec![rec];
@@ -479,6 +481,8 @@ mod test {
 
         assert_eq!(zero_base_recs[0].tid(), one_base_recs[0].tid());
         assert_eq!(zero_base_recs[0].pos(), one_base_recs[0].pos());
+        assert_eq!(zero_base_recs[0].mpos(), one_base_recs[0].mpos());
+        assert_eq!(zero_base_recs[0].mtid(), one_base_recs[0].mtid());
         assert_eq!(zero_base_recs[0].flags(), one_base_recs[0].flags());
     }
 
