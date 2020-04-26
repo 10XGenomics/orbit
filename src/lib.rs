@@ -14,11 +14,7 @@ use failure::Error;
 use rust_htslib::bam;
 use rust_htslib::bam::header::{Header, HeaderRecord};
 use rust_htslib::bam::HeaderView;
-
-mod bindings;
-
-use bindings::Aligner as BindAligner;
-use bindings::StarRef as BindRef;
+use star_sys::{self as bindings, Aligner as BindAligner, StarRef as BindRef};
 
 pub struct StarReference {
     inner: Arc<InnerStarReference>,
@@ -369,25 +365,29 @@ fn align_read_rust(
 
 fn align_read_pair_rust(
     al: *mut BindAligner,
-    read: &[u8],
-    qual: &[u8],
+    read1: &[u8],
+    qual1: &[u8],
     read2: &[u8],
     qual2: &[u8],
     aln_buf: &mut Vec<u8>,
 ) -> Result<(), Error> {
-    let length = read.len() as c_ulonglong;
-    let c_read = CString::new(read)?;
-    let c_qual = CString::new(qual)?;
-    let read_ptr = c_read.as_ptr() as *mut c_char;
-    let qual_ptr = c_qual.as_ptr() as *mut c_char;
+    let length1 = read1.len() as c_ulonglong;
+    let c_read1 = CString::new(read1)?;
+    let c_qual1 = CString::new(qual1)?;
+    let read_ptr1 = c_read1.as_ptr() as *mut c_char;
+    let qual_ptr1 = c_qual1.as_ptr() as *mut c_char;
 
+    let length2 = read2.len() as c_ulonglong;
     let c_read2 = CString::new(read2)?;
     let c_qual2 = CString::new(qual2)?;
     let read_ptr2 = c_read2.as_ptr() as *mut c_char;
     let qual_ptr2 = c_qual2.as_ptr() as *mut c_char;
 
-    let res: *const c_char =
-        unsafe { bindings::align_read_pair(al, read_ptr, qual_ptr, read_ptr2, qual_ptr2, length) };
+    let res: *const c_char = unsafe {
+        bindings::align_read_pair(
+            al, read_ptr1, qual_ptr1, length1, read_ptr2, qual_ptr2, length2,
+        )
+    };
     if res.is_null() {
         return Err(failure::format_err!("STAR returned null alignment"));
     }
@@ -409,6 +409,7 @@ mod test {
     /// References to some commonly used reference genomes for testing purposes
     pub const DEFAULT_REF_1: &str = "/mnt/opt/refdata_cellranger/mm10-3.0.0/star";
     pub const DEFAULT_REF_2: &str = "/mnt/opt/refdata_cellranger/GRCh38-3.0.0/star";
+    pub const DEFAULT_REF_3: &str = "/mnt/opt/refdata_cellranger/GRCh38-1.2.0/star";
 
     const ERCC_REF: &'static str = "test/ercc92-1.2.0/star/";
 
@@ -527,6 +528,31 @@ mod test {
 
         let res = aligner.align_read_sam(b"name", read, qual);
         assert!(res == "\t0\t6\t30070474\t255\t98M\t*\t0\t0\tGTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC\tGGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG\tNH:i:1\tHI:i:1\tAS:i:96\tnM:i:0\n");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_align_read_pair() {
+        let settings = StarSettings::new(DEFAULT_REF_3);
+        let reference = StarReference::load(settings).unwrap();
+        let mut aligner = reference.get_aligner();
+
+        let read1 = b"GTATAAACAAAAATCCTGTCTCTAAAATGTAACTGATGACTAGCTGACATGCAGCTACAAAGACCTTAGTTCCTTTAAAAACAATATCCAATCAAATCAGAATTGCCCCTCATGCTTCACATAA";
+        let qual1 = b"-FFF8FFFF8FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF8FF8FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
+        let read2 = b"GAGTTGTGTAAAGTGGCCAAACATCAACAACAACAACAAAAAACACAAACAGGAAAGAGCAATTGGGTAAAGCTGTACACTGCTCTTTTAAAATACTATTATGAGATGGACATTTATGTGAAGCATGAGGGGCAATTCTGATTTGATTGG";
+        let qual2 = b"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF-FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF-FFFFFFFFFFFFFFFFFFFFFFFFFF8FFFFFF-FFFFFFF8";
+
+        let (recs1, recs2) = aligner.align_read_pair(b"name", read1, qual1, read2, qual2);
+
+        assert_eq!(recs1.len(), 1);
+        assert_eq!(recs1[0].flags(), 83);
+        assert_eq!(recs1[0].tid(), 0);
+        assert_eq!(recs1[0].pos(), 24647323);
+
+        assert_eq!(recs2.len(), 1);
+        assert_eq!(recs2[0].flags(), 163);
+        assert_eq!(recs2[0].tid(), 0);
+        assert_eq!(recs2[0].pos(), 24647210);
     }
 
     #[test]
