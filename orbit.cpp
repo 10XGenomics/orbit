@@ -103,18 +103,20 @@ const char* align_read(Aligner* a, char *Read1, char *Qual1, unsigned long long 
     return str;
 }
 
-const char* align_read_pair(Aligner* a, char *Read1, char *Qual1, char *Read2, char *Qual2, unsigned long long read_length)
+const char* align_read_pair(Aligner* a, char *Read1, char *Qual1, unsigned long long read_length1, char *Read2, char *Qual2, unsigned long long read_length2)
 {
+    char* reads[2] = {Read1, Read2};
+    char* quals[2] = {Qual1, Qual2};
     static char qname[] = "a";
     a->ra->iRead++;
     a->ra->readNmates = 2;
-    a->ra->Read0 = &Read1;
-    a->ra->Qual0 = &Qual1;
-    strcpy(a->ra->Read0[1], Read2);
-    strcpy(a->ra->Qual0[1], Qual2);
+    a->ra->Read0 = reads;
+    a->ra->Qual0 = quals;
     a->ra->readName = qname;
-    a->ra->readLength[0] = read_length;
-    a->ra->readLengthOriginal[0] = read_length;
+    a->ra->readLength[0] = read_length1;
+    a->ra->readLength[1] = read_length2;
+    a->ra->readLengthOriginal[0] = read_length1;
+    a->ra->readLengthOriginal[1] = read_length2;
     
     int readStatus = a->ra->oneRead();
     a->ra->readName[1] = '\0';
