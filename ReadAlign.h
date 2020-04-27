@@ -20,7 +20,9 @@ class ReadAlign {
         const Genome &mapGen; //mapped-to-genome structure
 
         uint iRead;
-        char **Read1;
+
+        // input data as fastq strings
+        const char *readFastq[2];
 
         istream* readInStream[MAX_N_MATES];fstream chunkOutChimSAM, *chunkOutChimJunction, chunkOutUnmappedReadsStream[MAX_N_MATES], chunkOutFilterBySJoutFiles[MAX_N_MATES];
 
@@ -43,6 +45,7 @@ class ReadAlign {
         uint readNmates;
         char **Read0;
         char **Qual0;
+        char **Read1;
         char **Qual1;
         char **readNameMates;
         char *readName;

@@ -4,7 +4,7 @@
 #include "ReadAlign.h"
 
 ReadAlign::ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcriptome *TrIn, int iChunk)
-                    : mapGen(genomeIn), P(Pin), chunkTr(TrIn)
+                    : mapGen(genomeIn), readFastq{nullptr, nullptr}, P(Pin), chunkTr(TrIn)
 {
     iRead = 0;
     readFilesIndex = 0;
