@@ -6,7 +6,6 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::os::raw::c_char;
 use std::os::raw::c_int;
-use std::os::raw::c_ulonglong;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -180,6 +179,8 @@ pub struct StarAligner {
     reference: Arc<InnerStarReference>,
     sam_buf: Vec<u8>,
     aln_buf: Vec<u8>,
+    fastq1: Vec<u8>,
+    fastq2: Vec<u8>,
     header_view: HeaderView,
 }
 
@@ -195,8 +196,22 @@ impl StarAligner {
             reference,
             sam_buf: Vec::new(),
             aln_buf: Vec::new(),
+            fastq1: Vec::new(),
+            fastq2: Vec::new(),
             header_view,
         }
+    }
+
+    /// Prepare a read and qual for processing by formatting as FASTQ
+    fn prepare_fastq(buf: &mut Vec<u8>, _name: &[u8], read: &[u8], qual: &[u8]) {
+        buf.clear();
+        // for now, we fixup the read name on the backend, avoid the copy for now
+        buf.extend_from_slice(b"@a\n");
+        buf.extend_from_slice(read);
+        buf.extend_from_slice(b"\n+\n");
+        buf.extend_from_slice(qual);
+        buf.push(b'\n');
+        buf.push(b'\0');
     }
 
     /// Aligns a given read and produces BAM records
@@ -214,13 +229,15 @@ impl StarAligner {
             return vec![rec];
         }
 
-        align_read_rust(self.aligner, read, qual, &mut self.aln_buf).unwrap();
+        Self::prepare_fastq(&mut self.fastq1, name, read, qual);
+        align_read_rust(self.aligner, self.fastq1.as_slice(), &mut self.aln_buf).unwrap();
         self.parse_sam_to_records(name)
     }
 
     /// Aligns a given read and return the resulting SAM string
-    pub fn align_read_sam(&mut self, _name: &[u8], read: &[u8], qual: &[u8]) -> String {
-        align_read_rust(self.aligner, read, qual, &mut self.aln_buf).unwrap();
+    pub fn align_read_sam(&mut self, name: &[u8], read: &[u8], qual: &[u8]) -> String {
+        Self::prepare_fastq(&mut self.fastq1, name, read, qual);
+        align_read_rust(self.aligner, self.fastq1.as_slice(), &mut self.aln_buf).unwrap();
         String::from_utf8(self.aln_buf.clone()).unwrap()
     }
 
@@ -233,7 +250,15 @@ impl StarAligner {
         read2: &[u8],
         qual2: &[u8],
     ) -> (Vec<bam::Record>, Vec<bam::Record>) {
-        align_read_pair_rust(self.aligner, read1, qual1, read2, qual2, &mut self.aln_buf).unwrap();
+        Self::prepare_fastq(&mut self.fastq1, name, read1, qual1);
+        Self::prepare_fastq(&mut self.fastq2, name, read2, qual2);
+        align_read_pair_rust(
+            self.aligner,
+            self.fastq1.as_slice(),
+            self.fastq2.as_slice(),
+            &mut self.aln_buf,
+        )
+        .unwrap();
         let full_vec = self.parse_sam_to_records(name);
 
         // Partition the records into first mate and second mate
@@ -252,13 +277,21 @@ impl StarAligner {
     /// Aligns a given read and return the resulting SAM string
     pub fn align_read_pair_sam(
         &mut self,
-        _name: &[u8],
+        name: &[u8],
         read1: &[u8],
         qual1: &[u8],
         read2: &[u8],
         qual2: &[u8],
     ) -> String {
-        align_read_pair_rust(self.aligner, read1, qual1, read2, qual2, &mut self.aln_buf).unwrap();
+        Self::prepare_fastq(&mut self.fastq1, name, read1, qual1);
+        Self::prepare_fastq(&mut self.fastq2, name, read2, qual2);
+        align_read_pair_rust(
+            self.aligner,
+            self.fastq1.as_slice(),
+            self.fastq2.as_slice(),
+            &mut self.aln_buf,
+        )
+        .unwrap();
         String::from_utf8(self.aln_buf.clone()).unwrap()
     }
 
@@ -336,19 +369,9 @@ fn add_ref_to_bam_header(header: &mut Header, seq_name: &str, seq_len: usize) {
 /// more natural rather than the wrappers around C datatypes.  Each function below makes any
 /// necessary conversions to the inputs, calls the library function, and makes any necessary
 /// conversions to the outputs.
-fn align_read_rust(
-    al: *mut BindAligner,
-    read: &[u8],
-    qual: &[u8],
-    aln_buf: &mut Vec<u8>,
-) -> Result<(), Error> {
-    let length = read.len() as c_ulonglong;
-    let c_read = CString::new(read)?;
-    let c_qual = CString::new(qual)?;
-    let read_ptr = c_read.as_ptr() as *mut c_char;
-    let qual_ptr = c_qual.as_ptr() as *mut c_char;
-
-    let res: *const c_char = unsafe { bindings::align_read(al, read_ptr, qual_ptr, length) };
+fn align_read_rust(al: *mut BindAligner, fastq: &[u8], aln_buf: &mut Vec<u8>) -> Result<(), Error> {
+    let fastq = CStr::from_bytes_with_nul(fastq)?;
+    let res: *const c_char = unsafe { bindings::align_read(al, fastq.as_ptr()) };
     if res.is_null() {
         return Err(failure::format_err!("STAR returned null alignment"));
     }
@@ -365,29 +388,14 @@ fn align_read_rust(
 
 fn align_read_pair_rust(
     al: *mut BindAligner,
-    read1: &[u8],
-    qual1: &[u8],
-    read2: &[u8],
-    qual2: &[u8],
+    fastq1: &[u8],
+    fastq2: &[u8],
     aln_buf: &mut Vec<u8>,
 ) -> Result<(), Error> {
-    let length1 = read1.len() as c_ulonglong;
-    let c_read1 = CString::new(read1)?;
-    let c_qual1 = CString::new(qual1)?;
-    let read_ptr1 = c_read1.as_ptr() as *mut c_char;
-    let qual_ptr1 = c_qual1.as_ptr() as *mut c_char;
-
-    let length2 = read2.len() as c_ulonglong;
-    let c_read2 = CString::new(read2)?;
-    let c_qual2 = CString::new(qual2)?;
-    let read_ptr2 = c_read2.as_ptr() as *mut c_char;
-    let qual_ptr2 = c_qual2.as_ptr() as *mut c_char;
-
-    let res: *const c_char = unsafe {
-        bindings::align_read_pair(
-            al, read_ptr1, qual_ptr1, length1, read_ptr2, qual_ptr2, length2,
-        )
-    };
+    let fastq1 = CStr::from_bytes_with_nul(fastq1)?;
+    let fastq2 = CStr::from_bytes_with_nul(fastq2)?;
+    let res: *const c_char =
+        unsafe { bindings::align_read_pair(al, fastq1.as_ptr(), fastq2.as_ptr()) };
     if res.is_null() {
         return Err(failure::format_err!("STAR returned null alignment"));
     }

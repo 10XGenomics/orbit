@@ -16,20 +16,14 @@ pub struct Aligner {
 extern "C" {
     pub fn align_read(
         arg1: *mut Aligner,
-        arg2: *mut ::std::os::raw::c_char,
-        arg3: *mut ::std::os::raw::c_char,
-        arg4: ::std::os::raw::c_ulonglong,
+        arg2: *const ::std::os::raw::c_char,
     ) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
     pub fn align_read_pair(
         arg1: *mut Aligner,
-        arg2: *mut ::std::os::raw::c_char,
-        arg3: *mut ::std::os::raw::c_char,
-        arg4: ::std::os::raw::c_ulonglong,
-        arg5: *mut ::std::os::raw::c_char,
-        arg6: *mut ::std::os::raw::c_char,
-        arg7: ::std::os::raw::c_ulonglong,
+        arg2: *const ::std::os::raw::c_char,
+        arg3: *const ::std::os::raw::c_char,
     ) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
