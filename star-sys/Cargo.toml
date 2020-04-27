@@ -1,0 +1,16 @@
+[package]
+name = "star-sys"
+version = "0.2.0"
+authors = ["mkirsche", "Lance Hepler <lance.hepler@10xgenomics.com>", "Patrick Marks <patrick@10xgenomics.com>"]
+edition = "2018"
+build = "build.rs"
+links = "star"
+
+[lib]
+name = "star_sys"
+
+[dependencies]
+libc = "0.2"
+
+[build-dependencies]
+cc = { version = "1.0", features = ["parallel"] }

@@ -26,9 +26,10 @@ extern "C" {
         arg1: *mut Aligner,
         arg2: *mut ::std::os::raw::c_char,
         arg3: *mut ::std::os::raw::c_char,
-        arg4: *mut ::std::os::raw::c_char,
+        arg4: ::std::os::raw::c_ulonglong,
         arg5: *mut ::std::os::raw::c_char,
-        arg6: ::std::os::raw::c_ulonglong,
+        arg6: *mut ::std::os::raw::c_char,
+        arg7: ::std::os::raw::c_ulonglong,
     ) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
