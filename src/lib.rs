@@ -214,19 +214,23 @@ impl StarAligner {
         buf.push(b'\0');
     }
 
+    fn empty_record(name: &[u8], read: &[u8], qual: &[u8]) -> bam::Record {
+        let mut rec = bam::Record::new();
+        rec.set_tid(-1);
+        rec.set_pos(-1);
+        rec.set_mtid(-1);
+        rec.set_mpos(-1);
+        rec.set(name, None, read, qual);
+        rec.set_unmapped();
+        rec
+    }
+
     /// Aligns a given read and produces BAM records
     pub fn align_read(&mut self, name: &[u8], read: &[u8], qual: &[u8]) -> Vec<bam::Record> {
         // STAR will throw an error on empty reads - so just construct an empty record.
         if read.len() == 0 {
             // Make an unmapped record and return it
-            let mut rec = bam::Record::new();
-            rec.set_tid(-1);
-            rec.set_pos(-1);
-            rec.set_mtid(-1);
-            rec.set_mpos(-1);
-            rec.set(name, None, read, qual);
-            rec.set_unmapped();
-            return vec![rec];
+            return vec![Self::empty_record(name, read, qual)];
         }
 
         Self::prepare_fastq(&mut self.fastq1, name, read, qual);
@@ -250,6 +254,15 @@ impl StarAligner {
         read2: &[u8],
         qual2: &[u8],
     ) -> (Vec<bam::Record>, Vec<bam::Record>) {
+        if read1.len() == 0 {
+            let recs1 = vec![Self::empty_record(name, read1, qual1)];
+            let recs2 = self.align_read(name, read2, qual2);
+            return (recs1, recs2);
+        } else if read2.len() == 0 {
+            let recs1 = self.align_read(name, read1, qual1);
+            let recs2 = vec![Self::empty_record(name, read2, qual2)];
+            return (recs1, recs2);
+        }
         Self::prepare_fastq(&mut self.fastq1, name, read1, qual1);
         Self::prepare_fastq(&mut self.fastq2, name, read2, qual2);
         align_read_pair_rust(
@@ -432,6 +445,26 @@ mod test {
     const ERCC_QUAL_3: &'static [u8] = b"???????????????";
 
     #[test]
+    fn test_empty_tiny_reads() {
+        let settings = StarSettings::new(ERCC_REF);
+        let reference = StarReference::load(settings).unwrap();
+        let mut aligner = reference.get_aligner();
+
+        let recs = aligner.align_read(b"a", b"", b"");
+        println!("{:?}", recs);
+        let recs = aligner.align_read(b"b", b"A", b"?");
+        println!("{:?}", recs);
+        let (recs1, recs2) = aligner.align_read_pair(b"a", b"", b"", b"", b"");
+        println!("{:?}, {:?}", recs1, recs2);
+        let (recs1, recs2) = aligner.align_read_pair(b"b", b"A", b"?", b"", b"");
+        println!("{:?}, {:?}", recs1, recs2);
+        let (recs1, recs2) = aligner.align_read_pair(b"c", b"", b"", b"C", b"?");
+        println!("{:?}, {:?}", recs1, recs2);
+        let (recs1, recs2) = aligner.align_read_pair(b"d", b"A", b"?", b"C", b"?");
+        println!("{:?}, {:?}", recs1, recs2);
+    }
+
+    #[test]
     fn test_ercc_align() {
         let settings = StarSettings::new(ERCC_REF);
         let reference = StarReference::load(settings).unwrap();
@@ -551,6 +584,11 @@ mod test {
         let qual2 = b"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF-FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF-FFFFFFFFFFFFFFFFFFFFFFFFFF8FFFFFF-FFFFFFF8";
 
         let (recs1, recs2) = aligner.align_read_pair(b"name", read1, qual1, read2, qual2);
+
+        /*
+        163	1	24647211	255	150M	=	24647324	237	GAGTTGTGTAAAGTGGCCAAACATCAACAACAACAACAAAAAACACAAACAGGAAAGAGCAATTGGGTAAAGCTGTACACTGCTCTTTTAAAATACTATTATGAGATGGACATTTATGTGAAGCATGAGGGGCAATTCTGATTTGATTGG	FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF-FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF-FFFFFFFFFFFFFFFFFFFFFFFFFF8FFFFFF-FFFFFFF8	NH:i:1	HI:i:1	AS:i:272	nM:i:0
+        83	1	24647324	255	124M	=	24647211	-237	TTATGTGAAGCATGAGGGGCAATTCTGATTTGATTGGATATTGTTTTTAAAGGAACTAAGGTCTTTGTAGCTGCATGTCAGCTAGTCATCAGTTACATTTTAGAGACAGGATTTTTGTTTATAC	FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF8FF8FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF8FFFF8FFF-	NH:i:1	HI:i:1	AS:i:272	nM:i:0
+        */
 
         assert_eq!(recs1.len(), 1);
         assert_eq!(recs1[0].flags(), 83);
