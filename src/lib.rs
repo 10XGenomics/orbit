@@ -105,6 +105,10 @@ pub struct StarSettings {
 /// Max number of multiple alignments for a read that will be output to the SAM/BAM files.
 const DEFAULT_MULTN: isize = -1;
 
+/// Set the --outFilterScoreMin parameter of STAR.
+/// Alignment will be output only if its score is higher than or equal to this value.
+const DEFAULT_OUT_FILTER_SCORE_MIN: isize = 20;
+
 impl StarSettings {
     /// This constructor just sets all of the necessary arguments to their defaults, and the
     /// arguments which can take on different values have separate functions to set them later
@@ -113,6 +117,8 @@ impl StarSettings {
             "STAR".to_string(),
             "--genomeDir".to_string(),
             reference_path.to_string(),
+            "--outFilterScoreMin".to_string(),
+            DEFAULT_OUT_FILTER_SCORE_MIN.to_string(),
             "--outSAMmultNmax".to_string(),
             DEFAULT_MULTN.to_string(),
             "--runThreadN".to_string(),
@@ -444,6 +450,9 @@ mod test {
     const ERCC_READ_3: &'static [u8] = b"AACTTAATGGACGGG";
     const ERCC_QUAL_3: &'static [u8] = b"???????????????";
 
+    const ERCC_READ_4: &'static [u8] = b"AATCCACTCAATAAATCTAAAAAC";
+    const ERCC_QUAL_4: &'static [u8] = b"????????????????????????";
+
     #[test]
     fn test_empty_tiny_reads() {
         let settings = StarSettings::new(ERCC_REF);
@@ -471,28 +480,40 @@ mod test {
         let mut aligner = reference.get_aligner();
 
         let recs = aligner.align_read(NAME, ERCC_READ_1, ERCC_QUAL_1);
-        assert_eq!(recs.len(), 1);
-        assert_eq!(recs[0].pos(), 50);
-        assert_eq!(recs[0].tid(), 0);
         println!("{:?}", recs);
+        assert_eq!(recs.len(), 1);
+        assert_eq!(recs[0].flags(), 0);
+        assert_eq!(recs[0].tid(), 0);
+        assert_eq!(recs[0].pos(), 50);
+        assert_eq!(recs[0].mapq(), 255);
 
         let recs = aligner.align_read(NAME, ERCC_READ_2, ERCC_QUAL_2);
+        println!("{:?}", recs);
         assert_eq!(recs.len(), 1);
+        assert_eq!(recs[0].flags(), 0);
         assert_eq!(recs[0].tid(), 0);
         assert_eq!(recs[0].pos(), 500);
-        println!("{:?}", recs);
+        assert_eq!(recs[0].mapq(), 255);
 
         let recs = aligner.align_read(NAME, ERCC_READ_3, ERCC_QUAL_3);
+        println!("{:?}", recs);
+        assert_eq!(recs.len(), 1);
+        assert_eq!(recs[0].flags(), 4); // UNMAP
+        assert_eq!(recs[0].tid(), -1);
+        assert_eq!(recs[0].pos(), -1);
+        assert_eq!(recs[0].mapq(), 0);
+
+        let recs = aligner.align_read(NAME, ERCC_READ_4, ERCC_QUAL_4);
+        println!("{:?}", recs);
         assert_eq!(recs.len(), 2);
         assert_eq!(recs[0].flags(), 0);
-        assert_eq!(recs[0].tid(), 39);
-        assert_eq!(recs[0].pos(), 27);
+        assert_eq!(recs[0].tid(), 72);
+        assert_eq!(recs[0].pos(), 492);
         assert_eq!(recs[0].mapq(), 3);
-        assert_eq!(recs[1].flags(), 0x110); // REVERSE,SECONDARY
+        assert_eq!(recs[1].flags(), 0x100); // SECONDARY
         assert_eq!(recs[1].tid(), 72);
-        assert_eq!(recs[1].pos(), 553);
+        assert_eq!(recs[1].pos(), 607);
         assert_eq!(recs[1].mapq(), 3);
-        println!("{:?}", recs);
     }
 
     #[test]
