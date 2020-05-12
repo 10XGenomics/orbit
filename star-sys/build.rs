@@ -70,13 +70,12 @@ fn main() {
     cc::Build::new()
         .cpp(true)
         .static_flag(true)
-        .pic(true)
         .cpp_link_stdlib(Some(libcxx()))
         .define("COMPILATION_TIME_PLACE", "\"build.rs\"")
         .files(FILES)
         .flag("-std=c++11")
         .flag("-Wall")
         .flag("-Wextra")
-        .flag("-fPIC")
+        .flag("-Werror")
         .compile("orbit");
 }
