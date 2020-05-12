@@ -17,10 +17,10 @@ extern "C" {
     struct Aligner;
 
     // align_read: align an individual read and get a string of BAM records
-    const char* align_read(struct Aligner*, char*, char*, unsigned long long);
+    const char* align_read(struct Aligner*, const char*);
     
     // align_read_pair: align a pair of reads and get a string of BAM records
-    const char* align_read_pair(struct Aligner*, char*, char*, unsigned long long, char*, char*, unsigned long long);
+    const char* align_read_pair(struct Aligner*, const char*, const char*);
 
     // init_aligner_clone: create an aligner from the same reference as an
     // existing aligner, sharing key structures with it and saving memory in
