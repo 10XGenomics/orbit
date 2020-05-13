@@ -97,13 +97,8 @@ impl StarReference {
 #[derive(Clone)]
 pub struct StarSettings {
     reference_path: String,
-    multn: isize,
     args: Vec<String>,
 }
-
-/// Set the --outSAMmultNmax parameter of STAR.
-/// Max number of multiple alignments for a read that will be output to the SAM/BAM files.
-const DEFAULT_MULTN: isize = -1;
 
 impl StarSettings {
     /// This constructor just sets all of the necessary arguments to their defaults, and the
@@ -113,8 +108,6 @@ impl StarSettings {
             "STAR".to_string(),
             "--genomeDir".to_string(),
             reference_path.to_string(),
-            "--outSAMmultNmax".to_string(),
-            DEFAULT_MULTN.to_string(),
             "--runThreadN".to_string(),
             "1".to_string(),
             "--readNameSeparator".to_string(),
@@ -131,26 +124,14 @@ impl StarSettings {
         ];
         StarSettings {
             reference_path: reference_path.to_string(),
-            multn: DEFAULT_MULTN,
             args: def_args,
         }
     }
 
-    /// Update the array of arguments when the arguments' values have changed
-    fn sync_args(&mut self) {
-        for i in 0..self.args.len() {
-            if self.args[i] == "--genomeDir" {
-                self.args[i + 1] = self.reference_path.clone();
-            } else if self.args[i] == "--outSAMmultNmax" {
-                self.args[i + 1] = self.multn.to_string();
-            }
-        }
-    }
-
-    /// Set the max number of multimapping reads
-    pub fn set_multn(&mut self, new_multn: isize) {
-        self.multn = new_multn;
-        self.sync_args();
+    /// Add an argument to pass to STAR.
+    pub fn arg(mut self, arg: &str) -> Self {
+        self.args.push(arg.to_string());
+        self
     }
 
     /// Add the given read group strings to the arguments
@@ -444,6 +425,9 @@ mod test {
     const ERCC_READ_3: &'static [u8] = b"AACTTAATGGACGGG";
     const ERCC_QUAL_3: &'static [u8] = b"???????????????";
 
+    const ERCC_READ_4: &'static [u8] = b"AATCCACTCAATAAATCTAAAAAC";
+    const ERCC_QUAL_4: &'static [u8] = b"????????????????????????";
+
     #[test]
     fn test_empty_tiny_reads() {
         let settings = StarSettings::new(ERCC_REF);
@@ -492,6 +476,33 @@ mod test {
         assert_eq!(recs[1].tid(), 72);
         assert_eq!(recs[1].pos(), 553);
         assert_eq!(recs[1].mapq(), 3);
+        println!("{:?}", recs);
+
+        let recs = aligner.align_read(NAME, ERCC_READ_4, ERCC_QUAL_4);
+        println!("{:?}", recs);
+        assert_eq!(recs.len(), 2);
+        assert_eq!(recs[0].flags(), 0);
+        assert_eq!(recs[0].tid(), 72);
+        assert_eq!(recs[0].pos(), 492);
+        assert_eq!(recs[0].mapq(), 3);
+        assert_eq!(recs[1].flags(), 0x100); // SECONDARY
+        assert_eq!(recs[1].tid(), 72);
+        assert_eq!(recs[1].pos(), 607);
+        assert_eq!(recs[1].mapq(), 3);
+    }
+
+    #[test]
+    fn test_transcriptome_min_score() {
+        let settings = StarSettings::new(ERCC_REF).arg("--outFilterScoreMin=20");
+        let reference = StarReference::load(settings).unwrap();
+        let mut aligner = reference.get_aligner();
+
+        let recs = aligner.align_read(NAME, ERCC_READ_3, ERCC_QUAL_3);
+        assert_eq!(recs.len(), 1);
+        assert_eq!(recs[0].flags(), 4); // UNMAP
+        assert_eq!(recs[0].tid(), -1);
+        assert_eq!(recs[0].pos(), -1);
+        assert_eq!(recs[0].mapq(), 0);
         println!("{:?}", recs);
     }
 
