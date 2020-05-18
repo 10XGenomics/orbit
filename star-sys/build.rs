@@ -69,7 +69,6 @@ fn main() {
     }
     cc::Build::new()
         .cpp(true)
-        .static_flag(true)
         .cpp_link_stdlib(Some(libcxx()))
         .define("COMPILATION_TIME_PLACE", "\"build.rs\"")
         .files(FILES)
