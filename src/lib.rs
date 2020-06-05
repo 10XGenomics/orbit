@@ -167,6 +167,11 @@ pub struct StarAligner {
 
 unsafe impl Send for StarAligner {}
 
+enum AlignedRecords<'a> {
+    Read1(&'a mut Vec<bam::Record>),
+    Read2(&'a mut Vec<bam::Record>),
+}
+
 impl StarAligner {
     fn new(reference: Arc<InnerStarReference>) -> StarAligner {
         let aligner = unsafe { bindings::init_aligner_from_ref(reference.as_ref().reference) };
@@ -206,6 +211,46 @@ impl StarAligner {
         rec
     }
 
+    fn empty_records<'a>(
+        name: &[u8],
+        read: &[u8],
+        qual: &[u8],
+        alns: AlignedRecords<'a>,
+    ) -> Vec<bam::Record> {
+        use AlignedRecords::*;
+        let (alns, aln_is_first_in_template) = match alns {
+            Read1(alns) => (alns, true),
+            Read2(alns) => (alns, false),
+        };
+        let mut recs = vec![];
+        recs.resize_with(alns.len(), || Self::empty_record(name, read, qual));
+        for (aln, rec) in alns.iter_mut().zip(&mut recs) {
+            aln.set_paired();
+            rec.set_paired();
+            if aln.is_secondary() {
+                rec.set_secondary();
+            }
+            if aln.is_supplementary() {
+                rec.set_supplementary();
+            }
+            if aln_is_first_in_template {
+                // aln is first in template and rec is an empty unmapped record
+                aln.set_first_in_template();
+                rec.set_last_in_template();
+                aln.set_mate_unmapped();
+            } else {
+                // rec is first in template (and an empty unmapped record),
+                //   and aln is last in template
+                rec.set_first_in_template();
+                aln.set_last_in_template();
+                if aln.is_unmapped() {
+                    rec.set_mate_unmapped();
+                }
+            }
+        }
+        recs
+    }
+
     /// Aligns a given read and produces BAM records
     pub fn align_read(&mut self, name: &[u8], read: &[u8], qual: &[u8]) -> Vec<bam::Record> {
         // STAR will throw an error on empty reads - so just construct an empty record.
@@ -235,13 +280,14 @@ impl StarAligner {
         read2: &[u8],
         qual2: &[u8],
     ) -> (Vec<bam::Record>, Vec<bam::Record>) {
+        use AlignedRecords::*;
         if read1.len() == 0 {
-            let recs1 = vec![Self::empty_record(name, read1, qual1)];
-            let recs2 = self.align_read(name, read2, qual2);
+            let mut recs2 = self.align_read(name, read2, qual2);
+            let recs1 = Self::empty_records(name, read1, qual1, Read2(&mut recs2));
             return (recs1, recs2);
         } else if read2.len() == 0 {
-            let recs1 = self.align_read(name, read1, qual1);
-            let recs2 = vec![Self::empty_record(name, read2, qual2)];
+            let mut recs1 = self.align_read(name, read1, qual1);
+            let recs2 = Self::empty_records(name, read2, qual2, Read1(&mut recs1));
             return (recs1, recs2);
         }
         Self::prepare_fastq(&mut self.fastq1, name, read1, qual1);
