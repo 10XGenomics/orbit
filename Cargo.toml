@@ -9,8 +9,7 @@ edition = "2018"
 [dependencies]
 failure = "*"
 libc = "0.2"
-# rust-htslib = { version = "0.26", default-features = false }
-rust-htslib = { version = "0.26", default-features = false, features = ["serde"] }
+rust-htslib = { version = ">=0.31", default-features = false, features = ["serde"] }
 star-sys = { version = "0.2", path = "star-sys" }
 
 [profile.release]
