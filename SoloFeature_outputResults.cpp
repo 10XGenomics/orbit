@@ -10,7 +10,7 @@ void SoloFeature::outputResults()
         //output genes
         ofstream &geneStr=ofstrOpen(P.outFileNamePrefix+pSolo.outFileNames[0]+pSolo.outFileNames[1],ERROR_OUT, P);
         for (uint32 ii=0; ii<Trans.nGe; ii++)
-            geneStr << Trans.geID[ii] <<"\t"<< (Trans.geName[ii].empty() ? Trans.geID[ii] : Trans.geName[ii]) << '\n';
+            geneStr << Trans.geID[ii] <<"\t"<< Trans.geID[ii] << '\n';
         geneStr.close();
     };
     if (featureType==0 || !pSolo.featureYes[0]) {

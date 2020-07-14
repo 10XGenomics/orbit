@@ -14,21 +14,25 @@ Transcriptome::Transcriptome (Parameters &Pin) : P(Pin){
     ifstream &geStream = ifstrOpen(trInfoDir+"/geneInfo.tab", ERROR_OUT, "SOLUTION: utilize --sjdbGTFfile /path/to/annotations.gtf option at the genome generation step or mapping step", P);
     geStream >> nGe;
     geID.resize(nGe);
-    geName.resize(nGe);
-    geBiotype.resize(nGe);
     geStream.ignore(999,'\n');
+    string line1;
     for (uint ii=0;ii<nGe;ii++) {
-        string line1;
+        line1.clear();
         getline(geStream,line1);
         istringstream stream1(line1);
-        stream1 >> geID[ii] >> geName[ii] >> geBiotype[ii];
+        stream1 >> geID[ii];
     };
     geStream.close();
 
     if ( P.quant.trSAM.yes ) {//load exon-transcript structures
         //load tr and ex info
         ifstream & trinfo = ifstrOpen(trInfoDir+"/transcriptInfo.tab", ERROR_OUT, "SOLUTION: utilize --sjdbGTFfile /path/to/annotantions.gtf option at the genome generation step or mapping step",P);
-        trinfo >> nTr;
+        {
+            line1.clear();
+            getline(trinfo,line1);
+            istringstream stream1(line1);
+            stream1 >> nTr;
+        }
         trS=new uint [nTr];
         trE=new uint [nTr];
         trEmax=new uint [nTr];
@@ -36,10 +40,12 @@ Transcriptome::Transcriptome (Parameters &Pin) : P(Pin){
         trExN=new uint16 [nTr];
         trStr=new uint8 [nTr];
         trID.resize(nTr);
-        trGene=new uint32 [nTr];
         for (uint32 itr=0; itr<nTr; itr++) {
             uint16 str1;
-            trinfo >> trID[itr] >> trS[itr] >> trE[itr] >> trEmax[itr] >> str1 >> trExN[itr] >> trExI[itr] >> trGene[itr];
+            line1.clear();
+            getline(trinfo,line1);
+            istringstream stream1(line1);
+            stream1 >> trID[itr] >> trS[itr] >> trE[itr] >> trEmax[itr] >> str1 >> trExN[itr] >> trExI[itr];
             trStr[itr]=str1;
 
             if (!trinfo.good()) {

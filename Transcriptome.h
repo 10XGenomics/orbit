@@ -12,7 +12,7 @@ class Transcriptome {
 public:
     string trInfoDir;
 
-    vector <string> trID, geID, geName, geBiotype; //transcript/gene IDs
+    vector <string> trID, geID; //transcript/gene IDs
     uint32 nTr, nGe; //number of transcript/genes
 
     uint *trS, *trE, *trEmax; //transcripts start,end,end-max
@@ -23,7 +23,6 @@ public:
     uint8 *trStr; //transcript strand
     uint32 *exSE; //exons start/end
     uint32 *exLenCum; //cumulative length of previous exons
-    uint32 *trGene; //transcript to gene correspondence
 
     struct {//exon-gene structure for GeneCounts
        uint64 nEx;//number of exons/genes

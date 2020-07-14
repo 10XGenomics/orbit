@@ -140,7 +140,7 @@ void Genome::genomeLoad(){//allocate and load Genome
         errOut << "EXITING because of FATAL ERROR: read no value for the versionGenome parameter from genomeParameters.txt file\n";
         errOut << "SOLUTION: please re-generate genome from scratch with the latest version of STAR\n";
         exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_GENOME_FILES, P);
-    } else if (P1.versionGenome == P.versionGenome || (!P.quant.yes && P1.versionGenome == "20201")) {//
+    } else if (P1.versionGenome == P.versionGenome || P1.versionGenome == "20201") {//
         P.inOut->logMain << "Genome version is compatible with current STAR\n";
     } else {
         ostringstream errOut;
