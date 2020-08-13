@@ -16,7 +16,6 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
     memset(winBin[0],255,sizeof(winBin[0][0])*P.winBinN);
     memset(winBin[1],255,sizeof(winBin[0][0])*P.winBinN);
 
-
 //     for (uint iWin=0;iWin<nWall;iWin++) {//zero out winBin
 //         if (WC[iWin][WC_gStart]<=WC[iWin][WC_gEnd]) {//otherwise the window is dead
 //             memset(&(winBin[WC[iWin][WC_Str]][WC[iWin][WC_gStart]]),255,sizeof(winBin[0][0])*(WC[iWin][WC_gEnd]-WC[iWin][WC_gStart]+1));
@@ -52,6 +51,7 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
             for (uint iSA=PC[iP][PC_SAstart]; iSA<=PC[iP][PC_SAend]; iSA++) {//scan through all alignments of this piece
                 // going through ordered positions in the suffix array from PC_SAstart to PC_SAend
                 uint a1 = mapGen.SA[iSA];
+                //printf("a1 %llu\n", a1);
                 uint aStr = a1 >> mapGen.GstrandBit;
                 a1 &= mapGen.GstrandMask; //remove strand bit
 
@@ -64,11 +64,11 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
                     aStr=0;
                     a1 = mapGen.nGenome - (aLength+a1);
                 };
-
                 //final strand
                 if (revertStrand) { //modified strand according to user input CHECK!!!!
                     aStr=1-aStr;
                 };
+
 
                 if (a1>=mapGen.sjGstart) {//this is sj align
                     uint a1D, aLengthD, a1A, aLengthA, sj1;
@@ -92,6 +92,7 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
             }; //for (uint iSA=PC[iP][PC_SAstart]; iSA<=PC[iP][PC_SAend]; iSA++) //scan through all alignments of this piece
         };//if (PC[iP][PC_Nrep]<=P.winAnchorMultimapNmax) //proceed if anchor
     };//for (uint iP=0; iP<nP; iP++) //scan through all anchor pieces, create alignment windows
+
 
 
     for (uint iWin=0;iWin<nW;iWin++) {//extend windows with flanks
@@ -139,6 +140,7 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
             nWAP[ii]=0;
         };
 
+
         for (uint iSA=PC[iP][PC_SAstart]; iSA<=PC[iP][PC_SAend]; iSA++) {//scan through all alignments
 
             uint a1 = mapGen.SA[iSA];
@@ -179,6 +181,7 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
                     assignAlignToWindow(a1, aLength, aStr, aNrep, aFrag, aRstart, aAnchor, -1);
               };
         };
+
 
 //         for (uint ii=0;ii<nW;ii++) {//check of some pieces created too many aligns in some windows, and remove those from WA (ie shift nWA indices
 //             if (nWAP[ii]>P.seedNoneLociPerWindow) nWA[ii] -= nWAP[ii];
@@ -266,6 +269,7 @@ std::time(&timeStart);
     uint iW1=0;//index of non-empty windows
     uint trNtotal=0; //total number of recorded transcripts
 
+
     for (uint iW=0; iW<nW; iW++) {//transcripts for all windows
 
         if (nWA[iW]==0) continue; //the window does not contain any aligns because it was merged with other windows
@@ -285,13 +289,14 @@ std::time(&timeStart);
         trA.Str = WC[iW][WC_Str];
         trA.roStr = revertStrand ? 1-trA.Str : trA.Str; //original strand of the read
         trA.maxScore=0;
-
+        //printf("something something trAll %llu\n", trNtotal);
         trAll[iW1]=trArrayPointer+trNtotal;
         if (trNtotal+P.alignTranscriptsPerWindowNmax >= P.alignTranscriptsPerReadNmax) {
             P.inOut->logMain << "WARNING: not enough space allocated for transcript. Did not process all windows for read "<< readName+1 <<endl;
             P.inOut->logMain <<"   SOLUTION: increase alignTranscriptsPerReadNmax and re-run\n" << flush;
             break;
         };
+        //printf("trA %llu\n", trA.Chr);
         *(trAll[iW1][0])=trA;
         nWinTr[iW1]=0; //initialize number of transcripts per window
 
@@ -320,7 +325,6 @@ std::time(&timeStart);
     #else
         stitchWindowAligns(0, nWA[iW], 0, WAincl, 0, 0, trA, Lread, WA[iW], R[trA.roStr==0 ? 0:2], mapGen, P, trAll[iW1], nWinTr+iW1, this);
     #endif
-
         if (nWinTr[iW1]==0) {
             continue;
         };
@@ -328,7 +332,7 @@ std::time(&timeStart);
         if (trAll[iW1][0]->maxScore > trBest->maxScore || (trAll[iW1][0]->maxScore == trBest->maxScore && trAll[iW1][0]->gLength < trBest->gLength ) ) {
             trBest=trAll[iW1][0];
         };
-
+        //printf("why not add here %llu\n", nWinTr[iW1]);
         trNtotal += nWinTr[iW1];
         iW1++;
     };

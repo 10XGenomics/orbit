@@ -71,9 +71,6 @@ uint insertSeqSA(PackedArray & SA, PackedArray & SA1, PackedArray & SAi, char * 
 
     uint64* indArray=new uint64[nG1*2*2+2];// for each base, 1st number - insertion place in SA, 2nd number - index, *2 for reverse compl
 
-
-    #pragma omp parallel num_threads(P.runThreadN)
-    #pragma omp for schedule (dynamic,1000)
     for (uint ii=0; ii<2*nG1; ii++) {//find insertion points for each of the sequences
 
         if (seq1[0][ii]>3)

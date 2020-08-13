@@ -25,7 +25,7 @@ public:
 
     string cbSeq, umiSeq, cbQual, umiQual;
 
-    SoloReadFeature (int32 feTy, Parameters &Pin, int iChunk);
+    SoloReadFeature (int32 feTy, const Parameters &Pin, int iChunk);
     void record(SoloReadBarcode &soloBar, uint nTr, set<uint32> &readGene, set<uint32> &readGeneFull, Transcript *alignOut);
     void addCounts(const SoloReadFeature &soloCBin);
     void addStats(const SoloReadFeature &soloCBin);
@@ -35,8 +35,8 @@ public:
 private:
     const int32 featureType;
 
-    Parameters &P;
-    ParametersSolo &pSolo;
+    const Parameters &P;
+    const ParametersSolo &pSolo;
 };
 
 #endif

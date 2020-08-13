@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include "IncludeDefine.h"
 #include "Parameters.h"
 #include "ErrorWarning.h"
@@ -7,8 +8,6 @@
 #include "stringSubstituteAll.h"
 #include SAMTOOLS_BGZF_H
 #include "GlobalVariables.h"
-#include "signalFromBAM.h"
-#include "bamRemoveDuplicates.h"
 
 //for mkfifo
 #include <sys/stat.h>
@@ -56,15 +55,9 @@ Parameters::Parameters() {//initalize parameters info
     parArray.push_back(new ParameterInfoScalar <uint> (-1, -1, "readMapNumber", &readMapNumber));
     parArray.push_back(new ParameterInfoVector <string> (-1, -1, "readNameSeparator", &readNameSeparator));
     //parArray.push_back(new ParameterInfoScalar <string> (-1, -1, "readStrand", &pReads.strandString));
-
-
-    //input from BAM
     parArray.push_back(new ParameterInfoScalar <string> (-1, -1, "inputBAMfile", &inputBAMfile));
-
-    //BAM processing
     parArray.push_back(new ParameterInfoScalar <string> (-1, -1, "bamRemoveDuplicatesType", &removeDuplicates.mode));
     parArray.push_back(new ParameterInfoScalar <uint>   (-1, -1, "bamRemoveDuplicatesMate2basesN", &removeDuplicates.mate2basesN));
-
     //limits
     parArray.push_back(new ParameterInfoScalar <uint>   (-1, -1, "limitGenomeGenerateRAM", &limitGenomeGenerateRAM));
     parArray.push_back(new ParameterInfoScalar <uint>   (-1, -1, "limitIObufferSize", &limitIObufferSize));
@@ -271,11 +264,22 @@ Parameters::Parameters() {//initalize parameters info
 
 };
 
+Parameters::~Parameters() {
+    // TODO cleanup sjNovel*? clip3pAdapterSeqNum?
+    for (auto *p : parArray) {
+        if (p != nullptr) {
+            delete p;
+        }
+    }
+    if (inOut != nullptr) {
+        delete inOut;
+    }
+}
+
 
 void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters: default, from files, from command line
 
 ///////// Default parameters
-
     #include "parametersDefault.xxd"
     string parString( (const char*) parametersDefault,parametersDefault_len);
     stringstream parStream (parString);
@@ -298,7 +302,6 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
         commandLine += string(argIn[0]);
         for (int iarg=1; iarg<argInN; iarg++) {
             string oneArg=string(argIn[iarg]);
-
             if (oneArg=="--version") {//print version and exit
                 std::cout << STAR_VERSION <<std::endl;
                 exit(0);
@@ -326,7 +329,6 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
         istringstream parStreamCommandLine(commandLineFile);
         scanAllLines(parStreamCommandLine, 1, 2); //read only initial Command Line parameters
     };
-
 //     need to be careful since runMode and pGe.gDir are not Command-Line-Initial
 //     if (runMode=="genomeGenerate" && outFileNamePrefix=="./") {// for genome generation, output into pGe.gDir
 //         outFileNamePrefix=pGe.gDir;
@@ -458,23 +460,23 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
         errOut << "SOLUTION: use one of the allowed values of --runDirPerm : 'User_RWX' or 'All_RWX' \n";
         exitWithError(errOut.str(),std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
     };
-
+    /*
     if (outTmpDir=="-") {
         outFileTmp=outFileNamePrefix +"_STARtmp/";
         sysRemoveDir (outFileTmp);
     } else {
         outFileTmp=outTmpDir + "/";
     };
-
+    */
+    /*
     if (mkdir (outFileTmp.c_str(),runDirPerm)!=0) {
         ostringstream errOut;
         errOut <<"EXITING because of fatal ERROR: could not make temporary directory: "<< outFileTmp<<"\n";
         errOut <<"SOLUTION: (i) please check the path and writing permissions \n (ii) if you specified --outTmpDir, and this directory exists - please remove it before running STAR\n"<<flush;
         exitWithError(errOut.str(), std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
     };
-
-    //threaded or not
-    g_threadChunks.threadBool=(runThreadN>1);
+    */
+    //g_threadChunks.threadBool=(runThreadN>1);
 
     //wigOut parameters
     if (outWigType.at(0)=="None") {
@@ -539,40 +541,12 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
     {
         removeDuplicates.yes=true;
         removeDuplicates.markMulti=false;
-    } else if (removeDuplicates.mode!="-")
-    {
-            ostringstream errOut;
-            errOut << "EXITING because of fatal PARAMETERS error: unrecognized option in of --bamRemoveDuplicatesType="<<removeDuplicates.mode<<"\n";
-            errOut << "SOLUTION: use allowed option: - or UniqueIdentical or UniqueIdenticalNotMulti";
-            exitWithError(errOut.str(),std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
     };
 
     if (runMode=="alignReads") {
         inOut->logProgress.open((outFileNamePrefix + "Log.progress.out").c_str());
-    } else if (runMode=="inputAlignmentsFromBAM") {
-        //at the moment, only wiggle output is implemented
-        if (outWigFlags.yes) {
-            *inOut->logStdOut << timeMonthDayTime() << " ..... reading from BAM, output wiggle\n" <<flush;
-            inOut->logMain << timeMonthDayTime()    << " ..... reading from BAM, output wiggle\n" <<flush;
-            string wigOutFileNamePrefix=outFileNamePrefix + "Signal";
-            signalFromBAM(inputBAMfile, wigOutFileNamePrefix, *this);
-            *inOut->logStdOut << timeMonthDayTime() << " ..... done\n" <<flush;
-            inOut->logMain << timeMonthDayTime()    << " ..... done\n" <<flush;
-        } else if (removeDuplicates.mode!="-") {
-            *inOut->logStdOut << timeMonthDayTime() << " ..... reading from BAM, remove duplicates, output BAM\n" <<flush;
-            inOut->logMain << timeMonthDayTime()    << " ..... reading from BAM, remove duplicates, output BAM\n" <<flush;
-            bamRemoveDuplicates(inputBAMfile, (outFileNamePrefix+"Processed.out.bam").c_str(), *this);
-            *inOut->logStdOut << timeMonthDayTime() << " ..... done\n" <<flush;
-            inOut->logMain << timeMonthDayTime()    << " ..... done\n" <<flush;
-        } else {
-            ostringstream errOut;
-            errOut <<"EXITING because of fatal INPUT ERROR: at the moment --runMode inputFromBAM only works with --outWigType bedGraph OR --bamRemoveDuplicatesType Identical"<<"\n";
-            exitWithError(errOut.str(), std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
-        };
-        sysRemoveDir (outFileTmp);
-        exit(0);
-    };
-
+    } 
+    
     outSAMbool=false;
     outBAMunsorted=false;
     outBAMcoord=false;
@@ -603,7 +577,8 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
                 } else {
                     outBAMfileUnsortedName=outFileNamePrefix + "Aligned.out.bam";
                 };
-                inOut->outBAMfileUnsorted = bgzf_open(outBAMfileUnsortedName.c_str(),("w"+to_string((long long) outBAMcompression)).c_str());
+                throw std::runtime_error("Unimplemented!");
+                //inOut->outBAMfileUnsorted = bgzf_open(outBAMfileUnsortedName.c_str(),("w"+to_string((long long) outBAMcompression)).c_str());
             };
             if (outBAMcoord) {
                 if (outStd=="BAM_SortedByCoordinate") {
@@ -611,7 +586,8 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
                 } else {
                     outBAMfileCoordName=outFileNamePrefix + "Aligned.sortedByCoord.out.bam";
                 };
-                inOut->outBAMfileCoord = bgzf_open(outBAMfileCoordName.c_str(),("w"+to_string((long long) outBAMcompression)).c_str());
+                throw std::runtime_error("Unimplemented!");
+                //inOut->outBAMfileCoord = bgzf_open(outBAMfileCoordName.c_str(),("w"+to_string((long long) outBAMcompression)).c_str());
                 if (outBAMsortingThreadN==0) {
                     outBAMsortingThreadNactual=min(6, runThreadN);
                 } else {
@@ -651,7 +627,6 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
 
     if (!outBAMcoord && outWigFlags.yes && runMode=="alignReads") {
         ostringstream errOut;
-        errOut <<"EXITING because of fatal PARAMETER error: generating signal with --outWigType requires sorted BAM\n";
         errOut <<"SOLUTION: re-run STAR with with --outSAMtype BAM SortedByCoordinate, or, id you also need unsroted BAM, with --outSAMtype BAM SortedByCoordinate Unsorted\n";
         exitWithError(errOut.str(), std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
     };
@@ -838,6 +813,7 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
             errOut << "SOLUTION: re-run STAR with --genomeLoad NoSharedMemory ; this is the only option compatible with --twopassMode Basic .\n";
             exitWithError(errOut.str(),std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
         };
+        /*
         twoPass.yes=true;
         twoPass.dir=outFileNamePrefix+"_STARpass1/";
         sysRemoveDir (twoPass.dir);
@@ -847,12 +823,13 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
             errOut <<"SOLUTION: please check the path and writing permissions \n";
             exitWithError(errOut.str(), std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
         };
+        */
     };
 
     // openReadFiles depends on twoPass for reading SAM header
     if (runMode=="alignReads" && pGe.gLoad!="Remove" && pGe.gLoad!="LoadAndExit") {//open reads files to check if they are present
-        openReadsFiles();
-
+        //openReadsFiles();
+        readNmates = 2;
         //check sizes of the mate files, if not the same, assume mates are not the same length
         if (readNmates==1) {
             readMatesEqualLengths=true;
@@ -910,8 +887,8 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
         errOut <<"SOLUTION: re-run STAR with larger --limitIObufferSize or smaller --limitOutSJcollapsed\n";
         exitWithError(errOut.str(), std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
     };
-    chunkInSizeBytesArray=(uint) int((limitIObufferSize-limitOutSJcollapsed*Junction::dataSize)*BUFFER_InSizeFraction)/2;
-    chunkOutBAMsizeBytes= (uint) int((1.0/BUFFER_InSizeFraction-1.0)*chunkInSizeBytesArray*2.0);
+    chunkInSizeBytesArray=(uint) ((int64_t)((limitIObufferSize-limitOutSJcollapsed*Junction::dataSize)*BUFFER_InSizeFraction)/2);
+    chunkOutBAMsizeBytes= (uint) ((int64_t)((1.0/BUFFER_InSizeFraction-1.0)*chunkInSizeBytesArray*2.0));
     chunkInSizeBytes=chunkInSizeBytesArray-2*(DEF_readSeqLengthMax+1)-2*DEF_readNameLengthMax;//to prevent overflow
 
     //basic trimming
@@ -992,7 +969,8 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
                     } else {
                         outQuantBAMfileName=outFileNamePrefix + "Aligned.toTranscriptome.out.bam";
                     };
-                    inOut->outQuantBAMfile=bgzf_open(outQuantBAMfileName.c_str(),("w"+to_string((long long) quant.trSAM.bamCompression)).c_str());
+                    throw std::runtime_error("Unimplemented!");
+                    //inOut->outQuantBAMfile=bgzf_open(outQuantBAMfileName.c_str(),("w"+to_string((long long) quant.trSAM.bamCompression)).c_str());
                 };
                 if (quant.trSAM.ban=="IndelSoftclipSingleend") {
                     quant.trSAM.indel=false;
@@ -1287,6 +1265,7 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
             errOut << "SOLUTION: specify pGe.sjdbOverhang>0, ideally readmateLength-1";
             exitWithError(errOut.str(),std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
         };
+        /*
         sjdbInsert.outDir=outFileNamePrefix+"_STARgenome/";
         sysRemoveDir (sjdbInsert.outDir);
         if (mkdir (sjdbInsert.outDir.c_str(),runDirPerm)!=0) {
@@ -1295,6 +1274,7 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
             errOut <<"SOLUTION: please check the path and writing permissions \n";
             exitWithError(errOut.str(), std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
         };
+        */
     };
 
     if (outBAMcoord && limitBAMsortRAM==0) {//check limitBAMsortRAM
@@ -1405,6 +1385,8 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
 
     ////////////////////////////////////////////////
     inOut->logMain << "Finished loading and checking parameters\n" <<flush;
+
+
 };
 
 
@@ -1429,7 +1411,6 @@ int Parameters::scanOneLine (string &lineIn, int inputLevel, int inputLevelReque
     string parIn("");
     lineInStream >> parIn;
     if (parIn=="" || parIn.substr(0,2)=="//" || parIn.substr(0,1)=="#") return 0; //this is a comment
-
     uint iPar;
     for (iPar=0; iPar<parArray.size(); iPar++) {
         if (parIn==parArray[iPar]->nameString) {//
@@ -1451,7 +1432,6 @@ int Parameters::scanOneLine (string &lineIn, int inputLevel, int inputLevelReque
     };
 
     lineInStream.str(lineIn); lineInStream.clear(); lineInStream >> parIn; //get the correct state of stream, past reading parIn
-
     if (iPar==parArray.size()) {//string is not identified
         ostringstream errOut;
         errOut << "EXITING: FATAL INPUT ERROR: unrecognized parameter name \""<< parIn << "\" in input \"" << parameterInputName.at(inputLevel) <<"\"\n";

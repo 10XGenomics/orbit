@@ -65,6 +65,7 @@ void ReadAlign::assignAlignToWindow(uint a1, uint aLength, uint aStr, uint aNrep
         };
     };
 
+
     if (nWA[iW]==P.seedPerWindowNmax) {//too many aligns per window,  re-calcualte min-length, remove the shortest one,
 
         WALrec[iW]=Lread+1;

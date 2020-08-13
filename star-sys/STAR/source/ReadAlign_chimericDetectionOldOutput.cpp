@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include "ReadAlign.h"
 #include "BAMfunctions.h"
 
@@ -6,6 +7,8 @@ void ReadAlign::chimericDetectionOldOutput() {
     if (!chimRecord) {
         return;
     };
+
+    throw std::runtime_error("Unimplemented!");
 
     chimN=2; //this  is hard-coded for now
     //re-calculate the score for chimeric transcripts
@@ -93,10 +96,10 @@ void ReadAlign::chimericDetectionOldOutput() {
             };
             if (tagI>=0) {
                 bam1_t *b;
-                b=bam_init1();
+                //b=bam_init1();
                 bam_read1_fromArray(outBAMoneAlign[tagI], b);
-                uint8_t* auxp=bam_aux_get(b,"NM");
-                uint32_t auxv=bam_aux2i(auxp);
+                uint8_t* auxp=NULL;//bam_aux_get(b,"NM");
+                uint32_t auxv= 0;//bam_aux2i(auxp);
                 string tagSA1="SAZ"+mapGen.chrName[b->core.tid]+','+to_string((uint)b->core.pos+1) +',' + ( (b->core.flag&0x10)==0 ? '+':'-') + \
                         ',' + bam_cigarString(b) + ',' + to_string((uint)b->core.qual) + ',' + to_string((uint)auxv) + ';' ;
 

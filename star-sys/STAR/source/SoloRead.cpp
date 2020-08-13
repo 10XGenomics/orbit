@@ -1,6 +1,6 @@
 #include "SoloRead.h"
 
-SoloRead::SoloRead(Parameters &Pin, int32 iChunkIn) :  iChunk(iChunkIn), P(Pin), pSolo(P.pSolo)
+SoloRead::SoloRead(const Parameters &Pin, int32 iChunkIn) :  iChunk(iChunkIn), P(Pin), pSolo(P.pSolo)
 {
     readBar = new SoloReadBarcode(P);
     

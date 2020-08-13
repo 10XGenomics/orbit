@@ -1,157 +1,85 @@
 # user may define these whole flags
-# LDFLAGS
 # CPPFLAGS
 # CXXFLAGS
-# CFLAGS
+UNAME := $(shell uname)
 
 # or these user-set flags that will be added to standard flags
-LDFLAGSextra ?=
 CXXFLAGSextra ?=
 
 # user may define the compiler
-CXX ?= g++
+CXX ?= 
 
 # pre-defined flags
-LDFLAGS_shared := -pthread -Lhtslib -Bstatic -lhts -Bdynamic -lz
-LDFLAGS_static := -static -static-libgcc -pthread -Lhtslib -lhts -lz 
-LDFLAGS_Mac :=-pthread -lz htslib/libhts.a
-LDFLAGS_Mac_static :=-pthread -lz -static-libgcc htslib/libhts.a
-LDFLAGS_gdb := $(LDFLAGS_shared)
 
-COMPTIMEPLACE := -D'COMPILATION_TIME_PLACE="$(shell echo `date` $(HOSTNAME):`pwd`)"'
+COMPTIMEPLACE := -D'COMPILATION_TIME_PLACE="source/Makefile"'
 
-CXXFLAGS_common := -pipe -std=c++11 -Wall -Wextra -fopenmp $(COMPTIMEPLACE)
-CXXFLAGS_main := -O3 $(CXXFLAGS_common)
+ifeq ($(UNAME), Darwin)
+	CXXFLAGS_extra := -D'COMPILE_FOR_MAC'
+else
+	CXXFLAGS_extra :=
+endif
+CXXFLAGS_common := -pipe -std=c++11 -Wall -Wextra -Werror -fPIC $(CXXFLAGS_extra) $(COMPTIMEPLACE)
+
+CXXFLAGS_main := -O3 -g $(CXXFLAGS_common)
 CXXFLAGS_gdb :=  -O0 -g $(CXXFLAGS_common)
-
-CFLAGS := -O3 -pipe -Wall -Wextra $(CFLAGS)
 
 
 ##########################################################################################################
 
-OBJECTS = ParametersChimeric_initialize.o ParametersSolo.o SoloRead.o SoloRead_record.o \
-	SoloReadBarcode.o SoloReadBarcode_getCBandUMI.o \
-	SoloReadFeature.o SoloReadFeature_record.o SoloReadFeature_inputRecords.o \
-	Solo.o SoloFeature.o SoloFeature_collapseUMI.o SoloFeature_outputResults.o SoloFeature_processRecords.o\
-	ReadAlign_outputAlignments.o  \
-	ReadAlign.o STAR.o \
-	SharedMemory.o PackedArray.o SuffixArrayFuns.o Parameters.o InOutStreams.o SequenceFuns.o Genome.o Stats.o \
-	Transcript.o Transcript_alignScore.o Transcript_generateCigarP.o Chain.o \
-	Transcript_variationAdjust.o Variation.o ReadAlign_waspMap.o \
-	ReadAlign_storeAligns.o ReadAlign_stitchPieces.o ReadAlign_multMapSelect.o ReadAlign_mapOneRead.o readLoad.o \
-	ReadAlignChunk.o ReadAlignChunk_processChunks.o ReadAlignChunk_mapChunk.o \
-	OutSJ.o outputSJ.o blocksOverlap.o ThreadControl.o sysRemoveDir.o \
-	ReadAlign_maxMappableLength2strands.o binarySearch2.o\
-	ReadAlign_outputTranscriptSAM.o ReadAlign_outputTranscriptSJ.o ReadAlign_outputTranscriptCIGARp.o ReadAlign_calcCIGAR.cpp \
-	ReadAlign_createExtendWindowsWithAlign.o ReadAlign_assignAlignToWindow.o ReadAlign_oneRead.o \
-	ReadAlign_stitchWindowSeeds.o \
-	ReadAlign_peOverlapMergeMap.o ReadAlign_mappedFilter.o \
-	ReadAlign_chimericDetection.o ReadAlign_chimericDetectionOld.o ReadAlign_chimericDetectionOldOutput.o\
-	ChimericDetection.o ChimericDetection_chimericDetectionMult.o ReadAlign_chimericDetectionPEmerged.o \
-	ChimericSegment.cpp ChimericAlign.cpp ChimericAlign_chimericJunctionOutput.o ChimericAlign_chimericStitching.o \
-	stitchWindowAligns.o extendAlign.o stitchAlignToTranscript.o alignSmithWaterman.o \
-	Genome_genomeGenerate.o genomeParametersWrite.o genomeScanFastaFiles.o genomeSAindex.o \
-	Genome_insertSequences.o insertSeqSA.o funCompareUintAndSuffixes.o funCompareUintAndSuffixesMemcmp.o \
-	TimeFunctions.o ErrorWarning.o loadGTF.o streamFuns.o stringSubstituteAll.o \
-	Transcriptome.o Transcriptome_quantAlign.o Transcriptome_geneFullAlignOverlap.o \
-	ReadAlign_quantTranscriptome.o Quantifications.o Transcriptome_geneCountsAddAlign.o \
-	sjdbLoadFromFiles.o sjdbLoadFromStream.o sjdbPrepare.o sjdbBuildIndex.o sjdbInsertJunctions.o mapThreadsSpawn.o \
-	Parameters_openReadsFiles.cpp Parameters_closeReadsFiles.cpp Parameters_readSAMheader.o \
-	bam_cat.o serviceFuns.o GlobalVariables.cpp \
-	BAMoutput.o BAMfunctions.o ReadAlign_alignBAM.o BAMbinSortByCoordinate.o signalFromBAM.o bamRemoveDuplicates.o BAMbinSortUnmapped.o 
-
-SOURCES := $(wildcard *.cpp) $(wildcard *.c)
-
+OBJECTS = orbit.o \
+    InOutStreams.o \
+    Parameters.o \
+    ParametersSolo.o \
+    ParametersChimeric_initialize.o \
+    PackedArray.o \
+    SequenceFuns.o \
+    Genome.o \
+    Genome_insertSequences.o \
+    Genome_genomeGenerate.o \
+    streamFuns.o \
+    genomeScanFastaFiles.o \
+    TimeFunctions.o \
+    insertSeqSA.o \
+    ReadAlign.o \
+    Transcript.o \
+    Transcriptome_quantAlign.o \
+    funCompareUintAndSuffixesMemcmp.o \
+    genomeSAindex.o \
+    ReadAlign_outputAlignments.o \
+    ReadAlign_outputTranscriptSAM.o \
+    ReadAlign_quantTranscriptome.o \
+    ReadAlign_calcCIGAR.o \
+    ReadAlign_storeAligns.o \
+    SuffixArrayFuns.o \
+    ReadAlign_oneRead.o \
+    ReadAlign_mapOneRead.o \
+    ReadAlign_stitchPieces.o \
+    ReadAlign_mappedFilter.o \
+    ReadAlign_maxMappableLength2strands.o \
+    ReadAlign_assignAlignToWindow.o \
+    ReadAlign_createExtendWindowsWithAlign.o \
+    ReadAlign_multMapSelect.o \
+    readLoad.o \
+    stitchWindowAligns.o \
+    extendAlign.o \
+    binarySearch2.o \
+    blocksOverlap.o \
+    stitchAlignToTranscript.o \
+    ErrorWarning.o
 
 %.o : %.cpp
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $<
 
-%.o : %.c
-	$(CXX) -c $(CPPFLAGS) $(CFLAGS) $<
+all: liborbit.a
 
-all: STAR
-
-.PHONY: clean
 clean:
-	rm -f *.o STAR STARstatic STARlong Depend.list
-
-.PHONY: CLEAN
-CLEAN:
-	rm -f *.o STAR Depend.list
-	$(MAKE) -C htslib clean
-
-.PHONY: cleanRelease
-cleanRelease:
-	rm -f *.o Depend.list
-	$(MAKE) -C htslib clean
-
-ifneq ($(MAKECMDGOALS),clean)
-ifneq ($(MAKECMDGOALS),cleanRelease)
-ifneq ($(MAKECMDGOALS),CLEAN)
-ifneq ($(MAKECMDGOALS),STARforMac)
-ifneq ($(MAKECMDGOALS),STARforMacGDB)
-Depend.list: $(SOURCES) parametersDefault.xxd htslib
-	echo $(SOURCES)
-	'rm' -f ./Depend.list
-	$(CXX) $(CXXFLAGS_common) -MM $^ >> Depend.list
-include Depend.list
-endif
-endif
-endif
-endif
-endif
-
-htslib : htslib/libhts.a
-
-htslib/libhts.a :
-	$(MAKE) -C htslib lib-static
+	rm -f *.o *.a
 
 parametersDefault.xxd: parametersDefault
 	xxd -i parametersDefault > parametersDefault.xxd
 
-STAR : CXXFLAGS := $(CXXFLAGSextra) $(CXXFLAGS_main) $(CXXFLAGS)
-STAR : LDFLAGS := $(LDFLAGSextra) $(LDFLAGS_shared) $(LDFLAGS)
-STAR : Depend.list parametersDefault.xxd $(OBJECTS)
-	$(CXX) -o STAR $(CXXFLAGS) $(OBJECTS) $(LDFLAGS)
-
-POSIXSHARED : CXXFLAGS := $(CXXFLAGSextra) $(CXXFLAGS_main) -DPOSIX_SHARED_MEM $(CXXFLAGS)
-POSIXSHARED : LDFLAGS := $(LDFLAGSextra) $(LDFLAGS_shared) $(LDFLAGS)
-POSIXSHARED : Depend.list parametersDefault.xxd $(OBJECTS)
-	$(CXX) -o STAR $(CXXFLAGS) $(OBJECTS) $(LDFLAGS)
-
-STARstatic : CXXFLAGS := $(CXXFLAGSextra) $(CXXFLAGS_main) $(CXXFLAGS)
-STARstatic : LDFLAGS := $(LDFLAGSextra) $(LDFLAGS_static) $(LDFLAGS)
-STARstatic : Depend.list parametersDefault.xxd $(OBJECTS)
-	$(CXX) -o STAR $(CXXFLAGS) $(OBJECTS) $(LDFLAGS)
-
-STARlong : CXXFLAGS := $(CXXFLAGSextra) $(CXXFLAGS_main) -D'COMPILE_FOR_LONG_READS' $(CXXFLAGS)
-STARlong : LDFLAGS := $(LDFLAGSextra) $(LDFLAGS_shared) $(LDFLAGS)
-STARlong : Depend.list parametersDefault.xxd $(OBJECTS)
-	$(CXX) -o STARlong $(CXXFLAGS) $(OBJECTS) $(LDFLAGS)
-
-STARlongStatic : CXXFLAGS := $(CXXFLAGSextra) $(CXXFLAGS_main) -D'COMPILE_FOR_LONG_READS' $(CXXFLAGS)
-STARlongStatic : LDFLAGS := $(LDFLAGSextra) $(LDFLAGS_static) $(LDFLAGS)
-STARlongStatic : Depend.list parametersDefault.xxd $(OBJECTS)
-	$(CXX) -o STARlong $(CXXFLAGS) $(OBJECTS) $(LDFLAGS)
-
-gdb : CXXFLAGS := $(CXXFLAGSextra) $(CXXFLAGS_gdb) $(CXXFLAGS)
-gdb : LDFLAGS := $(LDFLAGSextra) $(LDFLAGS_gdb) $(LDFLAGS)
-gdb : Depend.list parametersDefault.xxd $(OBJECTS)
-	$(CXX) -o STAR $(CXXFLAGS) $(OBJECTS) $(LDFLAGS)
-
-gdb-long : CXXFLAGS := $(CXXFLAGSextra) $(CXXFLAGS_gdb) -D'COMPILE_FOR_LONG_READS' $(CXXFLAGS)
-gdb-long : LDFLAGS := $(LDFLAGSextra) $(LDFLAGS_gdb) $(LDFLAGS)
-gdb-long : Depend.list parametersDefault.xxd $(OBJECTS)
-	$(CXX) -o STARlong $(CXXFLAGS) $(OBJECTS) $(LDFLAGS)
-
-STARforMacStatic : CXXFLAGS := $(CXXFLAGSextra) $(CXXFLAGS_main) -D'COMPILE_FOR_MAC' $(CXXFLAGS)
-STARforMacStatic : LDFLAGS := $(LDFLAGSextra) $(LDFLAGS_Mac_static) $(LDFLAGS)
-STARforMacStatic : Depend.list parametersDefault.xxd $(OBJECTS)
-	$(CXX) -o STAR $(CXXFLAGS) $(OBJECTS) $(LDFLAGS)
-
-STARlongForMacStatic : CXXFLAGS := -D'COMPILE_FOR_LONG_READS' $(CXXFLAGSextra) $(CXXFLAGS_main) -D'COMPILE_FOR_MAC' $(CXXFLAGS)
-STARlongForMacStatic : LDFLAGS := $(LDFLAGSextra) $(LDFLAGS_Mac_static) $(LDFLAGS)
-STARlongForMacStatic : Depend.list parametersDefault.xxd $(OBJECTS)
-	$(CXX) -o STARlong $(CXXFLAGS) $(OBJECTS) $(LDFLAGS)
+liborbit.a : CXXFLAGS := $(CXXFLAGSextra) $(CXXFLAGS_main) $(CXXFLAGS)
+liborbit.a : $(OBJECTS)
+	ar -csru $@ $(OBJECTS)
 
 

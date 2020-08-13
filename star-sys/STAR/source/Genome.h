@@ -4,7 +4,6 @@
 #include "IncludeDefine.h"
 #include "Parameters.h"
 #include "PackedArray.h"
-#include "SharedMemory.h"
 #include "Variation.h"
 
 class Genome {
@@ -45,10 +44,8 @@ class Genome {
         uint genomeInsertL; //total length of the sequence to be inserted on the fly
         uint genomeInsertChrIndFirst; //index of the first inserted chromosome
 
-        SharedMemory * sharedMemory;
-
         Genome (Parameters &Pin );
-        //~Genome();
+        ~Genome();
 
         void freeMemory();
         void genomeLoad();
@@ -65,7 +62,5 @@ class Genome {
         char *shmStart;
         char *G1; //pointer -200 of G
         uint OpenStream(string name, ifstream & stream, uint size);
-        void HandleSharedMemoryException(const SharedMemoryException & exc, uint64 shmSize);
-
 };
 #endif

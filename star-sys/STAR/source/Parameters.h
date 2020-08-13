@@ -327,6 +327,7 @@ class Parameters {
     uint Lread;
 
     Parameters();
+    ~Parameters();
     int readParsFromFile(ifstream*, ofstream*, int); //read parameters from one file
     int readPars(); // read parameters from all files
     int scanOneLine (string &lineIn, int inputLevel, int inputLevelRequested);

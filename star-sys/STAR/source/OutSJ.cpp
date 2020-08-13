@@ -1,13 +1,16 @@
 #include "OutSJ.h"
 #include "ErrorWarning.h"
 
-OutSJ::OutSJ (uint nSJmax, Parameters &Pin, Genome &genomeIn) : oneSJ(genomeIn), P(Pin), mapGen(genomeIn)  {//do I need P?
+OutSJ::OutSJ (uint nSJmax, const Parameters &Pin, const Genome &genomeIn) : oneSJ(genomeIn), P(Pin), mapGen(genomeIn)  {//do I need P?
 
     data = new char [oneSJ.dataSize*nSJmax]; //allocate big array of SJ loci and properties
     memset(data,0,oneSJ.dataSize*nSJmax);
     N=0;//initialize the counter
 };
 
+OutSJ::~OutSJ() {
+    delete[] data;
+}
 
 int compareSJ(const void* i1, const void* i2) {//compare SJs from the data structure
     uint s1=*( (uint*)i1 );
@@ -56,7 +59,7 @@ void OutSJ::collapseSJ() {//collapse junctions. Simple version now: re-sort ever
     N=isj1+1;
 };
 
-Junction::Junction(Genome &genomeIn) : mapGen(genomeIn) {
+Junction::Junction(const Genome &genomeIn) : mapGen(genomeIn) {
 };
 
 //////////////////////////////////////////////////// oneJunctionWrite
@@ -80,7 +83,7 @@ void Junction::outputStream(ostream &outStream) {
             <<"\t"<< *overhangLeft << endl;
 };
 
-void Junction::collapseOneSJ(char* isj1P, char* isjP, Parameters& P) {//collapse isj junction into isj1: increase counts in isj1. choose max overhangs, motif, annot
+void Junction::collapseOneSJ(char* isj1P, char* isjP, const Parameters& P) {//collapse isj junction into isj1: increase counts in isj1. choose max overhangs, motif, annot
     *(uint32*)(isj1P+countUniqueP)   += *(uint32*)(isjP+countUniqueP);
     *(uint32*)(isj1P+countMultipleP) += *(uint32*)(isjP+countMultipleP);
 

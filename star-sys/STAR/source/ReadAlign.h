@@ -5,13 +5,7 @@
 #include "Parameters.h"
 #include "Transcript.h"
 #include "Genome.h"
-#include "Stats.h"
-#include "OutSJ.h"
 #include "Transcriptome.h"
-#include "BAMoutput.h"
-#include "Quantifications.h"
-#include "ChimericDetection.h"
-#include "SoloRead.h"
 
 #include <time.h>
 #include <random>
@@ -19,21 +13,19 @@
 class ReadAlign {
     public:
          //methods
-        ReadAlign (Parameters& Pin, Genome &genomeIn, Transcriptome *TrIn, int iChunk);//allocate arrays
+        ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcriptome *TrIn, int iChunk);//allocate arrays
         int oneRead();
 
         //vars
-        Genome &mapGen; //mapped-to-genome structure
+        const Genome &mapGen; //mapped-to-genome structure
 
         uint iRead;
-        char **Read1;
 
-        Stats statsRA; //mapping statistics
+        // input data as fastq strings
+        const char *readFastq[2];
 
-        istream* readInStream[MAX_N_MATES];
-        BAMoutput *outBAMcoord, *outBAMunsorted, *outBAMquant;//sorted by coordinate, unsorted, transcriptomic BAM structure
-        fstream chunkOutChimSAM, *chunkOutChimJunction, chunkOutUnmappedReadsStream[MAX_N_MATES], chunkOutFilterBySJoutFiles[MAX_N_MATES];
-        OutSJ *chunkOutSJ, *chunkOutSJ1;
+        istream* readInStream[MAX_N_MATES];fstream chunkOutChimSAM, *chunkOutChimJunction, chunkOutUnmappedReadsStream[MAX_N_MATES], chunkOutFilterBySJoutFiles[MAX_N_MATES];
+
 
         ostream* outSAMstream;
         uint outBAMbytes; //number of bytes output to SAM/BAM with oneRead
@@ -50,12 +42,19 @@ class ReadAlign {
 
         ReadAlign *peMergeRA; //ReadAlign for merged PE mates
 
-        ChimericDetection *chimDet;
-
-        SoloRead *soloRead; //counts reads per CB per and outputs CB/UMI/gene into file, per thread
-
+        uint readNmates;
+        char **Read0;
+        char **Qual0;
+        char **Read1;
+        char **Qual1;
+        char **readNameMates;
+        char *readName;
+        void multMapSelect();
+        int mapOneRead();
+        const char* outputAlignments();
+        void resetN();
     private:
-        Parameters& P; //pointer to the parameters, will be initialized on construction
+        const Parameters& P; //pointer to the parameters, will be initialized on construction
 
         //quantification
         Transcriptome *chunkTr;
@@ -96,13 +95,13 @@ class ReadAlign {
         vector<string>readNameExtra;
 
         char dummyChar[4096];
-        char** Read0;
-        char** Qual0;
-        char** readNameMates;
-        char* readName;
-        char** Qual1; //modified QSs for scoring
+        //char** Read0;
+        //char** Qual0;
+        //char** readNameMates;
+        //char* readName;
+        //char** Qual1; //modified QSs for scoring
 
-        uint readNmates;
+        //uint readNmates;
         //split
         uint** splitR;
         uint Nsplit;
@@ -155,9 +154,9 @@ class ReadAlign {
             uint mateStart[2];//mates starts in the merged read
         } peOv;//PE  mates overlap/merge/remap structure
 
-        void resetN();//resets the counters to 0
-        void multMapSelect();
-        int mapOneRead();
+        //void resetN();//resets the counters to 0
+        //void multMapSelect();
+        //int mapOneRead();
         uint maxMappableLength2strands(uint pieceStart, uint pieceLength, uint iDir, uint iSA1, uint iSA2, uint& maxL, uint iFrag);
         void storeAligns (uint iDir, uint Shift, uint Nrep, uint L, uint indStartEnd[2], uint iFrag);
 
@@ -166,7 +165,6 @@ class ReadAlign {
         int alignBAM(Transcript const &trOut, uint nTrOut, uint iTrOut, uint trChrStart, uint mateChr, uint mateStart, char mateStrand, int unmapType, bool *mateMapped, vector<int> outSAMattrOrder, char** outBAMarray, uint* outBAMarrayN);
         void samAttrNM_MD (Transcript const &trOut, uint iEx1, uint iEx2, uint &tagNM, string &tagMD);
 
-        void outputTranscriptSJ(Transcript const &trOut, uint nTrOut, OutSJ *outStream, uint sjReadStartN );
         string outputTranscriptCIGARp(Transcript const &trOut);
         int createExtendWindowsWithAlign(uint a1, uint aStr); //extends and windows with one alignment
         void assignAlignToWindow(uint a1, uint aLength, uint aStr, uint aNrep, uint aFrag, uint aRstart,bool aAnchor, uint sjA); //assigns one alignment to a window
@@ -179,7 +177,7 @@ class ReadAlign {
         void chimericDetectionPEmerged(ReadAlign &seRa);
 //         void chimericDetectionPEmergedTrim();
 
-        void outputAlignments();
+        //string outputAlignments();
         void calcCIGAR(Transcript const &trOut, uint nMates, uint iExMate, uint leftMate);
 
         void stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R);//stitches all seeds in one window: iW
@@ -188,7 +186,6 @@ class ReadAlign {
         uint quantTranscriptome (Transcriptome *Tr, uint nAlignG, Transcript **alignG, Transcript *alignT, vector<uint32> &readTranscripts, set<uint32> &readTrGenes);
 
         void copyRead(ReadAlign&);
-        void waspMap();
         void peOverlapMergeMap();
         void peMergeMates();
         void peOverlapSEtoPE(ReadAlign &seRA);

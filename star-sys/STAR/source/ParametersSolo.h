@@ -37,6 +37,6 @@ public:
 
     void initialize(Parameters *pPin);
 private:
-    Parameters *pP;
+    const Parameters *pP;
 };
 #endif

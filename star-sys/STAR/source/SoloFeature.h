@@ -27,7 +27,7 @@ public:
 
     array<vector<uint64>,2> sjAll;
 
-    SoloFeature(int feTy, Parameters &Pin, Transcriptome &inTrans);
+    SoloFeature(int feTy, const Parameters &Pin, Transcriptome &inTrans);
     void processRecords(ReadAlignChunk **RAchunk);
     void collapseUMI(uint32 *rGU, uint32 rN, uint32 &nGenes, uint32 &nUtot, uint32 *umiArray);
     void outputResults();
@@ -35,8 +35,8 @@ public:
 private:
     const int32 featureType;
 
-    Parameters &P;
-    ParametersSolo &pSolo;
+    const Parameters &P;
+    const ParametersSolo &pSolo;
     Transcriptome &Trans;
 
     static const uint32 umiArrayStride=3;

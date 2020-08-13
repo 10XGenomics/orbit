@@ -24,13 +24,13 @@ public:
 
     const static uint dataSize=overhangRightP+sizeof(uint16);
 
-    Junction(Genome &genomeIn);
+    Junction(const Genome &genomeIn);
     void junctionPointer(char* sjPoint, uint isj);
     void outputStream(ostream &outStream);
-    void collapseOneSJ(char* isj1P, char* isjP, Parameters& P);
+    void collapseOneSJ(char* isj1P, char* isjP, const Parameters& P);
 
 private:
-    Genome &mapGen;
+    const Genome &mapGen;
 };
 
 class OutSJ {
@@ -41,13 +41,14 @@ public:
     uint N; //number of junctions stored
     Junction oneSJ;
 
-    OutSJ(uint nSJmax, Parameters &Pin, Genome &genomeIn);
+    OutSJ(uint nSJmax, const Parameters &Pin, const Genome &genomeIn);
+    ~OutSJ();
     void collapseSJ();//collapse the junctions in data
 //     int compareSJ(void* i1, void* i2);
 
 private:
-    Parameters &P;
-    Genome &mapGen;
+    const Parameters &P;
+    const Genome &mapGen;
 };
 
 int compareSJ(const void* i1, const void* i2); //external functions

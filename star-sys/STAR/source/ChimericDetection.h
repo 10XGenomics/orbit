@@ -11,12 +11,12 @@ class ReadAlign;
 
 class ChimericDetection {
     private:
-        Parameters &P;
+        const Parameters &P;
         ReadAlign *RA;
         Transcript ***trAll;
         uint nW, *nWinTr;
         char** Read1;
-        Genome &outGen;
+        const Genome &outGen;
         uint *readLength;
 
     public:
@@ -25,8 +25,9 @@ class ChimericDetection {
         bool chimRecord;
         int chimScoreBest;
 
-        ChimericDetection(Parameters &Pin, Transcript ***trAll, uint *nWinTr, char** Read1in, Genome &genomeIn, fstream *ostreamChimJunctionIn, ReadAlign *RA);
+        ChimericDetection(const Parameters &Pin, Transcript ***trAll, uint *nWinTr, char** Read1in, const Genome &genomeIn, fstream *ostreamChimJunctionIn, ReadAlign *RA);
         bool chimericDetectionMult(uint nWin, uint *readLengthIn, int maxNonChimAlignScore, bool PEmerged_flag);
+        bool chimericDetectionMult(uint nWin, uint *readLengthIn);
         fstream *ostreamChimJunction;
 };
 

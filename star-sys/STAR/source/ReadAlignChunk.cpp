@@ -1,6 +1,12 @@
+#include <iostream>
+#include <strstream>
+
 #include "ReadAlignChunk.h"
 #include <pthread.h>
 #include "ErrorWarning.h"
+
+using std::strstreambuf;
+using std::istream;
 
 ReadAlignChunk::ReadAlignChunk(Parameters& Pin, Genome &genomeIn, Transcriptome *TrIn, int iChunk) : P(Pin), mapGen(genomeIn) {//initialize chunk
 
@@ -18,13 +24,13 @@ ReadAlignChunk::ReadAlignChunk(Parameters& Pin, Genome &genomeIn, Transcriptome 
     RA->iRead=0;
 
     chunkIn=new char* [P.readNmates];
-    readInStream=new istringstream* [P.readNmates];
+    readInStream=new istream* [P.readNmates];
 //     readInStream=new istringstream* [P.readNmates];
     for (uint ii=0;ii<P.readNmates;ii++) {
        chunkIn[ii]=new char[P.chunkInSizeBytesArray];//reserve more space to finish loading one read
        memset(chunkIn[ii],'\n',P.chunkInSizeBytesArray);
-       readInStream[ii] = new istringstream;
-       readInStream[ii]->rdbuf()->pubsetbuf(chunkIn[ii],P.chunkInSizeBytesArray);
+       strstreambuf *buf = new strstreambuf(chunkIn[ii],P.chunkInSizeBytesArray);
+       readInStream[ii] = new istream(buf);
        RA->readInStream[ii]=readInStream[ii];
     };
 
@@ -32,58 +38,10 @@ ReadAlignChunk::ReadAlignChunk(Parameters& Pin, Genome &genomeIn, Transcriptome 
     if (P.outSAMbool) {
         chunkOutBAM=new char [P.chunkOutBAMsizeBytes];
         RA->outBAMarray=chunkOutBAM;
-        chunkOutBAMstream=new ostringstream;
-        chunkOutBAMstream->rdbuf()->pubsetbuf(chunkOutBAM,P.chunkOutBAMsizeBytes);
+        strstreambuf *buf = new strstreambuf(chunkOutBAM,P.chunkOutBAMsizeBytes,chunkOutBAM);
+        chunkOutBAMstream=new ostream(buf);
         RA->outSAMstream=chunkOutBAMstream;
-        RA->outSAMstream->seekp(0,ios::beg);
         chunkOutBAMtotal=0;
-    };
-
-    if (P.outBAMunsorted) {
-        chunkOutBAMunsorted = new BAMoutput (P.inOut->outBAMfileUnsorted, P);
-        RA->outBAMunsorted = chunkOutBAMunsorted;
-    } else {
-        chunkOutBAMunsorted=NULL;
-        RA->outBAMunsorted=NULL;
-    };
-
-    if (P.outBAMcoord) {
-        chunkOutBAMcoord = new BAMoutput (iChunk, P.outBAMsortTmpDir, P);
-        RA->outBAMcoord = chunkOutBAMcoord;
-    } else {
-        chunkOutBAMcoord=NULL;
-        RA->outBAMcoord=NULL;
-    };
-
-    if ( P.quant.trSAM.bamYes ) {
-        chunkOutBAMquant = new BAMoutput (P.inOut->outQuantBAMfile,P);
-        RA->outBAMquant = chunkOutBAMquant;
-    } else {
-        chunkOutBAMquant=NULL;
-        RA->outBAMquant=NULL;
-    };
-
-    chunkOutSJ=new OutSJ (P.limitOutSJcollapsed, P, mapGen);
-    chunkOutSJ1=new OutSJ (P.limitOutSJcollapsed, P, mapGen);
-
-    RA->chunkOutSJ=chunkOutSJ;
-    RA->chunkOutSJ1=chunkOutSJ1;
-
-    if (P.pCh.segmentMin>0) {
-       if (P.pCh.out.samOld) {
-            chunkFstreamOpen(P.outFileTmp + "/Chimeric.out.sam.thread", iChunk, RA->chunkOutChimSAM);
-       };
-       if (P.pCh.out.junctions) {
-            chunkFstreamOpen(P.outFileTmp + "/Chimeric.out.junction.thread", iChunk, *RA->chunkOutChimJunction);
-       };
-    };
-    if (P.outReadsUnmapped=="Fastx" ) {
-        chunkFstreamOpen(P.outFileTmp + "/Unmapped.out.mate1.thread",iChunk, RA->chunkOutUnmappedReadsStream[0]);
-        if (P.readNmatesIn==2) chunkFstreamOpen(P.outFileTmp + "/Unmapped.out.mate2.thread",iChunk, RA->chunkOutUnmappedReadsStream[1]);
-    };
-    if (P.outFilterType=="BySJout") {
-        chunkFstreamOpen(P.outFileTmp + "/FilterBySJoutFiles.mate1.thread",iChunk, RA->chunkOutFilterBySJoutFiles[0]);
-        if (P.readNmates==2) chunkFstreamOpen(P.outFileTmp + "/FilterBySJoutFiles.mate2.thread",iChunk, RA->chunkOutFilterBySJoutFiles[1]);
     };
 
     if (P.wasp.yes) {
@@ -91,9 +49,6 @@ ReadAlignChunk::ReadAlignChunk(Parameters& Pin, Genome &genomeIn, Transcriptome 
     };
     if (P.peOverlap.yes) {
         RA->peMergeRA= new ReadAlign(Pin,genomeIn,TrIn,iChunk);
-        delete RA->peMergeRA->chunkOutChimJunction;
-        RA->peMergeRA->chunkOutChimJunction=RA->chunkOutChimJunction;//point to the same out-stream
-        RA->peMergeRA->chimDet->ostreamChimJunction=RA->peMergeRA->chunkOutChimJunction;
     };
 };
 

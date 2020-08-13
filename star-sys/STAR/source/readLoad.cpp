@@ -1,7 +1,7 @@
 #include "readLoad.h"
 #include "ErrorWarning.h"
 
-int readLoad(istream& readInStream, Parameters& P, uint iMate, uint& Lread, uint& LreadOriginal, char* readName, char* Seq, char* SeqNum, char* Qual, char* QualNum, uint &clip3pNtotal, uint &clip5pNtotal, uint &clip3pAdapterN, uint &iReadAll, uint &readFilesIndex, char &readFilter, string &readNameExtra){
+int readLoad(istream& readInStream, const Parameters& P, uint iMate, uint& Lread, uint& LreadOriginal, char* readName, char* Seq, char* SeqNum, char* Qual, char* QualNum, uint &clip3pNtotal, uint &clip5pNtotal, uint &clip3pAdapterN, uint &/*iReadAll*/, uint &/*readFilesIndex*/, char &/*readFilter*/, string &readNameExtra){
     //load one read from a stream
     int readFileType=0;
 
@@ -20,7 +20,9 @@ int readLoad(istream& readInStream, Parameters& P, uint iMate, uint& Lread, uint
         exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
     };
 
-    readInStream >> iReadAll >> readFilter >> readFilesIndex; //extract read number
+    //printf("read name is: %s\n", readName);
+
+    //readInStream >> iReadAll >> readFilter >> readFilesIndex; //extract read number
 
     getline(readInStream, readNameExtra);
     if (!readNameExtra.empty()) {
@@ -35,6 +37,7 @@ int readLoad(istream& readInStream, Parameters& P, uint iMate, uint& Lread, uint
 //     readInStream.ignore(DEF_readNameSeqLengthMax,'\n');//ignore the resit of the line - just in case
 
     readInStream.getline(Seq,DEF_readSeqLengthMax+1); //extract sequence
+    //printf("seq is: %s\n", Seq);
 
     Lread=0;
     for (int ii=0; ii<readInStream.gcount()-1; ii++) {
@@ -77,7 +80,6 @@ int readLoad(istream& readInStream, Parameters& P, uint iMate, uint& Lread, uint
 //         exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
 //     };
 //     LreadOriginal=Lread;
-
     LreadOriginal=Lread;
     if ( Lread>(P.clip5pNbases[iMate]+P.clip3pNbases[iMate]) ) {
         Lread=Lread-(P.clip5pNbases[iMate]+P.clip3pNbases[iMate]);

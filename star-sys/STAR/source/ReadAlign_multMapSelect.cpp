@@ -11,7 +11,7 @@ void ReadAlign::multMapSelect() {//select multiple mappers from all transcripts 
     if (nW==0) {//no good windows
         return;
     };
-
+    //printf("heyyyy %llu\n", nW);
     maxScore=-10*Lread;
     for (uint iW=0; iW<nW; iW++) {//scan windows
         if (maxScore < trAll[iW][0]->maxScore) maxScore = trAll[iW][0]->maxScore;
@@ -32,7 +32,7 @@ void ReadAlign::multMapSelect() {//select multiple mappers from all transcripts 
                     errOut  << "EXITING: Fatal ERROR: number of alignments exceeds MAX_N_MULTMAP, increase it and re-compile STAR";
                     exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_PARAMETER, P);
                 };
-
+                //printf("resetting trMult element yay %lld %lld\n", trAll[iW][iTr]->gStart, trAll[iW][iTr]->cStart);
                 trMult[nTr]=trAll[iW][iTr];
                 trMult[nTr]->Chr = trAll[iW][0]->Chr;
                 trMult[nTr]->Str = trAll[iW][0]->Str;
@@ -50,10 +50,13 @@ void ReadAlign::multMapSelect() {//select multiple mappers from all transcripts 
         return;
     };
 
+    //printf("made it here\n");
+
     for (uint iTr=0; iTr<nTr; iTr++)
     {
         trMult[iTr]->roStart = trMult[iTr]->roStr==0 ? trMult[iTr]->rStart : Lread - trMult[iTr]->rStart - trMult[iTr]->rLength;
         trMult[iTr]->cStart=trMult[iTr]->gStart - mapGen.chrStart[trMult[iTr]->Chr];
+        //printf("new beginnings %llu %llu\n", trMult[iTr]->roStart, trMult[iTr]->cStart);
     };
 
 //     if (P.outMultimapperOrder.sortCoord)

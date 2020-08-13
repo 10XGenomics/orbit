@@ -14,9 +14,7 @@ void ParametersChimeric::initialize(Parameters *pPin)
         pP->inOut->outChimSAM.open((pP->outFileNamePrefix + "Chimeric.out.sam").c_str());
         pP->inOut->outChimSAM << pP->samHeader;
     };
-    pthread_mutex_init(&g_threadChunks.mutexOutChimSAM, NULL);
-    pthread_mutex_init(&g_threadChunks.mutexOutChimJunction, NULL);
-    
+
     out.bam=false;
     out.junctions=false;
     out.samOld=false;

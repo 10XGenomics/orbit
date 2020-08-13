@@ -1,7 +1,7 @@
 #include "SoloFeature.h"
 #include "streamFuns.h"
 
-SoloFeature::SoloFeature(int feTy, Parameters &Pin, Transcriptome &inTrans)
+SoloFeature::SoloFeature(int feTy, const Parameters &Pin, Transcriptome &inTrans)
           :  featureType(feTy), P(Pin), pSolo(P.pSolo), Trans(inTrans)
 {
 

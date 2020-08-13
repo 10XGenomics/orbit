@@ -48,8 +48,6 @@ void sjdbBuildIndex (Parameters &P, char *Gsj, char *G, PackedArray &SA, PackedA
 
     uint64* indArray=new uint64[2*mapGen.sjdbN*(nIndicesSJ1+1)*2];//8+4 bytes for SA index and index in the genome * nJunction * nIndices per junction * 2 for reverse compl
     uint64 sjNew=0;
-    #pragma omp parallel num_threads(P.runThreadN)
-    #pragma omp for schedule (dynamic,1000) reduction(+:sjNew)
     for (uint isj=0; isj<2*mapGen.sjdbN; isj++) {//find insertion points for each of the sequences
 
         char** seq1=new char*[2];

@@ -3,9 +3,11 @@
 #include "Transcript.h"
 #include "ReadAlign.h"
 
-ReadAlign::ReadAlign (Parameters& Pin, Genome &genomeIn, Transcriptome *TrIn, int iChunk)
-                    : mapGen(genomeIn), P(Pin), chunkTr(TrIn)
+ReadAlign::ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcriptome *TrIn, int iChunk)
+                    : mapGen(genomeIn), readFastq{nullptr, nullptr}, P(Pin), chunkTr(TrIn)
 {
+    iRead = 0;
+    readFilesIndex = 0;
     readNmates=P.readNmates;
     winBin = new uintWinBin* [2];
     winBin[0] = new uintWinBin [P.winBinN];
@@ -76,9 +78,6 @@ ReadAlign::ReadAlign (Parameters& Pin, Genome &genomeIn, Transcriptome *TrIn, in
     resetN();
     //chim
     chunkOutChimJunction = new fstream;
-    chimDet = new ChimericDetection(P, trAll, nWinTr, Read1, mapGen, chunkOutChimJunction, this);
-    //solo
-    soloRead = new SoloRead (P, iChunk);
 };
 
 void ReadAlign::resetN () {//reset resets the counters to 0 for a new read

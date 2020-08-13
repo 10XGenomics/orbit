@@ -1,7 +1,7 @@
 #include "SoloReadFeature.h"
 #include "streamFuns.h"
 
-SoloReadFeature::SoloReadFeature(int32 feTy, Parameters &Pin, int iChunk)
+SoloReadFeature::SoloReadFeature(int32 feTy, const Parameters &Pin, int iChunk)
              : featureType(feTy), P(Pin), pSolo(P.pSolo)
 {
     if (pSolo.type==0)

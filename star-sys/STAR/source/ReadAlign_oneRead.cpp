@@ -4,15 +4,18 @@
 #include "ErrorWarning.h"
 
 int ReadAlign::oneRead() {//process one read: load, map, write
-
+    //printf("at least called the method\n");
     //load read name, sequence, quality from the streams into internal arrays
     int readStatus[2];
 
+    readStatus[0] = 0;
 
-    readStatus[0]=readLoad(*(readInStream[0]), P, 0, readLength[0], readLengthOriginal[0], readNameMates[0], Read0[0], Read1[0], Qual0[0], Qual1[0], clip3pNtotal[0], clip5pNtotal[0], clip3pAdapterN[0], iReadAll, readFilesIndex, readFilter, readNameExtra[0]);
-    if (P.readNmates==2) {//read the 2nd mate
-        readStatus[1]=readLoad(*(readInStream[1]), P, 1, readLength[1], readLengthOriginal[1], readNameMates[1], Read0[1], Read1[0]+readLength[0]+1, Qual0[1], Qual1[0]+readLength[0]+1, clip3pNtotal[1], clip5pNtotal[1], clip3pAdapterN[1], iReadAll, readFilesIndex, readFilter, readNameExtra[1]);
+    std::istringstream is(readFastq[0]);
+    readStatus[0]=readLoad(is, P, 0, readLength[0], readLengthOriginal[0], readNameMates[0], Read0[0], Read1[0], Qual0[0], Qual1[0], clip3pNtotal[0], clip5pNtotal[0], clip3pAdapterN[0], iReadAll, readFilesIndex, readFilter, readNameExtra[0]);
+    if (readNmates==2) {//read the 2nd mate
+        std::istringstream is2(readFastq[1]);
 
+        readStatus[1]=readLoad(is2, P, 1, readLength[1], readLengthOriginal[1], readNameMates[1], Read0[1], Read1[0]+readLength[0]+1, Qual0[1], Qual1[0]+readLength[0]+1, clip3pNtotal[1], clip5pNtotal[1], clip3pAdapterN[1], iReadAll, readFilesIndex, readFilter, readNameExtra[1]);
         if (readStatus[0]!=readStatus[1]) {
             ostringstream errOut;
             errOut << "EXITING because of FATAL ERROR: Read1 and Read2 are not consistent, reached the end of the one before the other one\n";
@@ -53,36 +56,25 @@ int ReadAlign::oneRead() {//process one read: load, map, write
 
     };
 
+    //printf("complementing\n");
+
     readFileType=readStatus[0];
 
     complementSeqNumbers(Read1[0],Read1[1],Lread); //returns complement of Reads[ii]
+    //printf("big strong numbers\n");
     for (uint ii=0;ii<Lread;ii++) {//reverse
         Read1[2][Lread-ii-1]=Read1[1][ii];
         Qual1[1][Lread-ii-1]=Qual1[0][ii];
     };
 
-    statsRA.readN++;
-    statsRA.readBases += readLength[0]+readLength[1];
-
     //max number of mismatches allowed for this read
     outFilterMismatchNmaxTotal=min(P.outFilterMismatchNmax, (uint) (P.outFilterMismatchNoverReadLmax*(readLength[0]+readLength[1])));
-
+    //printf("about to map!\n");
     //map the read
     mapOneRead();
-
-    peOverlapMergeMap();
+    //printf("best %llu\n", trBest->gStart);
     multMapSelect();
     mappedFilter();
-
-    if (!peOv.yes) {//if the alignment was not mates merged - otherwise the chimeric detection was already done
-        chimericDetection();
-    };
-
-    if (P.pCh.out.bam && chimRecord) {//chimeric alignment was recorded in main BAM files, and it contains the representative portion, so non-chimeric aligmnent is not output
-        return 0;
-    };
-
-    waspMap();
 
     #ifdef OFF_BEFORE_OUTPUT
         #warning OFF_BEFORE_OUTPUT
@@ -90,7 +82,7 @@ int ReadAlign::oneRead() {//process one read: load, map, write
     #endif
 
     //write out alignments
-    outputAlignments();
+    //outputAlignments();
 
     return 0;
 

@@ -22,15 +22,15 @@ public:
         vector<string> names={"nNinBarcode","nUMIhomopolymer","nTooMany","nNoMatch"};
     } stats;
 
-    SoloReadBarcode(Parameters &Pin);
+    SoloReadBarcode(const Parameters &Pin);
     void getCBandUMI(string &readNameExtra);
     void addCounts(const SoloReadBarcode &rfIn);
     void addStats(const SoloReadBarcode &rfIn);
     void statsOut(ofstream &streamOut);
 
 private:
-    Parameters &P;
-    ParametersSolo &pSolo;
+    const Parameters &P;
+    const ParametersSolo &pSolo;
 };
 
 #endif

@@ -6,16 +6,13 @@
 
 int ReadAlign::createExtendWindowsWithAlign(uint a1, uint aStr) {
 
-
     uint aBin = (a1 >> P.winBinNbits); //align's bin
     uint iBinLeft=aBin, iBinRight=aBin;
     uintWinBin* wB=winBin[aStr];
     uint iBin=-1, iWin=-1, iWinRight=-1;
 
-
     if (wB[aBin]==uintWinBinMax) {//proceed if there is no window at this bin
         //check neighboring bins
-
         bool flagMergeLeft=false;
         if (aBin>0) {//merge left only if there are bins on the left
             for (iBin=aBin-1;  iBin >= ( aBin>P.winAnchorDistNbins ? aBin-P.winAnchorDistNbins : 0 );  --iBin) {//go left, find windows in Anchor range
