@@ -1,4 +1,0 @@
-[submodule "STAR"]
-        path = star-sys/STAR
-        url = https://github.com/10XGenomics/STAR.git
-        branch = orbit
