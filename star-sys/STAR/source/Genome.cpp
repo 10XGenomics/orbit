@@ -194,6 +194,8 @@ void Genome::genomeLoad(){//allocate and load Genome
     SAiInBytes += fstreamReadBig(SAiIn,(char*) &pGe.gSAindexNbases, sizeof(pGe.gSAindexNbases));
 
     genomeSAindexStart = new uint[pGe.gSAindexNbases+1];
+
+    // Note this data from SAiIn is small, don't bother mmaping it.
     SAiInBytes += fstreamReadBig(SAiIn,(char*) genomeSAindexStart, sizeof(genomeSAindexStart[0])*(pGe.gSAindexNbases+1));
     nSAi=genomeSAindexStart[pGe.gSAindexNbases];
     P.inOut->logMain << "Read from SAindex: pGe.gSAindexNbases=" << pGe.gSAindexNbases <<"  nSAi="<< nSAi <<endl;
@@ -238,9 +240,11 @@ void Genome::genomeLoad(){//allocate and load Genome
         exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_MEMORY_ALLOCATION, P);
     }
     // G points to the start of genome
-    G = mmapGenome.file_mmap;
-    // G1 points to the L bytes of padding before the genome
-    G1 = mmapGenome.file_mmap - L;
+    G = mmapGenome.file_mmap_addr;
+
+    // G1 points to the L bytes of padding before the genome. 
+    // There is always one page of padding available.
+    G1 = mmapGenome.file_mmap_addr - L;
 
     GenomeIn.close();
 
@@ -262,7 +266,7 @@ void Genome::genomeLoad(){//allocate and load Genome
         exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_MEMORY_ALLOCATION, P);
     }
 
-    SA.pointArray(mmapSA.file_mmap);
+    SA.pointArray(mmapSA.file_mmap_addr);
     SAin.close();
 
     P.inOut->logMain <<"Loading SAindex ... " << flush;
@@ -275,7 +279,7 @@ void Genome::genomeLoad(){//allocate and load Genome
     }
 
     // SAi starts past the begining of the file.
-    SAi.pointArray(mmapSAi.file_mmap + SAiIn.tellg());
+    SAi.pointArray(mmapSAi.file_mmap_addr + SAiIn.tellg());
 
     SAiIn.close();
 

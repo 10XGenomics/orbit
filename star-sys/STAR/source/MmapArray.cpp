@@ -6,29 +6,36 @@
 #include <unistd.h>
 
 MmapArray::MmapArray() {
-    prefix_mmap=NULL;
-    file_mmap=NULL;
+    mmap_addr=NULL;
+    mmap_length=0;
+
+    file_mmap_addr=NULL;
     file_mmap_length=0;
-    fd=0;
 };
 
-#define PAGE ((uint) (1<<12))
+#define PAGE ((size_t) (1<<12))
 
-uint round_up_to_page(uint v) {
-    return v + (PAGE - 1) & ~(PAGE-1);
+size_t round_up_to_page(size_t v) {
+    return (v + (PAGE - 1)) & ~(PAGE-1);
 }
 
-int MmapArray::makeMmap(string filename, uint length, uint suffix_padding) {
+// mmap `filename` as a mostly read-only map, allowing for limited writing before an after the file.
+// Maps at least `length` bytes of the file, although additional bytes from the file may be mapped.
+// Ensures that there is one writeable page before address where the file is mapped.
+// Ensures that there is at least `suffix_padding` writable bytes beyond the requested mapping length.
+// madvise()s the file mapping to instruct the kernel to begin reading the data.
+int MmapArray::makeMmap(string filename, size_t length, size_t suffix_padding) {    
 
-    fd = open(filename.c_str(), O_RDONLY);
+    int fd = open(filename.c_str(), O_RDONLY);
     if (fd == -1) {
         return -1;
     }
 
     file_mmap_length = round_up_to_page(length + suffix_padding);
-    
+    mmap_length = file_mmap_length + PAGE;
+
     // allocate the size we need, plus a preceding page
-    void* addr1 = mmap(NULL, file_mmap_length + PAGE, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
+    void* addr1 = mmap(NULL, mmap_length, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE, -1, 0);
 
     if (addr1 == (void*) -1) {
         std::cerr << "fd: " << fd;
@@ -45,7 +52,11 @@ int MmapArray::makeMmap(string filename, uint length, uint suffix_padding) {
         return -1;
     }
 
-    assert((char*)addr2 == (char*)addr1 + PAGE);
+    // make sure the mapping went to the place we requested.
+    // (I don't think this is allowed to happen...)
+    if ((char*)addr2 != (char*)addr1 + PAGE) {
+        return -1;
+    }
 
     // make the final page writeable. On Mac at least, it's much faster if the 'main' mmap above is read only.
     void* addr3 = mmap((void*) ((char*)addr1 + file_mmap_length), PAGE, PROT_READ|PROT_WRITE, MAP_FIXED|MAP_PRIVATE, fd, 0);
@@ -67,30 +78,19 @@ int MmapArray::makeMmap(string filename, uint length, uint suffix_padding) {
     }
 
     // save pointers
-    file_mmap = (char*) addr2;
-    prefix_mmap = (char*) addr1;
+    mmap_addr = (char*) addr1;
+    file_mmap_addr = (char*) addr2;
     
+    // mmaps persist after file handle is closed
+    close(fd);
+
     return 0;
 };
 
 MmapArray::~MmapArray() {
-
-    if (file_mmap) {
-        munmap(file_mmap, (size_t) file_mmap_length);
-        file_mmap=NULL;
-    }
-
-    if (prefix_mmap) {
-        munmap(prefix_mmap, PAGE);
-        prefix_mmap=NULL;
-    }
-
-    if (last_page_mmap) {
-        munmap(last_page_mmap, PAGE);
-        last_page_mmap=NULL;
-    }
-
-    if (fd) {
-        close(fd);
+    // this unmaps everything in one shot
+    if (mmap_addr) {
+        munmap(mmap_addr, mmap_length);
+        mmap_addr=NULL;
     }
 };
