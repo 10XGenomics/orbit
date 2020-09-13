@@ -5,12 +5,15 @@
 #include "Parameters.h"
 #include "PackedArray.h"
 #include "Variation.h"
+#include "MmapArray.h"
 
 class Genome {
     public:
         char *G, *sigG;
         PackedArray SA,SAinsert,SApass1,SApass2;
         PackedArray SAi;
+        MmapArray mmapSAi;
+
         Variation *Var;
 
         uint nGenomeInsert, nGenomePass1, nGenomePass2, nSAinsert, nSApass1, nSApass2;
