@@ -456,7 +456,7 @@ mod test {
 
     /// References to some commonly used reference genomes for testing purposes
     pub const DEFAULT_REF_1: &str = "/mnt/opt/refdata_cellranger/mm10-3.0.0/star";
-    pub const DEFAULT_REF_2: &str = "/mnt/opt/refdata_cellranger/GRCh38-3.0.0/star";
+    pub const DEFAULT_REF_2: &str = "/Users/patrick/refdata_cellranger/GRCh38-3.0.0/star";
     pub const DEFAULT_REF_3: &str = "/mnt/opt/refdata_cellranger/GRCh38-1.2.0/star";
 
     const ERCC_REF: &'static str = "test/ercc92-1.2.0/star/";
@@ -615,7 +615,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    //#[ignore]
     fn test_align_read() {
         let settings = StarSettings::new(DEFAULT_REF_2);
         let reference = StarReference::load(settings).unwrap();
