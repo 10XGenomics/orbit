@@ -9,8 +9,9 @@ class MmapArray {
 
     public:
         uint file_mmap_length;
-        void *file_mmap;
-        void *prefix_mmap;
+        char *file_mmap;
+        char *prefix_mmap;
+        char *last_page_mmap;
 
 
         MmapArray();
