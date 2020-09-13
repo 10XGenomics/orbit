@@ -704,6 +704,22 @@ mod test {
 
     #[test]
     #[ignore]
+    fn test_mmap_crasher() {
+        // this read caused a segfault when there was a bug in the mmap reference loader impl
+        let settings = StarSettings::new(DEFAULT_REF_2);
+        let reference = StarReference::load(settings).unwrap();
+        let mut aligner = reference.get_aligner();
+
+        let read = b"GACAAGCCTGGCCAACATGGTGAAAACCTGTCTCTACTAAAAAAAAAAAAAAATACAAAGATTAGCCGGGTGTGGTGGCAGGCACCTGTAATCCCAGC";
+        let qual = b"GGGGAGIGGAAGGGGIIGIGGGIGGGGIIIGGGGGGIIIIIGGGIIIIIIIGGAGAGGAAAGGGAGA.AA<AAGG.GAG.AAA.AAGG<GGGGGA..G";
+        let name = b"gatactaga";
+        let res = aligner.align_read(name, read, qual);
+        assert!(res.len() > 0);
+        println!("{:?}", res);
+    }
+
+    #[test]
+    #[ignore]
     fn test_write_bam() {
         let settings = StarSettings::new(DEFAULT_REF_1);
         let reference = StarReference::load(settings).unwrap();
