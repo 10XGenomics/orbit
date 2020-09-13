@@ -615,7 +615,7 @@ mod test {
     }
 
     #[test]
-    //#[ignore]
+    #[ignore]
     fn test_align_read() {
         let settings = StarSettings::new(DEFAULT_REF_2);
         let reference = StarReference::load(settings).unwrap();
