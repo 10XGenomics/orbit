@@ -271,7 +271,8 @@ void Genome::genomeLoad(){//allocate and load Genome
 
     P.inOut->logMain <<"Loading SAindex ... " << flush;
 
-    res = mmapSAi.makeMmap((pGe.gDir+ "/" + "SAindex"), SAi.lengthByte, 0);
+    size_t SAindexOffset = SAiIn.tellg();
+    res = mmapSAi.makeMmap((pGe.gDir+ "/" + "SAindex"), SAindexOffset + SAi.lengthByte, 0);
     if (res != 0) {
         ostringstream errOut;
         errOut <<"EXITING: got error in mmap: " << res;
@@ -279,7 +280,7 @@ void Genome::genomeLoad(){//allocate and load Genome
     }
 
     // SAi starts past the begining of the file.
-    SAi.pointArray(mmapSAi.file_mmap_addr + SAiIn.tellg());
+    SAi.pointArray(mmapSAi.file_mmap_addr + SAindexOffset);
 
     SAiIn.close();
 

@@ -59,8 +59,8 @@ int MmapArray::makeMmap(string filename, size_t length, size_t suffix_padding) {
     }
 
     // make the final page writeable. On Mac at least, it's much faster if the 'main' mmap above is read only.
-    void* addr3 = mmap((void*) ((char*)addr1 + file_mmap_length), PAGE, PROT_READ|PROT_WRITE, MAP_FIXED|MAP_PRIVATE, fd, 0);
-    
+    void* addr3 = mmap((void*) ((char*)addr1 + file_mmap_length), PAGE, PROT_READ|PROT_WRITE, MAP_FIXED|MAP_PRIVATE, fd, file_mmap_length - PAGE);
+
     if (addr3 == (void*) -1 || (char*)addr3 != (char*)addr1 + file_mmap_length) {
         std::cerr << "reference mmap failed: addr3: " << addr3 << "\n";
         return -1;
