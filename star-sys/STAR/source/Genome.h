@@ -12,8 +12,7 @@ class Genome {
         char *G, *sigG;
         PackedArray SA,SAinsert,SApass1,SApass2;
         PackedArray SAi;
-        MmapArray mmapSAi;
-
+        
         Variation *Var;
 
         uint nGenomeInsert, nGenomePass1, nGenomePass2, nSAinsert, nSApass1, nSApass2;
@@ -61,9 +60,10 @@ class Genome {
 
     private:
         Parameters &P;
-        key_t shmKey;
-        char *shmStart;
         char *G1; //pointer -200 of G
         uint OpenStream(string name, ifstream & stream, uint size);
+
+        // mmaps of reference files
+        MmapArray mmapSAi, mmapSA, mmapGenome;
 };
 #endif
