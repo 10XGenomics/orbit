@@ -78,9 +78,6 @@ int MmapArray::makeMmap(string filename, size_t length, size_t suffix_padding) {
     mmap_addr = (char*) addr1;
     file_mmap_addr = (char*) addr2;
     
-    // mmaps persist after file handle is closed
-    close(fd);
-
     return 0;
 };
 
