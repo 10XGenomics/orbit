@@ -16,7 +16,7 @@ class MmapArray {
         // Length of the array after the start of the file map
         size_t file_mmap_length;
 
-        MmapArray();
+        MmapArray() = default;
         ~MmapArray();
         int makeMmap(string filename, size_t length, size_t suffix_padding);
 };
