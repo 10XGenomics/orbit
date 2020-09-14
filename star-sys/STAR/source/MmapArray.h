@@ -1,6 +1,7 @@
 #ifndef MMAPARRAY_H_
 #define MMAPARRAY_H_
 
+#include <string>
 #include <cstddef>
 
 class MmapArray {
@@ -20,7 +21,7 @@ class MmapArray {
 
         MmapArray() = default;
         ~MmapArray();
-        int makeMmap(string filename, size_t length, size_t suffix_padding);
+        int initMmap(std::string filename, size_t length, size_t suffix_padding);
 };
 
 #endif  // MMAPARRAY_H_

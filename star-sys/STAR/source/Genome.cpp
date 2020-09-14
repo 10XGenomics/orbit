@@ -233,7 +233,7 @@ void Genome::genomeLoad(){//allocate and load Genome
             <<" eof="<<GenomeIn.eof()<<" fail="<<GenomeIn.fail()<<" bad="<<GenomeIn.bad()<<"\n"<<flush;
     P.inOut->logMain <<"Loading Genome ... " << flush;
 
-    int res = mmapGenome.makeMmap((pGe.gDir+ "/" + "Genome"), nGenome, L);
+    int res = mmapGenome.initMmap((pGe.gDir+ "/" + "Genome"), nGenome, L);
     if (res != 0) {
         ostringstream errOut;
         errOut <<"EXITING: got error in mmap: " << res;
@@ -259,7 +259,7 @@ void Genome::genomeLoad(){//allocate and load Genome
     P.inOut->logMain <<"Loading SA ... " << flush;
 
     // Load suffix array with mmap
-    res = mmapSA.makeMmap((pGe.gDir+ "/" + "SA"), SA.lengthByte, 0);
+    res = mmapSA.initMmap((pGe.gDir+ "/" + "SA"), SA.lengthByte, 0);
     if (res != 0) {
         ostringstream errOut;
         errOut <<"EXITING: got error in mmap: " << res;
@@ -272,7 +272,7 @@ void Genome::genomeLoad(){//allocate and load Genome
     P.inOut->logMain <<"Loading SAindex ... " << flush;
 
     size_t SAindexOffset = SAiIn.tellg();
-    res = mmapSAi.makeMmap((pGe.gDir+ "/" + "SAindex"), SAindexOffset + SAi.lengthByte, 0);
+    res = mmapSAi.initMmap((pGe.gDir+ "/" + "SAindex"), SAindexOffset + SAi.lengthByte, 0);
     if (res != 0) {
         ostringstream errOut;
         errOut <<"EXITING: got error in mmap: " << res;

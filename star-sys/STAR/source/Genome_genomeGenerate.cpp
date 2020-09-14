@@ -117,6 +117,13 @@ inline uint funG2strLocus (uint SAstr, uint const N, char const GstrandBit, uint
 
 void Genome::genomeGenerate() {
 
+    // Genome generation disabled -- see note below about 
+    // the copy constructor of Genome.
+    ostringstream errOut;
+    errOut << "This build of STAR/Orbit is not capable of running genomeGenerate";
+    errOut << "Use a normal build of STAR to generate a reference";
+    exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
+
     //check parameters
     if (sjdbOverhang<=0 && (pGe.sjdbFileChrStartEnd.at(0)!="-" || pGe.sjdbGTFfile!="-"))
     {
@@ -446,12 +453,20 @@ void Genome::genomeGenerate() {
     {//insert junctions
         SjdbClass sjdbLoci;
 
+        // NOTE - this code won't compile, because the copy-constructor of 
+        // Genome has been disabled, in order to setup the ability to mmap the 
+        // reference (10xGenomics/orbit PR #30)
+        // Therefore this orbit build of STAR has had genome generation disabled.
+        // NOTE: there are likely other change in orbit that break
+        // reference generation.
+        /*
         Genome mainGenome1(*this);
 
         P.sjdbInsert.outDir=pGe.gDir;
         P.twoPass.pass2=false;
 
         sjdbInsertJunctions(P, *this, mainGenome1, sjdbLoci);
+        */
 
     };
 
