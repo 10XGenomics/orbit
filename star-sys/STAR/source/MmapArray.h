@@ -21,4 +21,4 @@ class MmapArray {
         int makeMmap(string filename, size_t length, size_t suffix_padding);
 };
 
-#endif
+#endif  // MMAPARRAY_H_
