@@ -72,7 +72,6 @@ int MmapArray::makeMmap(string filename, size_t length, size_t suffix_padding) {
     
     if (res) {
         std::cerr << "madivse on reference mmap failred: res: " << res << "\n";
-        return -1;
     }
 
     // save pointers
