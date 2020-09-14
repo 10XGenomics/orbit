@@ -1,5 +1,5 @@
-#ifndef MMAPARRAY_DEF
-#define MMAPARRAY_DEF
+#ifndef MMAPARRAY_H_
+#define MMAPARRAY_H_
 
 #include "IncludeDefine.h"
 
