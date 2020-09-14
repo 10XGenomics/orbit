@@ -1,7 +1,7 @@
 #ifndef MMAPARRAY_H_
 #define MMAPARRAY_H_
 
-#include "IncludeDefine.h"
+#include <cstddef>
 
 class MmapArray {
 
