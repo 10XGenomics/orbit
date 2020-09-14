@@ -41,6 +41,7 @@ int MmapArray::makeMmap(string filename, size_t length, size_t suffix_padding) {
         std::cerr << "reference mmap failed: fd: " << fd;
         std::cerr << " len pre: " << length << " len_round: " << file_mmap_length << "\n";
         std::cerr << " addr1: " << addr1 << "\n";
+        close(fd);
         return -1;
     }
 
