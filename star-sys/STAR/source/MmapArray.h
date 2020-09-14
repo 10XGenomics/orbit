@@ -4,7 +4,9 @@
 #include <cstddef>
 
 class MmapArray {
-
+ private:
+   MmapArray(const MmapArray&) = delete;
+   MmapArray& operator=(const MmapArray&) = delete;
     public:
         // Start of the mapped region
         char *mmap_addr;
