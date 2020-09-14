@@ -1,17 +1,11 @@
 # include "MmapArray.h"
 
+#include <string>
+#include <iostream>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-
-MmapArray::MmapArray() {
-    mmap_addr=NULL;
-    mmap_length=0;
-
-    file_mmap_addr=NULL;
-    file_mmap_length=0;
-};
 
 #define PAGE ((size_t) (1<<12))
 
@@ -24,7 +18,7 @@ size_t round_up_to_page(size_t v) {
 // Ensures that there is one writeable page before address where the file is mapped.
 // Ensures that there is at least `suffix_padding` writable bytes beyond the requested mapping length.
 // madvise()s the file mapping to instruct the kernel to begin reading the data.
-int MmapArray::makeMmap(string filename, size_t length, size_t suffix_padding) {    
+int MmapArray::initMmap(std::string filename, size_t length, size_t suffix_padding) {    
 
     int fd = open(filename.c_str(), O_RDONLY);
     if (fd == -1) {
@@ -48,22 +42,23 @@ int MmapArray::makeMmap(string filename, size_t length, size_t suffix_padding) {
     // map the file starting after the first page
     void* addr2 = mmap((void*) ((char*)addr1 + PAGE), file_mmap_length, PROT_READ, MAP_FIXED|MAP_PRIVATE, fd, 0);
     
+    // make sure the mapping went to the address we requested.
     if (addr2 == (void*) -1 || (char*)addr2 != (char*)addr1 + PAGE) {
         std::cerr << "reference mmap failed: addr2: " << addr2 << "\n";
-        return -1;
-    }
-
-    // make sure the mapping went to the place we requested.
-    // (I don't think this is allowed to happen...)
-    if ((char*)addr2 != (char*)addr1 + PAGE) {
+        munmap(mmap_addr, mmap_length);
+        close(fd);
         return -1;
     }
 
     // make the final page writeable. On Mac at least, it's much faster if the 'main' mmap above is read only.
     void* addr3 = mmap((void*) ((char*)addr1 + file_mmap_length), PAGE, PROT_READ|PROT_WRITE, MAP_FIXED|MAP_PRIVATE, fd, file_mmap_length - PAGE);
 
+    // don't need the file handle in any case.
+    close(fd);
+
     if (addr3 == (void*) -1 || (char*)addr3 != (char*)addr1 + file_mmap_length) {
         std::cerr << "reference mmap failed: addr3: " << addr3 << "\n";
+        munmap(mmap_addr, mmap_length);
         return -1;
     }
 
