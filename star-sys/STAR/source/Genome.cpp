@@ -6,6 +6,7 @@
 #include "streamFuns.h"
 #include "genomeScanFastaFiles.h"
 
+#include <assert.h>
 #include <time.h>
 #include <cmath>
 #include <unistd.h>
