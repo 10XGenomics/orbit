@@ -233,18 +233,19 @@ void Genome::genomeLoad(){//allocate and load Genome
             <<" eof="<<GenomeIn.eof()<<" fail="<<GenomeIn.fail()<<" bad="<<GenomeIn.bad()<<"\n"<<flush;
     P.inOut->logMain <<"Loading Genome ... " << flush;
 
-    int res = mmapGenome.initMmap((pGe.gDir+ "/" + "Genome"), nGenome, L);
+    int res = mmapGenome.initMmap((pGe.gDir+ "/Genome"), nGenome, L);
     if (res != 0) {
         ostringstream errOut;
         errOut <<"EXITING: got error in mmap: " << res;
         exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_MEMORY_ALLOCATION, P);
     }
     // G points to the start of genome
-    G = mmapGenome.file_mmap_addr;
+    G = mmapGenome.begin();
 
     // G1 points to the L bytes of padding before the genome. 
     // There is always one page of padding available.
-    G1 = mmapGenome.file_mmap_addr - L;
+    assert(L < (1<<12));
+    char* G1 = mmapGenome.begin() - L;
 
     GenomeIn.close();
 
@@ -259,20 +260,20 @@ void Genome::genomeLoad(){//allocate and load Genome
     P.inOut->logMain <<"Loading SA ... " << flush;
 
     // Load suffix array with mmap
-    res = mmapSA.initMmap((pGe.gDir+ "/" + "SA"), SA.lengthByte, 0);
+    res = mmapSA.initMmap((pGe.gDir + "/SA"), SA.lengthByte, 0);
     if (res != 0) {
         ostringstream errOut;
         errOut <<"EXITING: got error in mmap: " << res;
         exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_MEMORY_ALLOCATION, P);
     }
 
-    SA.pointArray(mmapSA.file_mmap_addr);
+    SA.pointArray(mmapSA.begin());
     SAin.close();
 
     P.inOut->logMain <<"Loading SAindex ... " << flush;
 
     size_t SAindexOffset = SAiIn.tellg();
-    res = mmapSAi.initMmap((pGe.gDir+ "/" + "SAindex"), SAindexOffset + SAi.lengthByte, 0);
+    res = mmapSAi.initMmap((pGe.gDir + "/SAindex"), SAindexOffset + SAi.lengthByte, 0);
     if (res != 0) {
         ostringstream errOut;
         errOut <<"EXITING: got error in mmap: " << res;
@@ -280,7 +281,7 @@ void Genome::genomeLoad(){//allocate and load Genome
     }
 
     // SAi starts past the begining of the file.
-    SAi.pointArray(mmapSAi.file_mmap_addr + SAindexOffset);
+    SAi.pointArray(mmapSAi.begin() + SAindexOffset);
 
     SAiIn.close();
 
