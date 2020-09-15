@@ -26,6 +26,7 @@ const FILES: &[&str] = &[
     "STAR/source/ParametersSolo.cpp",
     "STAR/source/ParametersChimeric_initialize.cpp",
     "STAR/source/PackedArray.cpp",
+    "STAR/source/MmapArray.cpp",
     "STAR/source/SequenceFuns.cpp",
     "STAR/source/Genome.cpp",
     "STAR/source/Genome_insertSequences.cpp",

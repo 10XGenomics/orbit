@@ -453,6 +453,7 @@ fn align_read_pair_rust(
 #[cfg(test)]
 mod test {
     use super::*;
+    use rust_htslib::bam::Read;
 
     /// References to some commonly used reference genomes for testing purposes
     pub const DEFAULT_REF_1: &str = "/mnt/opt/refdata_cellranger/mm10-3.0.0/star";
@@ -704,21 +705,43 @@ mod test {
 
     #[test]
     #[ignore]
-    fn test_write_bam() {
-        let settings = StarSettings::new(DEFAULT_REF_1);
+    fn test_mmap_crasher() {
+        // this read caused a segfault when there was a bug in the mmap reference loader impl
+        let settings = StarSettings::new(DEFAULT_REF_2);
         let reference = StarReference::load(settings).unwrap();
         let mut aligner = reference.get_aligner();
 
-        let mut out =
-            bam::Writer::from_path(&"test/test.bam", &reference.header(), bam::Format::BAM)
-                .unwrap();
-        let read = b"GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC";
-        let qual = b"GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG";
+        let read = b"GACAAGCCTGGCCAACATGGTGAAAACCTGTCTCTACTAAAAAAAAAAAAAAATACAAAGATTAGCCGGGTGTGGTGGCAGGCACCTGTAATCCCAGC";
+        let qual = b"GGGGAGIGGAAGGGGIIGIGGGIGGGGIIIGGGGGGIIIIIGGGIIIIIIIGGAGAGGAAAGGGAGA.AA<AAGG.GAG.AAA.AAGG<GGGGGA..G";
         let name = b"gatactaga";
         let res = aligner.align_read(name, read, qual);
-        for record in res.iter() {
-            out.write(&record).unwrap();
-        }
+        assert!(res.len() > 0);
+        println!("{:?}", res);
+    }
+
+    #[test]
+    #[ignore]
+    fn test_write_bam() {
+        let res = {
+            let settings = StarSettings::new(DEFAULT_REF_1);
+            let reference = StarReference::load(settings).unwrap();
+            let mut aligner = reference.get_aligner();
+
+            let mut out =
+                bam::Writer::from_path(&"test/test.bam", &reference.header(), bam::Format::BAM)
+                    .unwrap();
+            let read = b"GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC";
+            let qual = b"GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG";
+            let name = b"gatactaga";
+            let res = aligner.align_read(name, read, qual);
+            for record in res.iter() {
+                out.write(&record).unwrap();
+            }
+
+            res
+            // this scope closes the BAM writing
+        };
+
         let bam_wrapped = bam::Reader::from_path(&"test/test.bam");
         match bam_wrapped {
             Ok(v) => println!("working with version: {:?}", v),
@@ -726,7 +749,6 @@ mod test {
         }
         // The reading portion is commented out because it's failing for unknown reasons, but the BAM
         // file can be read with samtools and pysam.
-        /*
         let mut bam = bam::Reader::from_path(&"test/test.bam").unwrap();
         let read_records = bam.records();
         let mut i = 0;
@@ -735,26 +757,5 @@ mod test {
             assert_eq!(record.pos(), res[i].pos());
             i += 1;
         }
-        */
     }
-
-    /*
-    #[test]
-    fn test_align_fastq()
-    {
-        let settings = StarSettings::new(DEFAULT_REF_1);
-        let reference = StarReference::load(settings).unwrap();
-        let mut aligner = reference.get_aligner();
-
-        let fastq_path : &str = "test/full1_sample.fastq";
-
-        let res : Vec<bam::Record> = aligner.align_fastq(fastq_path).unwrap();
-        assert!(res.len() > 0);
-
-        let mut out = bam::Writer::from_path(&"test/full1_sample.bam", &reference.header()).unwrap();
-        for record in res.iter() {
-            out.write(&record).unwrap();
-        }
-    }
-    */
 }
