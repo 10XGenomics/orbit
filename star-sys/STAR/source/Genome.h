@@ -60,7 +60,7 @@ class Genome {
 
     private:
         Parameters &P;
-        char *G1; //pointer -200 of G
+        //char *G1; //pointer -200 of G
         uint OpenStream(string name, ifstream & stream, uint size);
 
         // mmaps of reference files

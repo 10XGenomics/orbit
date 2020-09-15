@@ -8,7 +8,7 @@ class MmapArray {
  private:
    MmapArray(const MmapArray&) = delete;
    MmapArray& operator=(const MmapArray&) = delete;
-    public:
+      private:
         // Start of the mapped region
         char *mmap_addr;
         // Total length of the array
@@ -19,9 +19,12 @@ class MmapArray {
         // Length of the array after the start of the file map
         size_t file_mmap_length;
 
+      public:
+        char *begin();
+
         MmapArray() = default;
         ~MmapArray();
-        int initMmap(std::string filename, size_t length, size_t suffix_padding);
+        int initMmap(const std::string &filename, size_t length, size_t suffix_padding);
 };
 
 #endif  // MMAPARRAY_H_
