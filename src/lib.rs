@@ -476,6 +476,10 @@ mod test {
     const ERCC_READ_4: &'static [u8] = b"AATCCACTCAATAAATCTAAAAAC";
     const ERCC_QUAL_4: &'static [u8] = b"????????????????????????";
 
+    fn have_refs() -> bool {
+        Path::new("/mnt/opt/refdata_cellranger").exists()
+    }
+
     #[test]
     fn test_empty_tiny_reads() {
         let settings = StarSettings::new(ERCC_REF);
@@ -617,8 +621,11 @@ mod test {
     }
 
     #[test]
-    //#[ignore]
     fn test_align_read() {
+        if !have_refs() {
+            return;
+        }
+
         let settings = StarSettings::new(DEFAULT_REF_2);
         let reference = StarReference::load(settings).unwrap();
         let mut aligner = reference.get_aligner();
@@ -630,9 +637,61 @@ mod test {
         assert!(res == "\t0\t6\t30070474\t255\t98M\t*\t0\t0\tGTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC\tGGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG\tNH:i:1\tHI:i:1\tAS:i:96\tnM:i:0\n");
     }
 
+    // random selection of genome sequences
+    const SEQ: &[&[u8]] = &[
+        b"TTCCGTATATTAAACCAACCCTGTATGCTTGCGATGAAGCCTATTTGATCCTGTTGGATGATTGTTTTAATGTGCTCTTGGATTCGGTTTTCCAGAATTTACTGAGTATTTTTGCATCGA",
+        b"GTAGTGAGAGAGGCAAACAGTCGGGATTGGATACAAGGAAGTCACTCTGATTACCAGCCTTTGAAGGTCAACAGGGGGACGGGTGAGAAGGAATGGGAGGCCCAGCGGCCTGGAGTCCTG",
+        b"CAAAAGAAGCCAACAGAAAAAACTGAAAATTGAGAAATCTTTTTATCATGATTGAATTGTTCTAAAATTGGACTGTGATGGAGACACATCTTTACACTTAGACACACAAAAAAGCAAAGA",
+        b"CGACAATGCACGACAGAGGAAGCAGAACAGATATTTAGATTGCCTCTCATTTTCTCTCCCATATTATAGGGAGAAATATGATCGCGTATGCGAGAGTAGTGCCAACATATTGTGCTCTTT",
+        b"GCCCAGAGACAAGGACTTGCAGGGCAACAAAGCAGCATCATCCCACTATTCCAGGGGAGGTGCTAAATACGAGGGTGAGGCTGTCAAGCAGTCCCTGGTG",
+        b"GGCCCTTCCTCCCAGCCCAGACTCCTACATCCCAAACTTGAGCCATGGCACACATGCTGGGCACTTACTCTGTGCATAGCAGAGGGAGCTGAGCTGCATC",
+        b"TTCTAGCCCCTCCAACAGTTCTTCATGTAGCACTGCTTTTGGACAGTGACCCATGATATTGCCTTCGTTTGCCCCTCTGACTGTTGGAATCCCACGCACC",
+        b"GATGAGAAGCTCTGGCAGCTGGTAGCCATGGCGAAGATAGAGAGGTTCTCGTATGGGCAGCTGATCTCAAAAGATTTTGGAGAGTCACCCTTCATCATGT",
+        b"TGTAATTTTCTAAGTGATAAGAGGACTAGGAGCATCTTTTGTTCTAATGAGGTGACTCTGGGTGAACTCCTGGCTGGGTCCTGGATGGGGGCTGGTCAAG",
+
+    ];
+
+    // random selection of references
+    const REF_SET: &[&str] = &[
+        "hg19_and_mm10-3.0.0",
+        "Rattus_norvegicus.Rnor_6.0",
+        "Rattus_norvegicus.Rnor_6.0_EGFP",
+        "Mmul_8.0.1",
+        "Sscrofa11.1-1.0.0",
+        "donkey_3611_h1_MAKER",
+        "ppatens3_3-1.0.0",
+        "bdgp6-1.0.0",
+    ];
+
     #[test]
-    //#[ignore]
+    fn test_scan_references() {
+        if !have_refs() {
+            return;
+        }
+
+        let path: String = "/mnt/opt/refdata_cellranger".to_string();
+
+        for ref_test in REF_SET {
+            let p = path.clone() + "/" + ref_test + "/star";
+
+            let settings = StarSettings::new(&p);
+            let reference = StarReference::load(settings).unwrap();
+            let mut aligner = reference.get_aligner();
+
+            for read_test in SEQ {
+                let qual = vec![b'I'; read_test.len()];
+                let res = aligner.align_read_sam(b"asdf", read_test, &qual);
+                println!("res: {}", res);
+            }
+        }
+    }
+
+    #[test]
     fn test_align_read_hgmm() {
+        if !have_refs() {
+            return;
+        }
+
         let settings = StarSettings::new(DEFAULT_REF_4);
         let reference = StarReference::load(settings).unwrap();
         let mut aligner = reference.get_aligner();
@@ -646,8 +705,11 @@ mod test {
     }
 
     #[test]
-    //#[ignore]
     fn test_align_read_pair() {
+        if !have_refs() {
+            return;
+        }
+
         let settings = StarSettings::new(DEFAULT_REF_3);
         let reference = StarReference::load(settings).unwrap();
         let mut aligner = reference.get_aligner();
@@ -676,8 +738,11 @@ mod test {
     }
 
     #[test]
-    //#[ignore]
     fn test_align_multiple_reads() {
+        if !have_refs() {
+            return;
+        }
+
         let settings = StarSettings::new(DEFAULT_REF_2);
         let reference = StarReference::load(settings).unwrap();
         let mut aligner = reference.get_aligner();
@@ -705,8 +770,11 @@ mod test {
     }
 
     #[test]
-    //#[ignore]
     fn test_get_record() {
+        if !have_refs() {
+            return;
+        }
+
         let settings = StarSettings::new(DEFAULT_REF_2);
         let reference = StarReference::load(settings).unwrap();
         let mut aligner = reference.get_aligner();
@@ -720,8 +788,11 @@ mod test {
     }
 
     #[test]
-    //#[ignore]
     fn test_mmap_crasher() {
+        if !have_refs() {
+            return;
+        }
+
         // this read caused a segfault when there was a bug in the mmap reference loader impl
         let settings = StarSettings::new(DEFAULT_REF_2);
         let reference = StarReference::load(settings).unwrap();
@@ -736,8 +807,11 @@ mod test {
     }
 
     #[test]
-    //#[ignore]
     fn test_write_bam() {
+        if !have_refs() {
+            return;
+        }
+
         let res = {
             let settings = StarSettings::new(DEFAULT_REF_1);
             let reference = StarReference::load(settings).unwrap();
