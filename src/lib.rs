@@ -459,6 +459,7 @@ mod test {
     pub const DEFAULT_REF_1: &str = "/mnt/opt/refdata_cellranger/mm10-3.0.0/star";
     pub const DEFAULT_REF_2: &str = "/mnt/opt/refdata_cellranger/GRCh38-3.0.0/star";
     pub const DEFAULT_REF_3: &str = "/mnt/opt/refdata_cellranger/GRCh38-1.2.0/star";
+    pub const DEFAULT_REF_4: &str = "//mnt/opt/refdata_cellranger/hg19_and_mm10-3.0.0/star";
 
     const ERCC_REF: &'static str = "test/ercc92-1.2.0/star/";
 
@@ -616,7 +617,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    //#[ignore]
     fn test_align_read() {
         let settings = StarSettings::new(DEFAULT_REF_2);
         let reference = StarReference::load(settings).unwrap();
@@ -630,7 +631,22 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    //#[ignore]
+    fn test_align_read_hgmm() {
+        let settings = StarSettings::new(DEFAULT_REF_4);
+        let reference = StarReference::load(settings).unwrap();
+        let mut aligner = reference.get_aligner();
+
+        let read = b"GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC";
+        let qual = b"GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG";
+
+        let res = aligner.align_read_sam(b"name", read, qual);
+        println!("res: {}", res);
+        assert!(res == "\t0\thg19_6\t30038251\t255\t98M\t*\t0\t0\tGTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC\tGGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG\tNH:i:1\tHI:i:1\tAS:i:96\tnM:i:0\n");
+    }
+
+    #[test]
+    //#[ignore]
     fn test_align_read_pair() {
         let settings = StarSettings::new(DEFAULT_REF_3);
         let reference = StarReference::load(settings).unwrap();
@@ -660,7 +676,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    //#[ignore]
     fn test_align_multiple_reads() {
         let settings = StarSettings::new(DEFAULT_REF_2);
         let reference = StarReference::load(settings).unwrap();
@@ -689,7 +705,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    //#[ignore]
     fn test_get_record() {
         let settings = StarSettings::new(DEFAULT_REF_2);
         let reference = StarReference::load(settings).unwrap();
@@ -704,7 +720,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    //#[ignore]
     fn test_mmap_crasher() {
         // this read caused a segfault when there was a bug in the mmap reference loader impl
         let settings = StarSettings::new(DEFAULT_REF_2);
@@ -720,7 +736,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    //#[ignore]
     fn test_write_bam() {
         let res = {
             let settings = StarSettings::new(DEFAULT_REF_1);
