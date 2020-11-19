@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 failure = "*"
 libc = "0.2"
-rust-htslib = { version = "0.35.0", default-features = false, features = ["serde_feature"] }
+rust-htslib = { git="https://github.com/rust-bio/rust-htslib", rev="b32c9130a5fc22845d41e9ea6e971e53f6310b02", default-features = false, features = ["serde_feature"] }
 star-sys = { version = "0.2", path = "star-sys" }
 
 [profile.release]
