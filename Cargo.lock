@@ -128,8 +128,7 @@ checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 [[package]]
 name = "hts-sys"
 version = "1.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95b9321d012fe1bbfee89cd8c887bb23c5757419d9c70e91f5ab73ccde87da9e"
+source = "git+https://github.com/rust-bio/rust-htslib?rev=b32c9130a5fc22845d41e9ea6e971e53f6310b02#b32c9130a5fc22845d41e9ea6e971e53f6310b02"
 dependencies = [
  "cc",
  "fs-utils",
@@ -293,8 +292,7 @@ checksum = "7fe5bd57d1d7414c6b5ed48563a2c855d995ff777729dcd91c369ec7fea395ae"
 [[package]]
 name = "rust-htslib"
 version = "0.35.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "800872682c9217cf2f8e777566db0c4c80957c80c90fcf242c03df94e0d3628f"
+source = "git+https://github.com/rust-bio/rust-htslib?rev=b32c9130a5fc22845d41e9ea6e971e53f6310b02#b32c9130a5fc22845d41e9ea6e971e53f6310b02"
 dependencies = [
  "bio-types",
  "custom_derive",
