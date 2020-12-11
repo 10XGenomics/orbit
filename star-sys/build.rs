@@ -84,7 +84,6 @@ const HEADERS: &[&str] = &[
     "STAR/source/loadGTF.h",
     "STAR/source/orbit.h",
     "STAR/source/OutSJ.h",
-    "STAR/source/MmapArray.h",
     "STAR/source/PackedArray.h",
     "STAR/source/ParametersChimeric.h",
     "STAR/source/parametersDefault.xxd",
