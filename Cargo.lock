@@ -127,8 +127,9 @@ checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 
 [[package]]
 name = "hts-sys"
-version = "1.11.0"
-source = "git+https://github.com/rust-bio/rust-htslib?rev=b32c9130a5fc22845d41e9ea6e971e53f6310b02#b32c9130a5fc22845d41e9ea6e971e53f6310b02"
+version = "1.11.1-fix1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d376f20f3cef2b8e0612c4931dc992f7850882fcfda4dfaa2a0c172f43b3352d"
 dependencies = [
  "cc",
  "fs-utils",
@@ -146,6 +147,12 @@ dependencies = [
  "unicode-bidi",
  "unicode-normalization",
 ]
+
+[[package]]
+name = "ieee754"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9007da9cacbd3e6343da136e98b0d2df013f553d35bdec8b518f07bea768e19c"
 
 [[package]]
 name = "jobserver"
@@ -291,14 +298,16 @@ checksum = "7fe5bd57d1d7414c6b5ed48563a2c855d995ff777729dcd91c369ec7fea395ae"
 
 [[package]]
 name = "rust-htslib"
-version = "0.35.0"
-source = "git+https://github.com/rust-bio/rust-htslib?rev=b32c9130a5fc22845d41e9ea6e971e53f6310b02#b32c9130a5fc22845d41e9ea6e971e53f6310b02"
+version = "0.35.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32238e34bd0ef9111c345350092cefe81228dbb666b217597452241d5e18c945"
 dependencies = [
  "bio-types",
  "custom_derive",
  "derefable",
  "derive-new",
  "hts-sys",
+ "ieee754",
  "lazy_static",
  "libc",
  "linear-map",
