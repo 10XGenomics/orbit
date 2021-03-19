@@ -3,6 +3,7 @@ name = "orbit"
 version = "0.2.0"
 authors = ["mkirsche", "Lance Hepler <lance.hepler@10xgenomics.com>", "Patrick Marks <patrick@10xgenomics.com>"]
 edition = "2018"
+license = "MIT"
 
 [workspace]
 
