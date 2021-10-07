@@ -9,7 +9,7 @@ use std::os::raw::c_int;
 use std::path::Path;
 use std::sync::Arc;
 
-use failure::Error;
+use anyhow::{format_err, Error};
 use rust_htslib::bam;
 use rust_htslib::bam::header::{Header, HeaderRecord};
 use rust_htslib::bam::HeaderView;
@@ -413,7 +413,7 @@ fn align_read_rust(al: *mut BindAligner, fastq: &[u8], aln_buf: &mut Vec<u8>) ->
     let fastq = CStr::from_bytes_with_nul(fastq)?;
     let res: *const c_char = unsafe { bindings::align_read(al, fastq.as_ptr()) };
     if res.is_null() {
-        return Err(failure::format_err!("STAR returned null alignment"));
+        return Err(format_err!("STAR returned null alignment"));
     }
 
     let cstr = unsafe { CStr::from_ptr(res) };
@@ -437,7 +437,7 @@ fn align_read_pair_rust(
     let res: *const c_char =
         unsafe { bindings::align_read_pair(al, fastq1.as_ptr(), fastq2.as_ptr()) };
     if res.is_null() {
-        return Err(failure::format_err!("STAR returned null alignment"));
+        return Err(format_err!("STAR returned null alignment"));
     }
 
     let cstr = unsafe { CStr::from_ptr(res) };
@@ -825,7 +825,7 @@ mod test {
             let mut aligner = reference.get_aligner();
 
             let mut out =
-                bam::Writer::from_path(&"test/test.bam", &reference.header(), bam::Format::BAM)
+                bam::Writer::from_path(&"test/test.bam", &reference.header(), bam::Format::Bam)
                     .unwrap();
             let read = b"GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC";
             let qual = b"GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG";
