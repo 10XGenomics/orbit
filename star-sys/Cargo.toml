@@ -5,6 +5,7 @@ authors = ["mkirsche", "Lance Hepler <lance.hepler@10xgenomics.com>", "Patrick M
 edition = "2018"
 build = "build.rs"
 links = "star"
+license = "MIT"
 
 [lib]
 name = "star_sys"

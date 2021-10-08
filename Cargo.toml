@@ -1,15 +1,17 @@
 [package]
 name = "orbit"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["mkirsche", "Lance Hepler <lance.hepler@10xgenomics.com>", "Patrick Marks <patrick@10xgenomics.com>"]
 edition = "2018"
+license = "MIT"
+include = ["wrapper.h", "src/lib.rs", "LICENSE", "README.md"]
 
 [workspace]
 
 [dependencies]
-failure = "*"
+anyhow = "1"
 libc = "0.2"
-rust-htslib = { version = ">=0.35.2", default-features = false, features = ["serde_feature"] }
+rust-htslib = { version = "0.38.2", default-features = false, features = ["serde_feature"] }
 star-sys = { version = "0.2", path = "star-sys" }
 
 [profile.release]
