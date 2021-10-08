@@ -9,7 +9,7 @@ use std::os::raw::c_int;
 use std::path::Path;
 use std::sync::Arc;
 
-use failure::Error;
+use anyhow::{format_err, Error};
 use rust_htslib::bam;
 use rust_htslib::bam::header::{Header, HeaderRecord};
 use rust_htslib::bam::HeaderView;
@@ -413,7 +413,7 @@ fn align_read_rust(al: *mut BindAligner, fastq: &[u8], aln_buf: &mut Vec<u8>) ->
     let fastq = CStr::from_bytes_with_nul(fastq)?;
     let res: *const c_char = unsafe { bindings::align_read(al, fastq.as_ptr()) };
     if res.is_null() {
-        return Err(failure::format_err!("STAR returned null alignment"));
+        return Err(format_err!("STAR returned null alignment"));
     }
 
     let cstr = unsafe { CStr::from_ptr(res) };
@@ -437,7 +437,7 @@ fn align_read_pair_rust(
     let res: *const c_char =
         unsafe { bindings::align_read_pair(al, fastq1.as_ptr(), fastq2.as_ptr()) };
     if res.is_null() {
-        return Err(failure::format_err!("STAR returned null alignment"));
+        return Err(format_err!("STAR returned null alignment"));
     }
 
     let cstr = unsafe { CStr::from_ptr(res) };
@@ -453,11 +453,13 @@ fn align_read_pair_rust(
 #[cfg(test)]
 mod test {
     use super::*;
+    use rust_htslib::bam::Read;
 
     /// References to some commonly used reference genomes for testing purposes
     pub const DEFAULT_REF_1: &str = "/mnt/opt/refdata_cellranger/mm10-3.0.0/star";
     pub const DEFAULT_REF_2: &str = "/mnt/opt/refdata_cellranger/GRCh38-3.0.0/star";
     pub const DEFAULT_REF_3: &str = "/mnt/opt/refdata_cellranger/GRCh38-1.2.0/star";
+    pub const DEFAULT_REF_4: &str = "//mnt/opt/refdata_cellranger/hg19_and_mm10-3.0.0/star";
 
     const ERCC_REF: &'static str = "test/ercc92-1.2.0/star/";
 
@@ -473,6 +475,10 @@ mod test {
 
     const ERCC_READ_4: &'static [u8] = b"AATCCACTCAATAAATCTAAAAAC";
     const ERCC_QUAL_4: &'static [u8] = b"????????????????????????";
+
+    fn have_refs() -> bool {
+        Path::new("/mnt/opt/refdata_cellranger").exists()
+    }
 
     #[test]
     fn test_empty_tiny_reads() {
@@ -615,8 +621,11 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_align_read() {
+        if !have_refs() {
+            return;
+        }
+
         let settings = StarSettings::new(DEFAULT_REF_2);
         let reference = StarReference::load(settings).unwrap();
         let mut aligner = reference.get_aligner();
@@ -628,9 +637,86 @@ mod test {
         assert!(res == "\t0\t6\t30070474\t255\t98M\t*\t0\t0\tGTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC\tGGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG\tNH:i:1\tHI:i:1\tAS:i:96\tnM:i:0\n");
     }
 
+    // random selection of genome sequences
+    const SEQ: &[&[u8]] = &[
+        b"TTCCGTATATTAAACCAACCCTGTATGCTTGCGATGAAGCCTATTTGATCCTGTTGGATGATTGTTTTAATGTGCTCTTGGATTCGGTTTTCCAGAATTTACTGAGTATTTTTGCATCGA",
+        b"GTAGTGAGAGAGGCAAACAGTCGGGATTGGATACAAGGAAGTCACTCTGATTACCAGCCTTTGAAGGTCAACAGGGGGACGGGTGAGAAGGAATGGGAGGCCCAGCGGCCTGGAGTCCTG",
+        b"CAAAAGAAGCCAACAGAAAAAACTGAAAATTGAGAAATCTTTTTATCATGATTGAATTGTTCTAAAATTGGACTGTGATGGAGACACATCTTTACACTTAGACACACAAAAAAGCAAAGA",
+        b"CGACAATGCACGACAGAGGAAGCAGAACAGATATTTAGATTGCCTCTCATTTTCTCTCCCATATTATAGGGAGAAATATGATCGCGTATGCGAGAGTAGTGCCAACATATTGTGCTCTTT",
+        b"CTTGATGAGGTCACCCGGCATGAAAGCTTTCACCCCGTTGGAGGGCTTCCCTAGGGAGTCCTGGGTTATTCCGTAGACATGCGACCCCTCTACTGCTCCTTCCCTCATGGAGCCTCCCCT",
+        b"GCTACCCCGACCACATGAAGCAGCACGACTTCTTCAAGTCCGCCATGCCCGAGGGCTACGTCCAGGAGCGCACCATCTTCTTCAAGGACGACGGCAACTACAAGACCCGCGCAGAGGTGA",
+        b"CTCCAGGGCGTCGCCCAGGTTGAAGTCGTCACTCGCTGAGGGGGGCGGGGACAAGATTATCATAAATATGCAAATTTAGCGCCTCATTTACATATACAGCATTTACATCCAATCCGGGCC",
+        b"CCGCCCCCAGGCCCCACAGCTCGAGCTGATTTGAATATGCAGATGAGCAGACTCCGCCCCCGGGCACTGCCTTTAACCCCGCCCATGAGCCTGACGCTGAGTTCCGGCTTCCAAGCCCCG",
+        b"GCCCAGAGACAAGGACTTGCAGGGCAACAAAGCAGCATCATCCCACTATTCCAGGGGAGGTGCTAAATACGAGGGTGAGGCTGTCAAGCAGTCCCTGGTG",
+        b"GGCCCTTCCTCCCAGCCCAGACTCCTACATCCCAAACTTGAGCCATGGCACACATGCTGGGCACTTACTCTGTGCATAGCAGAGGGAGCTGAGCTGCATC",
+        b"TTCTAGCCCCTCCAACAGTTCTTCATGTAGCACTGCTTTTGGACAGTGACCCATGATATTGCCTTCGTTTGCCCCTCTGACTGTTGGAATCCCACGCACC",
+        b"GATGAGAAGCTCTGGCAGCTGGTAGCCATGGCGAAGATAGAGAGGTTCTCGTATGGGCAGCTGATCTCAAAAGATTTTGGAGAGTCACCCTTCATCATGT",
+        b"TGTAATTTTCTAAGTGATAAGAGGACTAGGAGCATCTTTTGTTCTAATGAGGTGACTCTGGGTGAACTCCTGGCTGGGTCCTGGATGGGGGCTGGTCAAG"
+    ];
+
+    // random selection of references
+    const REF_SET: &[&str] = &[
+        "hg19_and_mm10-3.0.0",
+        "Rattus_norvegicus.Rnor_6.0",
+        "Rattus_norvegicus.Rnor_6.0_EGFP",
+        "Danio_rerio_GRCz11.99_eGFP_DsRed",
+        "ASM130575v1-1.0.0",
+        "EquCab2-1.0.0",
+        "mm10-3.0.0",
+        "Mmul_8.0.1",
+        "Sscrofa11.1-1.0.0",
+        "donkey_3611_h1_MAKER",
+        "ppatens3_3-1.0.0",
+        "bdgp6-1.0.0",
+    ];
+
     #[test]
-    #[ignore]
+    fn test_scan_references() {
+        if !have_refs() {
+            return;
+        }
+
+        let path: String = "/mnt/opt/refdata_cellranger".to_string();
+
+        for ref_test in REF_SET {
+            let p = path.clone() + "/" + ref_test + "/star";
+
+            let settings = StarSettings::new(&p);
+            let reference = StarReference::load(settings).unwrap();
+            let mut aligner = reference.get_aligner();
+
+            for read_test in SEQ {
+                let qual = vec![b'I'; read_test.len()];
+                let res = aligner.align_read_sam(b"asdf", read_test, &qual);
+                println!("res: {}", res);
+            }
+        }
+    }
+
+    #[test]
+    fn test_align_read_hgmm() {
+        if !have_refs() {
+            return;
+        }
+
+        let settings = StarSettings::new(DEFAULT_REF_4);
+        let reference = StarReference::load(settings).unwrap();
+        let mut aligner = reference.get_aligner();
+
+        let read = b"GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC";
+        let qual = b"GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG";
+
+        let res = aligner.align_read_sam(b"name", read, qual);
+        println!("res: {}", res);
+        assert!(res == "\t0\thg19_6\t30038251\t255\t98M\t*\t0\t0\tGTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC\tGGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG\tNH:i:1\tHI:i:1\tAS:i:96\tnM:i:0\n");
+    }
+
+    #[test]
     fn test_align_read_pair() {
+        if !have_refs() {
+            return;
+        }
+
         let settings = StarSettings::new(DEFAULT_REF_3);
         let reference = StarReference::load(settings).unwrap();
         let mut aligner = reference.get_aligner();
@@ -659,8 +745,11 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_align_multiple_reads() {
+        if !have_refs() {
+            return;
+        }
+
         let settings = StarSettings::new(DEFAULT_REF_2);
         let reference = StarReference::load(settings).unwrap();
         let mut aligner = reference.get_aligner();
@@ -688,8 +777,11 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_get_record() {
+        if !have_refs() {
+            return;
+        }
+
         let settings = StarSettings::new(DEFAULT_REF_2);
         let reference = StarReference::load(settings).unwrap();
         let mut aligner = reference.get_aligner();
@@ -703,22 +795,50 @@ mod test {
     }
 
     #[test]
-    #[ignore]
-    fn test_write_bam() {
-        let settings = StarSettings::new(DEFAULT_REF_1);
+    fn test_mmap_crasher() {
+        if !have_refs() {
+            return;
+        }
+
+        // this read caused a segfault when there was a bug in the mmap reference loader impl
+        let settings = StarSettings::new(DEFAULT_REF_2);
         let reference = StarReference::load(settings).unwrap();
         let mut aligner = reference.get_aligner();
 
-        let mut out =
-            bam::Writer::from_path(&"test/test.bam", &reference.header(), bam::Format::BAM)
-                .unwrap();
-        let read = b"GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC";
-        let qual = b"GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG";
+        let read = b"GACAAGCCTGGCCAACATGGTGAAAACCTGTCTCTACTAAAAAAAAAAAAAAATACAAAGATTAGCCGGGTGTGGTGGCAGGCACCTGTAATCCCAGC";
+        let qual = b"GGGGAGIGGAAGGGGIIGIGGGIGGGGIIIGGGGGGIIIIIGGGIIIIIIIGGAGAGGAAAGGGAGA.AA<AAGG.GAG.AAA.AAGG<GGGGGA..G";
         let name = b"gatactaga";
         let res = aligner.align_read(name, read, qual);
-        for record in res.iter() {
-            out.write(&record).unwrap();
+        assert!(res.len() > 0);
+        println!("{:?}", res);
+    }
+
+    #[test]
+    fn test_write_bam() {
+        if !have_refs() {
+            return;
         }
+
+        let res = {
+            let settings = StarSettings::new(DEFAULT_REF_1);
+            let reference = StarReference::load(settings).unwrap();
+            let mut aligner = reference.get_aligner();
+
+            let mut out =
+                bam::Writer::from_path(&"test/test.bam", &reference.header(), bam::Format::Bam)
+                    .unwrap();
+            let read = b"GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC";
+            let qual = b"GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG";
+            let name = b"gatactaga";
+            let res = aligner.align_read(name, read, qual);
+            for record in res.iter() {
+                out.write(&record).unwrap();
+            }
+
+            res
+            // this scope closes the BAM writing
+        };
+
         let bam_wrapped = bam::Reader::from_path(&"test/test.bam");
         match bam_wrapped {
             Ok(v) => println!("working with version: {:?}", v),
@@ -726,7 +846,6 @@ mod test {
         }
         // The reading portion is commented out because it's failing for unknown reasons, but the BAM
         // file can be read with samtools and pysam.
-        /*
         let mut bam = bam::Reader::from_path(&"test/test.bam").unwrap();
         let read_records = bam.records();
         let mut i = 0;
@@ -735,26 +854,5 @@ mod test {
             assert_eq!(record.pos(), res[i].pos());
             i += 1;
         }
-        */
     }
-
-    /*
-    #[test]
-    fn test_align_fastq()
-    {
-        let settings = StarSettings::new(DEFAULT_REF_1);
-        let reference = StarReference::load(settings).unwrap();
-        let mut aligner = reference.get_aligner();
-
-        let fastq_path : &str = "test/full1_sample.fastq";
-
-        let res : Vec<bam::Record> = aligner.align_fastq(fastq_path).unwrap();
-        assert!(res.len() > 0);
-
-        let mut out = bam::Writer::from_path(&"test/full1_sample.bam", &reference.header()).unwrap();
-        for record in res.iter() {
-            out.write(&record).unwrap();
-        }
-    }
-    */
 }

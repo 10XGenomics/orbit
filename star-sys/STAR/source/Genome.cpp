@@ -6,26 +6,15 @@
 #include "streamFuns.h"
 #include "genomeScanFastaFiles.h"
 
+#include <assert.h>
 #include <time.h>
 #include <cmath>
 #include <unistd.h>
 #include <sys/stat.h>
 
-//addresses with respect to shmStart of several genome values
-#define SHM_sizeG 0
-#define SHM_sizeSA 8
-#define SHM_startG 16
-// #define SHM_startSA 24
-//
-// //first available byt of the shm
-// #define SHM_startSHM 32
 
+Genome::Genome (Parameters &Pin ): pGe(Pin.pGe), P(Pin) {
 
-//arbitrary number for ftok function
-#define SHM_projectID 23
-
-Genome::Genome (Parameters &Pin ): pGe(Pin.pGe), P(Pin), shmStart(NULL) {
-    shmKey=ftok(pGe.gDir.c_str(),SHM_projectID);
 
     sjdbOverhang = pGe.sjdbOverhang; //will be re-defined later if another value was used for the generated genome
     sjdbLength = pGe.sjdbOverhang==0 ? 0 : pGe.sjdbOverhang*2+1;
@@ -39,8 +28,6 @@ Genome::~Genome()
 void Genome::freeMemory(){//free big chunks of memory used by genome and suffix array
 
     if (pGe.gLoad=="NoSharedMemory") {//can deallocate only for non-shared memory
-        if (G1 != NULL) delete[] G1;
-        G1=NULL;
         SA.deallocateArray();
         SApass2.deallocateArray();
         SAi.deallocateArray();
@@ -86,9 +73,6 @@ void Genome::genomeLoad(){//allocate and load Genome
     time_t rawtime;
     time ( &rawtime );
     *(P.inOut->logStdOut) << timeMonthDayTime(rawtime) << " ..... loading genome\n" <<flush;
-
-    uint *shmNG=NULL, *shmNSA=NULL;   //pointers to shm stored values , *shmSG, *shmSSA
-    uint64 shmSize=0;//, shmStartG=0; shmStartSA=0;
 
     uint L=200,K=6;
 
@@ -209,11 +193,13 @@ void Genome::genomeLoad(){//allocate and load Genome
 
     uint SAiInBytes=0;
     SAiInBytes += fstreamReadBig(SAiIn,(char*) &pGe.gSAindexNbases, sizeof(pGe.gSAindexNbases));
+
     genomeSAindexStart = new uint[pGe.gSAindexNbases+1];
+
+    // Note this data from SAiIn is small, don't bother mmaping it.
     SAiInBytes += fstreamReadBig(SAiIn,(char*) genomeSAindexStart, sizeof(genomeSAindexStart[0])*(pGe.gSAindexNbases+1));
     nSAi=genomeSAindexStart[pGe.gSAindexNbases];
     P.inOut->logMain << "Read from SAindex: pGe.gSAindexNbases=" << pGe.gSAindexNbases <<"  nSAi="<< nSAi <<endl;
-
 
     /////////////////////////////////// at this point all array sizes should be known: calculate packed array lengths
     if (GstrandBit==0) {//not defined before
@@ -239,165 +225,69 @@ void Genome::genomeLoad(){//allocate and load Genome
     P.inOut->logMain << "nGenome=" << nGenome << ";  nSAbyte=" << nSAbyte <<endl<< flush;
     P.inOut->logMain <<"GstrandBit="<<int(GstrandBit)<<"   SA number of indices="<<nSA<<endl<<flush;
 
-    shmSize=SA.lengthByte + nGenome+L+L+SHM_startG+8;
-    shmSize+= SAi.lengthByte;
 
-    if (pGe.gLoad=="LoadAndKeep" ||
-         pGe.gLoad=="LoadAndRemove" ||
-         pGe.gLoad=="LoadAndExit" ||
-         pGe.gLoad=="Remove") {
+    genomeInsertL=0;
+    genomeInsertChrIndFirst=nChrReal;
 
-            ostringstream errOut;
-            errOut <<"EXITING: no shared memory support";
-            exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_MEMORY_ALLOCATION, P);
+    //load genome
+    P.inOut->logMain <<"Genome file size: "<<nGenome <<" bytes; state: good=" <<GenomeIn.good()\
+            <<" eof="<<GenomeIn.eof()<<" fail="<<GenomeIn.fail()<<" bad="<<GenomeIn.bad()<<"\n"<<flush;
+    P.inOut->logMain <<"Loading Genome ... " << flush;
 
-    } else if (pGe.gLoad=="NoSharedMemory") {// simply allocate memory, do not use shared memory
-        genomeInsertL=0;
-        genomeInsertChrIndFirst=nChrReal;
-        if (pGe.gFastaFiles.at(0)!="-")
-        {//will insert sequences in the genome, now estimate the extra size
-           uint oldlen=chrStart.back();//record the old length
-           genomeInsertL=genomeScanFastaFiles(P, G, false, *this)-oldlen;
-        };
+    int res = mmapGenome.initMmap((pGe.gDir+ "/Genome"), nGenome, L);
+    if (res != 0) {
+        ostringstream errOut;
+        errOut <<"EXITING: got error in mmap: " << res;
+        exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_MEMORY_ALLOCATION, P);
+    }
+    // G points to the start of genome
+    G = mmapGenome.begin();
 
-        try {
+    // G1 points to the L bytes of padding before the genome. 
+    // There is always one page of padding available.
+    assert(L < (1<<12));
+    char* G1 = mmapGenome.begin() - L;
 
-            if (P.sjdbInsert.pass1 || P.sjdbInsert.pass2)
-            {//reserve extra memory for insertion at the 1st and/or 2nd step
-                nGenomeInsert=nGenome+genomeInsertL;
-                nSAinsert=nSA+2*genomeInsertL;
+    GenomeIn.close();
 
-                nGenomePass1=nGenomeInsert;
-                nSApass1=nSAinsert;
-                if (P.sjdbInsert.pass1)
-                {
-                    nGenomePass1+=P.limitSjdbInsertNsj*sjdbLength;
-                    nSApass1+=2*P.limitSjdbInsertNsj*sjdbLength;
-                };
+    for (uint ii=0;ii<L;ii++) {// attach a tail with the largest symbol
+        G1[ii]=K-1;
+        G[nGenome+ii]=K-1;
+    };
 
-                nGenomePass2=nGenomePass1;
-                nSApass2=nSApass1;
-                if (P.sjdbInsert.pass2)
-                {
-                    nGenomePass2+=P.limitSjdbInsertNsj*sjdbLength;
-                    nSApass2+=2*P.limitSjdbInsertNsj*sjdbLength;
-                };
+    //load SAs
+    P.inOut->logMain <<"SA file size: "<<SA.lengthByte <<" bytes; state: good=" <<SAin.good()\
+            <<" eof="<<SAin.eof()<<" fail="<<SAin.fail()<<" bad="<<SAin.bad()<<"\n"<<flush;
+    P.inOut->logMain <<"Loading SA ... " << flush;
 
-                G1=new char[nGenomePass2+L+L];
-
-                SApass2.defineBits(GstrandBit+1,nSApass2);
-                SApass2.allocateArray();
-
-                SApass1.defineBits(GstrandBit+1,nSApass1);
-                SApass1.pointArray(SApass2.charArray+SApass2.lengthByte-SApass1.lengthByte);
-
-                SAinsert.defineBits(GstrandBit+1,nSAinsert);
-                SAinsert.pointArray(SApass1.charArray+SApass1.lengthByte-SAinsert.lengthByte);
-
-                SA.pointArray(SAinsert.charArray+SAinsert.lengthByte-SA.lengthByte);
-            } else
-            {//no sjdb insertions
-                if (genomeInsertL==0)
-                {// no sequence insertion, simple allocation
-                    G1=new char[nGenome+L+L];
-                    SA.allocateArray();
-                } else
-                {
-                    G1=new char[nGenome+L+L+genomeInsertL];
-                    SAinsert.defineBits(GstrandBit+1,nSA+2*genomeInsertL);//TODO: re-define GstrandBit if necessary
-                    SAinsert.allocateArray();
-                    SA.pointArray(SAinsert.charArray+SAinsert.lengthByte-SA.lengthByte);
-                };
-            };
-            SAi.allocateArray();
-            P.inOut->logMain <<"Shared memory is not used for genomes. Allocated a private copy of the genome.\n"<<flush;
-        } catch (exception & exc) {
-            ostringstream errOut;
-            errOut <<"EXITING: fatal error trying to allocate genome arrays, exception thrown: "<<exc.what()<<endl;
-            errOut <<"Possible cause 1: not enough RAM. Check if you have enough RAM " << nGenome+L+L+SA.lengthByte+SAi.lengthByte+2000000000 << " bytes\n";
-            errOut <<"Possible cause 2: not enough virtual memory allowed with ulimit. SOLUTION: run ulimit -v " <<  nGenome+L+L+SA.lengthByte+SAi.lengthByte+2000000000<<endl <<flush;
-            exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_MEMORY_ALLOCATION, P);
-        };
-
+    // Load suffix array with mmap
+    res = mmapSA.initMmap((pGe.gDir + "/SA"), SA.lengthByte, 0);
+    if (res != 0) {
+        ostringstream errOut;
+        errOut <<"EXITING: got error in mmap: " << res;
+        exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_MEMORY_ALLOCATION, P);
     }
 
+    SA.pointArray(mmapSA.begin());
+    SAin.close();
 
-//     if (twopass1readsN==0) {//not 2-pass
-//         shmStartG=SHM_startSHM;
-//         shmStartSA=0;
-//     } else {//2-pass
-//         ostringstream errOut;
-//         errOut << "EXITING because of FATAL ERROR: 2-pass procedure cannot be used with genome already loaded im memory'  "\n" ;
-//         errOut << "SOLUTION: check shared memory settings as explained in STAR manual, OR run STAR with --genomeLoad NoSharedMemory to avoid using shared memory\n" <<flush;
-//         exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_SHM, P);
-//     };
+    P.inOut->logMain <<"Loading SAindex ... " << flush;
 
+    size_t SAindexOffset = SAiIn.tellg();
+    res = mmapSAi.initMmap((pGe.gDir + "/SAindex"), SAindexOffset + SAi.lengthByte, 0);
+    if (res != 0) {
+        ostringstream errOut;
+        errOut <<"EXITING: got error in mmap: " << res;
+        exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_MEMORY_ALLOCATION, P);
+    }
 
-    G=G1+L;
-
-    if (pGe.gLoad=="NoSharedMemory") {//load genome and SAs from files
-        //load genome
-        P.inOut->logMain <<"Genome file size: "<<nGenome <<" bytes; state: good=" <<GenomeIn.good()\
-                <<" eof="<<GenomeIn.eof()<<" fail="<<GenomeIn.fail()<<" bad="<<GenomeIn.bad()<<"\n"<<flush;
-        P.inOut->logMain <<"Loading Genome ... " << flush;
-        uint genomeReadBytesN=fstreamReadBig(GenomeIn,G,nGenome);
-        P.inOut->logMain <<"done! state: good=" <<GenomeIn.good()\
-                <<" eof="<<GenomeIn.eof()<<" fail="<<GenomeIn.fail()<<" bad="<<GenomeIn.bad()<<"; loaded "<<genomeReadBytesN<<" bytes\n" << flush;
-        GenomeIn.close();
-
-        for (uint ii=0;ii<L;ii++) {// attach a tail with the largest symbol
-            G1[ii]=K-1;
-            G[nGenome+ii]=K-1;
-        };
-
-        //load SAs
-        P.inOut->logMain <<"SA file size: "<<SA.lengthByte <<" bytes; state: good=" <<SAin.good()\
-                <<" eof="<<SAin.eof()<<" fail="<<SAin.fail()<<" bad="<<SAin.bad()<<"\n"<<flush;
-        P.inOut->logMain <<"Loading SA ... " << flush;
-        genomeReadBytesN=fstreamReadBig(SAin,SA.charArray, SA.lengthByte);
-        P.inOut->logMain <<"done! state: good=" <<SAin.good()\
-                <<" eof="<<SAin.eof()<<" fail="<<SAin.fail()<<" bad="<<SAin.bad()<<"; loaded "<<genomeReadBytesN<<" bytes\n" << flush;
-        SAin.close();
-
-        P.inOut->logMain <<"Loading SAindex ... " << flush;
-        SAiInBytes +=fstreamReadBig(SAiIn,SAi.charArray, SAi.lengthByte);
-        P.inOut->logMain <<"done: "<<SAiInBytes<<" bytes\n" << flush;
-    };
+    // SAi starts past the begining of the file.
+    SAi.pointArray(mmapSAi.begin() + SAindexOffset);
 
     SAiIn.close();
 
-    if (pGe.gLoad=="LoadAndKeep" ||
-         pGe.gLoad=="LoadAndRemove" ||
-         pGe.gLoad=="LoadAndExit")
-    {
-        //record sizes. This marks the end of genome loading
-        *shmNG=nGenome;
-        *shmNSA=nSAbyte;
-    };
-
     time ( &rawtime );
-    P.inOut->logMain << "Finished loading the genome: " << asctime (localtime ( &rawtime )) <<"\n"<<flush;
-
-    #ifdef COMPILE_FOR_MAC
-    {
-        uint sum1=0;
-        for (uint ii=0;ii<nGenome; ii++) sum1 +=  (uint) (unsigned char) G[ii];
-        P.inOut->logMain << "Sum of all Genome bytes: " <<sum1 <<"\n"<<flush;
-        sum1=0;
-        for (uint ii=0;ii<SA.lengthByte; ii++) sum1 +=  (uint) (unsigned char) SA.charArray[ii];
-        P.inOut->logMain << "Sum of all SA bytes: " <<sum1 <<"\n"<<flush;
-        sum1=0;
-        for (uint ii=0;ii<SAi.lengthByte; ii++) sum1 +=  (uint) (unsigned char) SAi.charArray[ii];
-        P.inOut->logMain << "Sum of all SAi bytes: " <<sum1 <<"\n"<<flush;
-    };
-    #endif
-
-    if (pGe.gLoad=="LoadAndExit") {
-	uint shmSum=0;
-	for (uint ii=0;ii<shmSize;ii++) shmSum+=shmStart[ii];
-        P.inOut->logMain << "pGe.gLoad=LoadAndExit: completed, the genome is loaded and kept in RAM, EXITING now.\n"<<flush;
-        return;
-    };
+    P.inOut->logMain << "Finished ljk loading the genome: " << asctime (localtime ( &rawtime )) <<"\n"<<flush;
 
     insertSequences();
 
