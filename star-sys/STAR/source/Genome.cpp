@@ -6,7 +6,6 @@
 #include "streamFuns.h"
 #include "genomeScanFastaFiles.h"
 
-#include <assert.h>
 #include <time.h>
 #include <cmath>
 #include <unistd.h>
@@ -28,6 +27,8 @@ Genome::~Genome()
 void Genome::freeMemory(){//free big chunks of memory used by genome and suffix array
 
     if (pGe.gLoad=="NoSharedMemory") {//can deallocate only for non-shared memory
+        if (G1 != NULL) delete[] G1;
+        G1=NULL;
         SA.deallocateArray();
         SApass2.deallocateArray();
         SAi.deallocateArray();
@@ -195,8 +196,6 @@ void Genome::genomeLoad(){//allocate and load Genome
     SAiInBytes += fstreamReadBig(SAiIn,(char*) &pGe.gSAindexNbases, sizeof(pGe.gSAindexNbases));
 
     genomeSAindexStart = new uint[pGe.gSAindexNbases+1];
-
-    // Note this data from SAiIn is small, don't bother mmaping it.
     SAiInBytes += fstreamReadBig(SAiIn,(char*) genomeSAindexStart, sizeof(genomeSAindexStart[0])*(pGe.gSAindexNbases+1));
     nSAi=genomeSAindexStart[pGe.gSAindexNbases];
     P.inOut->logMain << "Read from SAindex: pGe.gSAindexNbases=" << pGe.gSAindexNbases <<"  nSAi="<< nSAi <<endl;
@@ -228,26 +227,35 @@ void Genome::genomeLoad(){//allocate and load Genome
 
     genomeInsertL=0;
     genomeInsertChrIndFirst=nChrReal;
+    if (pGe.gFastaFiles.at(0)!="-")
+    {//will insert sequences in the genome, now estimate the extra size
+        uint oldlen=chrStart.back();//record the old length
+        genomeInsertL=genomeScanFastaFiles(P, G, false, *this)-oldlen;
+    };
+
+    try {
+        G1=new char[nGenome+L+L];
+        SA.allocateArray();
+        SAi.allocateArray();
+        P.inOut->logMain <<"Shared memory is not used for genomes. Allocated a private copy of the genome.\n"<<flush;
+    } catch (exception & exc) {
+        ostringstream errOut;
+        errOut <<"EXITING: fatal error trying to allocate genome arrays, exception thrown: "<<exc.what()<<endl;
+        errOut <<"Possible cause 1: not enough RAM. Check if you have enough RAM " << nGenome+L+L+SA.lengthByte+SAi.lengthByte+2000000000 << " bytes\n";
+        errOut <<"Possible cause 2: not enough virtual memory allowed with ulimit. SOLUTION: run ulimit -v " <<  nGenome+L+L+SA.lengthByte+SAi.lengthByte+2000000000<<endl <<flush;
+        exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_MEMORY_ALLOCATION, P);
+    };
+
+
+    G=G1+L;
 
     //load genome
     P.inOut->logMain <<"Genome file size: "<<nGenome <<" bytes; state: good=" <<GenomeIn.good()\
             <<" eof="<<GenomeIn.eof()<<" fail="<<GenomeIn.fail()<<" bad="<<GenomeIn.bad()<<"\n"<<flush;
     P.inOut->logMain <<"Loading Genome ... " << flush;
-
-    int res = mmapGenome.initMmap((pGe.gDir+ "/Genome"), nGenome, L);
-    if (res != 0) {
-        ostringstream errOut;
-        errOut <<"EXITING: got error in mmap: " << res;
-        exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_MEMORY_ALLOCATION, P);
-    }
-    // G points to the start of genome
-    G = mmapGenome.begin();
-
-    // G1 points to the L bytes of padding before the genome. 
-    // There is always one page of padding available.
-    assert(L < (1<<12));
-    char* G1 = mmapGenome.begin() - L;
-
+    uint genomeReadBytesN=fstreamReadBig(GenomeIn,G,nGenome);
+    P.inOut->logMain <<"done! state: good=" <<GenomeIn.good()\
+            <<" eof="<<GenomeIn.eof()<<" fail="<<GenomeIn.fail()<<" bad="<<GenomeIn.bad()<<"; loaded "<<genomeReadBytesN<<" bytes\n" << flush;
     GenomeIn.close();
 
     for (uint ii=0;ii<L;ii++) {// attach a tail with the largest symbol
@@ -259,35 +267,34 @@ void Genome::genomeLoad(){//allocate and load Genome
     P.inOut->logMain <<"SA file size: "<<SA.lengthByte <<" bytes; state: good=" <<SAin.good()\
             <<" eof="<<SAin.eof()<<" fail="<<SAin.fail()<<" bad="<<SAin.bad()<<"\n"<<flush;
     P.inOut->logMain <<"Loading SA ... " << flush;
-
-    // Load suffix array with mmap
-    res = mmapSA.initMmap((pGe.gDir + "/SA"), SA.lengthByte, 0);
-    if (res != 0) {
-        ostringstream errOut;
-        errOut <<"EXITING: got error in mmap: " << res;
-        exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_MEMORY_ALLOCATION, P);
-    }
-
-    SA.pointArray(mmapSA.begin());
+    genomeReadBytesN=fstreamReadBig(SAin,SA.charArray, SA.lengthByte);
+    P.inOut->logMain <<"done! state: good=" <<SAin.good()\
+            <<" eof="<<SAin.eof()<<" fail="<<SAin.fail()<<" bad="<<SAin.bad()<<"; loaded "<<genomeReadBytesN<<" bytes\n" << flush;
     SAin.close();
 
     P.inOut->logMain <<"Loading SAindex ... " << flush;
+    SAiInBytes +=fstreamReadBig(SAiIn,SAi.charArray, SAi.lengthByte);
+    P.inOut->logMain <<"done: "<<SAiInBytes<<" bytes\n" << flush;
 
-    size_t SAindexOffset = SAiIn.tellg();
-    res = mmapSAi.initMmap((pGe.gDir + "/SAindex"), SAindexOffset + SAi.lengthByte, 0);
-    if (res != 0) {
-        ostringstream errOut;
-        errOut <<"EXITING: got error in mmap: " << res;
-        exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_MEMORY_ALLOCATION, P);
-    }
-
-    // SAi starts past the begining of the file.
-    SAi.pointArray(mmapSAi.begin() + SAindexOffset);
 
     SAiIn.close();
 
     time ( &rawtime );
     P.inOut->logMain << "Finished ljk loading the genome: " << asctime (localtime ( &rawtime )) <<"\n"<<flush;
+
+    #ifdef COMPILE_FOR_MAC
+    {
+        uint sum1=0;
+        for (uint ii=0;ii<nGenome; ii++) sum1 +=  (uint) (unsigned char) G[ii];
+        P.inOut->logMain << "Sum of all Genome bytes: " <<sum1 <<"\n"<<flush;
+        sum1=0;
+        for (uint ii=0;ii<SA.lengthByte; ii++) sum1 +=  (uint) (unsigned char) SA.charArray[ii];
+        P.inOut->logMain << "Sum of all SA bytes: " <<sum1 <<"\n"<<flush;
+        sum1=0;
+        for (uint ii=0;ii<SAi.lengthByte; ii++) sum1 +=  (uint) (unsigned char) SAi.charArray[ii];
+        P.inOut->logMain << "Sum of all SAi bytes: " <<sum1 <<"\n"<<flush;
+    };
+    #endif
 
     insertSequences();
 

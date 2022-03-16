@@ -38,7 +38,7 @@ uint ReadAlign::maxMappableLength2strands(uint pieceStartIn, uint pieceLengthIn,
 
         //find SA boundaries
         uint Lind=Lmax;
-        while (Lind>0) {//check the precense of the prefix for Lind
+        while (Lind>0) {//check the presence of the prefix for Lind
             iSA1=mapGen.SAi[mapGen.genomeSAindexStart[Lind-1]+ind1]; // starting point for suffix array search.
             if ((iSA1 & mapGen.SAiMarkAbsentMaskC) == 0) {//prefix exists
                 break;
@@ -48,13 +48,20 @@ uint ReadAlign::maxMappableLength2strands(uint pieceStartIn, uint pieceLengthIn,
             };
         };
 
-        // define lower bound for suffix array range search.
+        // define upper bound for suffix array range search.
+        bool iSA2good = true;
         if (mapGen.genomeSAindexStart[Lind-1]+ind1+1 < mapGen.genomeSAindexStart[Lind]) {//we are not at the end of the SA
-            iSA2=((mapGen.SAi[mapGen.genomeSAindexStart[Lind-1]+ind1+1] & mapGen.SAiMarkNmask) & mapGen.SAiMarkAbsentMask) - 1;
+            iSA2 = mapGen.SAi[mapGen.genomeSAindexStart[Lind-1]+ind1+1];
+            if ( (iSA2 & mapGen.SAiMarkAbsentMaskC) == 0) {
+                iSA2 = (iSA2 & mapGen.SAiMarkNmask) - 1;
+            } else {
+                iSA2 = mapGen.nSA-1; //safe, but can probably do better
+                iSA2good = false;
+            };
         } else {
             iSA2=mapGen.nSA-1;
+            iSA2good = false;
         };
-
 
     //#define SA_SEARCH_FULL
 
@@ -63,13 +70,14 @@ uint ReadAlign::maxMappableLength2strands(uint pieceStartIn, uint pieceLengthIn,
         maxL=0;
         Nrep = maxMappableLength(mapGen, Read1, pieceStart, pieceLength, iSA1 & mapGen.SAiMarkNmask, iSA2, dirR, maxL, indStartEnd);
     #else
-        if (Lind < P.pGe.gSAindexNbases && (iSA1 & mapGen.SAiMarkNmaskC)==0 ) {//no need for SA search
+        bool iSA1noN = (iSA1 & mapGen.SAiMarkNmaskC)==0;
+        if (Lind < P.pGe.gSAindexNbases && iSA1noN && iSA2good) {//no need for SA search
             // very short seq, already found hits in suffix array w/o having to search the genome for extensions.
             indStartEnd[0]=iSA1;
             indStartEnd[1]=iSA2;
             Nrep=indStartEnd[1]-indStartEnd[0]+1;
             maxL=Lind;
-        } else if (iSA1==iSA2) {//unique align already, just find maxL
+        } else if (iSA1==iSA2 && iSA1noN && iSA2good) {//unique align already, just find maxL
             if ((iSA1 & mapGen.SAiMarkNmaskC)!=0) {
                 ostringstream errOut;
                 errOut  << "BUG: in ReadAlign::maxMappableLength2strands";
@@ -79,12 +87,12 @@ uint ReadAlign::maxMappableLength2strands(uint pieceStartIn, uint pieceLengthIn,
             Nrep=1;
             bool comparRes;
             maxL=compareSeqToGenome(mapGen, Read1, pieceStart, pieceLength, Lind, iSA1, dirR, comparRes);
-        } else {//SA search, pieceLength>maxL
-            if ( (iSA1 & mapGen.SAiMarkNmaskC)==0 ) {//no N in the prefix
-                maxL=Lind;
+        } else {//need SA search, pieceLength>maxL
+            if (iSA2good && iSA1noN) {
+                maxL = Lind; //Lind bases were already matched
             } else {
                 maxL=0;
-            };
+            };        
             Nrep = maxMappableLength(mapGen, Read1, pieceStart, pieceLength, iSA1 & mapGen.SAiMarkNmask, iSA2, dirR, maxL, indStartEnd);
         };
     #endif
