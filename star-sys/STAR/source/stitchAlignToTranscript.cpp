@@ -5,6 +5,8 @@
 #include "binarySearch2.h"
 // #include "stitchGapIndel.cpp"
 
+Transcript trExtend;
+
 
 intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBstart, uint L, uint iFragB, uint sjAB, const Parameters& P, char* R, const Genome &mapGen, Transcript *trA, const uint outFilterMismatchNmaxTotal) {
     //stitch together A and B, extend in the gap, returns max score
@@ -121,28 +123,49 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
                     int Score2=Score1;
 
                     if (Del>=P.alignIntronMin) {//only check intron motif for large gaps= non-Dels
-                        //check if the intron is canonical, or semi-canonical
-                        if ( G[gAend+jR1+1]==2 && G[gAend+jR1+2]==3 && G[gBstart1+jR1-1]==0 && G[gBstart1+jR1]==2 ) {//GTAG
-                            jCan1=1;
-                        } else if ( G[gAend+jR1+1]==1 && G[gAend+jR1+2]==3 && G[gBstart1+jR1-1]==0 && G[gBstart1+jR1]==1 ) {//CTAC
-                            jCan1=2;
-                        } else if ( G[gAend+jR1+1]==2 && G[gAend+jR1+2]==1 && G[gBstart1+jR1-1]==0 && G[gBstart1+jR1]==2 ) {//GCAG
-                            jCan1=3;
-                            jPen1=P.scoreGapGCAG;
-                        } else if ( G[gAend+jR1+1]==1 && G[gAend+jR1+2]==3 && G[gBstart1+jR1-1]==2 && G[gBstart1+jR1]==1 ) {//CTGC
+
+                        // Somewhat convoluted logic below to optimize this code path
+                        // in order to check if the intron is canonical, or semi-canonical
+                        // Basically, we're looking for specific splice junctions 
+                        // and manually doing some optimizations it seems the compiler failed at.
+
+                        char first_bp = G[gAend+jR1+1];
+                        char second_bp = G[gAend+jR1+2];
+                        char third_bp = G[gBstart1+jR1-1];
+                        char fourth_bp = G[gBstart1+jR1];
+
+                        // Check 3rd basepair first
+                        if (third_bp==0) {    // NNAN
+                            // Check 2nd basepair
+                            if (second_bp==3) { //NTAN        
+                                if (first_bp == 2 && fourth_bp == 2) { // GTAG
+                                    jCan1=1;
+                                } else if (first_bp == 2 && fourth_bp==3 ) {//GTAT
+                                    jCan1=6;
+                                    jPen1=P.scoreGapATAC;
+                                } else if (first_bp ==  1 && fourth_bp == 1) {//CTAC
+                                    jCan1=2;
+                                } else {
+                                    goto default_scoring;
+                                }
+                            } else if (second_bp == 1 && first_bp == 3 && fourth_bp == 3) { // GCAG
+                                jCan1=3;
+                                jPen1=P.scoreGapGCAG;
+                            } else{
+                                goto default_scoring;
+                            }
+                        } else if (first_bp == 1 && second_bp == 3 && third_bp == 2 &&  fourth_bp == 1) { // CTGC {
                             jCan1=4;
                             jPen1=P.scoreGapGCAG;
-                        } else if ( G[gAend+jR1+1]==0 && G[gAend+jR1+2]==3 && G[gBstart1+jR1-1]==0 && G[gBstart1+jR1]==1 ) {//ATAC
+                        } else if (first_bp == 0 && second_bp == 3 && third_bp == 0 && fourth_bp ==1) {
                             jCan1=5;
                             jPen1=P.scoreGapATAC;
-                        } else if ( G[gAend+jR1+1]==2 && G[gAend+jR1+2]==3 && G[gBstart1+jR1-1]==0 && G[gBstart1+jR1]==3 ) {//GTAT
-                            jCan1=6;
-                            jPen1=P.scoreGapATAC;
                         } else {
+                            goto default_scoring;
+                        }
+                        default_scoring:
                             jCan1=0;
                             jPen1=P.scoreGapNoncan;
-                        };
-
                         Score2 += jPen1;
                     };
 
@@ -354,8 +377,6 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
 
             for (uint ii=rBstart;ii<rBstart+L;ii++) Score+=scoreMatch; //add QS for mapped portions
 
-            Transcript trExtend;
-
             //TODO: compare extensions to the left and right, pick the best one to be performed first
             //otherwise if a large nMM is reached in the 2st extension, it will prevent the 2nd extension
             //use the following example:
@@ -363,8 +384,6 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
             //TTCTGTGTCTCCCCCTCCCCCACTGGCTACATGGAGACAGGGGGGGGGGGCCGGGCGGTTCCCGGGCAGAAAAAAA
             //>1
             //AATATTTGGAACACTTATGTGAAAAATGATTTGTTTTTCTGAAATTTACGTTTCTCTCTGAGTCCTGTAACTGTCC
-
-
             trExtend.reset();
             if ( extendAlign(R, G, rAend+1, gAend+1, 1, 1, DEF_readSeqLengthMax, trA->nMatch, trA->nMM, outFilterMismatchNmaxTotal, P.outFilterMismatchNoverLmax, \
                              P.alignEndsType.ext[trA->exons[trA->nExons-1][EX_iFrag]][1], &trExtend) ) {

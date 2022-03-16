@@ -20,7 +20,7 @@ void Transcript::reset() {
     nMatch=0;
     nMM=0;
 
-    nGap=0; lGap=0; lDel=0; lIns=0; nDel=0; nIns=0;
+    nGap=0; lGap=0; lDel=0; lIns=0; nDel=0; nIns=0; nExons = 0;
 
     nUnique=nAnchor=0;
 };
