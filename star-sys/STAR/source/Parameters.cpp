@@ -14,6 +14,9 @@
 
 #define PAR_NAME_PRINT_WIDTH 30
 
+ParameterInfoBase::ParameterInfoBase(const char* nameStringIn, int inputLevelIn, int inputLevelAllowedIn)
+    : nameString(nameStringIn), inputLevel(inputLevelIn), inputLevelAllowed(inputLevelAllowedIn) {}
+
 Parameters::Parameters() {//initalize parameters info
 
     inOut = new InOutStreams;
