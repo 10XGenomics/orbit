@@ -1,11 +1,11 @@
 #include <cmath>
 #include "Transcript.h"
 
-intScore Transcript::alignScore(char **Read1, char *G, const Parameters &P) {//re-calculates score and number of mismatches
+intScore Transcript::alignScore(const char **Read1, const char *G, const Parameters &P) {//re-calculates score and number of mismatches
     maxScore=0;
     nMM=0;
     nMatch=0;
-    char* R=Read1[roStr==0 ? 0:2];
+    const char* R=Read1[roStr==0 ? 0:2];
     for (uint iex=0;iex<nExons;iex++) {
         for (uint ii=0;ii<exons[iex][EX_L];ii++) {
             char r1=R[ii+exons[iex][EX_R]];

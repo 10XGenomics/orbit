@@ -414,7 +414,7 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
     for (uint ii=0; ii<parArray.size(); ii++) {
         if (parArray[ii]->inputLevel>0) {
             inOut->logMain << setw(PAR_NAME_PRINT_WIDTH) << parArray[ii]->nameString <<"    "<< *(parArray[ii]) << endl;
-            if (parArray[ii]->nameString != "parametersFiles" ) {
+            if (strcmp(parArray[ii]->nameString, "parametersFiles")) {
                 clFull << "   --" << parArray[ii]->nameString << " " << *(parArray[ii]);
             };
         };

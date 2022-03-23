@@ -8,7 +8,7 @@
 
 template<class charT, class traits = std::char_traits<charT> >
 class NullBuf: public std::basic_streambuf<charT, traits> {
-    inline typename traits::int_type overflow(typename traits::int_type c) {
+    inline typename traits::int_type overflow(typename traits::int_type c) override {
         return traits::not_eof(c);
     }
 };

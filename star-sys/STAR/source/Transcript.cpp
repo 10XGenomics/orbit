@@ -1,10 +1,5 @@
 #include "Transcript.h"
 
-Transcript::Transcript()
-{
-    reset();
-};
-
 void Transcript::reset() {
     extendL=0;
 
@@ -23,9 +18,9 @@ void Transcript::reset() {
     nGap=0; lGap=0; lDel=0; lIns=0; nDel=0; nIns=0;
 
     nUnique=nAnchor=0;
-};
+}
 
-void Transcript::add(Transcript *trIn) {
+void Transcript::add(const Transcript *trIn) noexcept {
     maxScore+=trIn->maxScore;
     nMatch+=trIn->nMatch;
     nMM+=trIn->nMM;
@@ -33,11 +28,11 @@ void Transcript::add(Transcript *trIn) {
     lDel+=trIn->lDel; nDel+=trIn->nDel;
     lIns+=trIn->lIns; nIns+=trIn->nIns;
     nUnique+=trIn->nUnique;
-};
+}
 
-void Transcript::extractSpliceJunctions(vector<array<uint64,2>> &sjOut, bool &annotYes)
+bool Transcript::extractSpliceJunctions(vector<array<uint64,2>> &sjOut) const
 {
-    annotYes=true;
+    bool annotYes=true;
     for (uint64 iex=0; iex<nExons-1; iex++) {//record all junctions
         if (canonSJ[iex]>=0) {//only record junctions, not indels or mate gap
             array<uint64,2> sj;
@@ -48,5 +43,6 @@ void Transcript::extractSpliceJunctions(vector<array<uint64,2>> &sjOut, bool &an
                 annotYes=false;//if one of the SJs is unannoated, annotYes=false
         };
     };
-};
+    return annotYes;
+}
 

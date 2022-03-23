@@ -141,7 +141,7 @@ void ReadAlign::peMergeMates() {
     return;
 };
 
-void Transcript::peOverlapSEtoPE(uint* mateStart, Transcript &t) {//convert alignment from merged-SE to PE
+void Transcript::peOverlapSEtoPE(const uint* mateStart, const Transcript &t) {//convert alignment from merged-SE to PE
 
     uint mLen[2];
     mLen[0]=readLength[t.Str];
