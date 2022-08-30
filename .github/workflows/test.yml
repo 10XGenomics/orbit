@@ -34,10 +34,30 @@ jobs:
           echo "$HOME/bin" >> "$GITHUB_PATH"
       - name: Check Rust formatting
         run: cargo fmt -- --check
-      - name: Check dependency licenses
-        run: cargo deny --locked check
       - name: Remove the Cargo target directory
         if: github.ref == 'refs/heads/master'
         run: cargo clean
+      - name: Check dependency licenses
+        run: cargo deny --locked check
+      - name: Run clippy
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{secrets.GITHUB_TOKEN}}
+          args: |
+            --all-targets --locked --
+            -D clippy::perf
+            -D clippy::style
+            -D clippy::suspicious
+            -A clippy::comparison_chain
+            -W future_incompatible
+            -W nonstandard_style
+            -W rust_2021_compatibility
+            -W unused
+            -D clippy::enum_glob_use
+            -D clippy::redundant_closure_for_method_calls
+            -D clippy::unnecessary_unwrap
+            -D clippy::unused_io_amount
+            -D clippy::wildcard_imports
+            -D clippy::blacklisted_name
       - name: Run Rust tests
         run: RUST_BACKTRACE=1 cargo test --locked

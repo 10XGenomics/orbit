@@ -60,7 +60,7 @@ impl StarReference {
 
         // recover stray CStrings to prevent leaked memory
         nvec.into_iter().for_each(|ptr| unsafe {
-            CString::from_raw(ptr);
+            drop(CString::from_raw(ptr));
         });
 
         let inner = InnerStarReference {
@@ -217,7 +217,7 @@ impl StarAligner {
         qual: &[u8],
         alns: AlignedRecords<'a>,
     ) -> Vec<bam::Record> {
-        use AlignedRecords::*;
+        use AlignedRecords::{Read1, Read2};
         let (alns, aln_is_first_in_template) = match alns {
             Read1(alns) => (alns, true),
             Read2(alns) => (alns, false),
@@ -254,7 +254,7 @@ impl StarAligner {
     /// Aligns a given read and produces BAM records
     pub fn align_read(&mut self, name: &[u8], read: &[u8], qual: &[u8]) -> Vec<bam::Record> {
         // STAR will throw an error on empty reads - so just construct an empty record.
-        if read.len() == 0 {
+        if read.is_empty() {
             // Make an unmapped record and return it
             return vec![Self::empty_record(name, read, qual)];
         }
@@ -280,12 +280,12 @@ impl StarAligner {
         read2: &[u8],
         qual2: &[u8],
     ) -> (Vec<bam::Record>, Vec<bam::Record>) {
-        use AlignedRecords::*;
-        if read1.len() == 0 {
+        use AlignedRecords::{Read1, Read2};
+        if read1.is_empty() {
             let mut recs2 = self.align_read(name, read2, qual2);
             let recs1 = Self::empty_records(name, read1, qual1, Read2(&mut recs2));
             return (recs1, recs2);
-        } else if read2.len() == 0 {
+        } else if read2.is_empty() {
             let mut recs1 = self.align_read(name, read1, qual1);
             let recs2 = Self::empty_records(name, read2, qual2, Read1(&mut recs1));
             return (recs1, recs2);
@@ -341,11 +341,11 @@ impl StarAligner {
     fn parse_sam_to_records(&mut self, name: &[u8]) -> Vec<bam::Record> {
         let mut records = Vec::new();
         for slc in self.aln_buf.split(|c| *c == b'\n') {
-            if slc.len() > 0 {
+            if !slc.is_empty() {
                 self.sam_buf.clear();
                 self.sam_buf.extend_from_slice(name);
                 self.sam_buf.extend_from_slice(slc);
-                let record = bam::Record::from_sam(&mut self.header_view, &self.sam_buf).unwrap();
+                let record = bam::Record::from_sam(&self.header_view, &self.sam_buf).unwrap();
                 records.push(record);
             }
         }
@@ -372,10 +372,7 @@ fn get_lines(path: &Path) -> Vec<String> {
         Err(error) => panic!("error: {}: {}", path.display(), error),
         Ok(file) => file,
     };
-    BufReader::new(file)
-        .lines()
-        .map(|line| line.unwrap())
-        .collect()
+    BufReader::new(file).lines().map(Result::unwrap).collect()
 }
 
 /// Produces a header from the genome reference directory by looking up the contig names and
@@ -388,8 +385,8 @@ fn generate_header(genome_path: impl AsRef<Path>) -> (Header, HeaderView) {
 
     let contig_lengths_path = genome_path.as_ref().join(Path::new("chrLength.txt"));
     let contig_lengths = get_lines(&contig_lengths_path);
-    for (ref contig_name, len) in contig_names.iter().zip(contig_lengths.iter()) {
-        add_ref_to_bam_header(&mut header, &contig_name, len.parse::<usize>().unwrap());
+    for (contig_name, len) in contig_names.iter().zip(contig_lengths.into_iter()) {
+        add_ref_to_bam_header(&mut header, contig_name, len.parse::<usize>().unwrap());
     }
 
     let hv = HeaderView::from_header(&header);
@@ -461,20 +458,20 @@ mod test {
     pub const DEFAULT_REF_3: &str = "/mnt/opt/refdata_cellranger/GRCh38-1.2.0/star";
     pub const DEFAULT_REF_4: &str = "//mnt/opt/refdata_cellranger/hg19_and_mm10-3.0.0/star";
 
-    const ERCC_REF: &'static str = "test/ercc92-1.2.0/star/";
+    const ERCC_REF: &str = "test/ercc92-1.2.0/star/";
 
-    const NAME: &'static [u8] = b"NAME";
-    const ERCC_READ_1: &'static [u8] = b"GCATCCAGACCGTCGGCTGATCGTGGTTTTACTAGGCTAGACTAGCGTACGAGCACTATGGTCAGTAATTCCTGGAGGAATAGGTACCAAGAAAAAAACG";
-    const ERCC_QUAL_1: &'static [u8] = b"????????????????????????????????????????????????????????????????????????????????????????????????????";
+    const NAME: &[u8] = b"NAME";
+    const ERCC_READ_1: &[u8] = b"GCATCCAGACCGTCGGCTGATCGTGGTTTTACTAGGCTAGACTAGCGTACGAGCACTATGGTCAGTAATTCCTGGAGGAATAGGTACCAAGAAAAAAACG";
+    const ERCC_QUAL_1: &[u8] = b"????????????????????????????????????????????????????????????????????????????????????????????????????";
 
-    const ERCC_READ_2: &'static [u8] = b"GGAGACGAATTGCCAGAATTATTAACTGCGCAGTTAGGGCAGCGTCTGAGGAAGTTTGCTGCGGTTTCGCCTTGACCGCGGGAAGGAGACATAACGATAG";
-    const ERCC_QUAL_2: &'static [u8] = b"????????????????????????????????????????????????????????????????????????????????????????????????????";
+    const ERCC_READ_2: &[u8] = b"GGAGACGAATTGCCAGAATTATTAACTGCGCAGTTAGGGCAGCGTCTGAGGAAGTTTGCTGCGGTTTCGCCTTGACCGCGGGAAGGAGACATAACGATAG";
+    const ERCC_QUAL_2: &[u8] = b"????????????????????????????????????????????????????????????????????????????????????????????????????";
 
-    const ERCC_READ_3: &'static [u8] = b"AACTTAATGGACGGG";
-    const ERCC_QUAL_3: &'static [u8] = b"???????????????";
+    const ERCC_READ_3: &[u8] = b"AACTTAATGGACGGG";
+    const ERCC_QUAL_3: &[u8] = b"???????????????";
 
-    const ERCC_READ_4: &'static [u8] = b"AATCCACTCAATAAATCTAAAAAC";
-    const ERCC_QUAL_4: &'static [u8] = b"????????????????????????";
+    const ERCC_READ_4: &[u8] = b"AATCCACTCAATAAATCTAAAAAC";
+    const ERCC_QUAL_4: &[u8] = b"????????????????????????";
 
     fn have_refs() -> bool {
         Path::new("/mnt/opt/refdata_cellranger").exists()
@@ -790,7 +787,7 @@ mod test {
         let qual = b"GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG";
         let name = b"gatactaga";
         let res = aligner.align_read(name, read, qual);
-        assert!(res.len() > 0);
+        assert!(!res.is_empty());
         assert_eq!(res[0].pos(), 30070473);
     }
 
@@ -809,7 +806,7 @@ mod test {
         let qual = b"GGGGAGIGGAAGGGGIIGIGGGIGGGGIIIGGGGGGIIIIIGGGIIIIIIIGGAGAGGAAAGGGAGA.AA<AAGG.GAG.AAA.AAGG<GGGGGA..G";
         let name = b"gatactaga";
         let res = aligner.align_read(name, read, qual);
-        assert!(res.len() > 0);
+        assert!(!res.is_empty());
         println!("{:?}", res);
     }
 
@@ -825,14 +822,14 @@ mod test {
             let mut aligner = reference.get_aligner();
 
             let mut out =
-                bam::Writer::from_path(&"test/test.bam", &reference.header(), bam::Format::Bam)
+                bam::Writer::from_path("test/test.bam", reference.header(), bam::Format::Bam)
                     .unwrap();
             let read = b"GTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC";
             let qual = b"GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG";
             let name = b"gatactaga";
             let res = aligner.align_read(name, read, qual);
             for record in res.iter() {
-                out.write(&record).unwrap();
+                out.write(record).unwrap();
             }
 
             res
@@ -848,11 +845,12 @@ mod test {
         // file can be read with samtools and pysam.
         let mut bam = bam::Reader::from_path(&"test/test.bam").unwrap();
         let read_records = bam.records();
-        let mut i = 0;
-        for r in read_records {
-            let record = r.unwrap();
-            assert_eq!(record.pos(), res[i].pos());
-            i += 1;
+        for (record, res) in read_records
+            .into_iter()
+            .map(Result::unwrap)
+            .zip(res.into_iter())
+        {
+            assert_eq!(record.pos(), res.pos());
         }
     }
 }
