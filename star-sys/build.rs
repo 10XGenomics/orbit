@@ -127,5 +127,6 @@ fn main() {
         .flag("-Wall")
         .flag("-Wextra")
         .flag("-Werror")
+        .flag("-fvisibility=hidden")
         .compile("orbit");
 }
