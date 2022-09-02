@@ -8,6 +8,7 @@ use std::os::raw::c_char;
 use std::os::raw::c_int;
 use std::path::Path;
 use std::sync::Arc;
+use std::time::Instant;
 
 use anyhow::{format_err, Error};
 use rust_htslib::bam;
@@ -253,6 +254,7 @@ impl StarAligner {
 
     /// Aligns a given read and produces BAM records
     pub fn align_read(&mut self, name: &[u8], read: &[u8], qual: &[u8]) -> Vec<bam::Record> {
+        let now = Instant::now();
         // STAR will throw an error on empty reads - so just construct an empty record.
         if read.len() == 0 {
             // Make an unmapped record and return it
@@ -261,7 +263,17 @@ impl StarAligner {
 
         Self::prepare_fastq(&mut self.fastq1, name, read, qual);
         align_read_rust(self.aligner, self.fastq1.as_slice(), &mut self.aln_buf).unwrap();
-        self.parse_sam_to_records(name)
+        let record= self.parse_sam_to_records(name);
+        let new_now = Instant::now();
+        let (chr, pos, cigar, cigar_ops) = if record.len() > 0 {
+            let rec = &record[0];
+            (rec.tid().to_string(), rec.pos().to_string(), format!("{}", rec.cigar()), rec.cigar().len().to_string())
+        } else {
+            ("NA".to_string(), "NA".to_string(), "NA".to_string(), "NA".to_string())
+        };
+        println!("{:?},{:?},{:?},{},{},{},{}", std::str::from_utf8(&read).unwrap(), new_now.duration_since(now), record.len(), chr, pos, cigar, cigar_ops);
+        record
+
     }
 
     /// Aligns a given read and return the resulting SAM string
