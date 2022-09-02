@@ -11,7 +11,7 @@ include = ["wrapper.h", "src/lib.rs", "LICENSE", "README.md"]
 [dependencies]
 anyhow = "1"
 libc = "0.2"
-rust-htslib = { version = "0.38.2", default-features = false, features = ["serde_feature"] }
+rust-htslib = { version = "0.39.5", default-features = false, features = ["serde_feature"] }
 star-sys = { version = "0.2", path = "star-sys" }
 
 [profile.release]
