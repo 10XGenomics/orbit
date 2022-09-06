@@ -5,6 +5,19 @@
 #include "binarySearch2.h"
 // #include "stitchGapIndel.cpp"
 
+namespace std {
+
+// Specialize array<char, 4> comparison to help the vectorizer out.
+//
+// Comparing 2 arrays of width 4 should just end up being comparison of 32-bit
+// values.  The compiler has trouble figuring that out if it goes through the
+// default implementation, which uses std::equal.
+template<>
+inline bool operator==(const array<char, 4>& a, const array<char,  4>& b) {
+    return (*reinterpret_cast<const uint32_t*>(&a[0])) == (*reinterpret_cast<const uint32_t*>(&b[0]));
+}
+
+}
 
 intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBstart, uint L, uint iFragB, uint sjAB, const Parameters& P, char* R, const Genome &mapGen, Transcript *trA, const uint outFilterMismatchNmaxTotal) {
     //stitch together A and B, extend in the gap, returns max score
