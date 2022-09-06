@@ -263,17 +263,35 @@ impl StarAligner {
 
         Self::prepare_fastq(&mut self.fastq1, name, read, qual);
         align_read_rust(self.aligner, self.fastq1.as_slice(), &mut self.aln_buf).unwrap();
-        let record= self.parse_sam_to_records(name);
+        let record = self.parse_sam_to_records(name);
         let new_now = Instant::now();
         let (chr, pos, cigar, cigar_ops) = if record.len() > 0 {
             let rec = &record[0];
-            (rec.tid().to_string(), rec.pos().to_string(), format!("{}", rec.cigar()), rec.cigar().len().to_string())
+            (
+                rec.tid().to_string(),
+                rec.pos().to_string(),
+                format!("{}", rec.cigar()),
+                rec.cigar().len().to_string(),
+            )
         } else {
-            ("NA".to_string(), "NA".to_string(), "NA".to_string(), "NA".to_string())
+            (
+                "NA".to_string(),
+                "NA".to_string(),
+                "NA".to_string(),
+                "NA".to_string(),
+            )
         };
-        println!("{:?},{:?},{:?},{},{},{},{}", std::str::from_utf8(&read).unwrap(), new_now.duration_since(now), record.len(), chr, pos, cigar, cigar_ops);
+        println!(
+            "{:?},{:?},{:?},{},{},{},{}",
+            std::str::from_utf8(&read).unwrap(),
+            new_now.duration_since(now),
+            record.len(),
+            chr,
+            pos,
+            cigar,
+            cigar_ops
+        );
         record
-
     }
 
     /// Aligns a given read and return the resulting SAM string
