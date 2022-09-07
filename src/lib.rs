@@ -265,7 +265,7 @@ impl StarAligner {
         align_read_rust(self.aligner, self.fastq1.as_slice(), &mut self.aln_buf).unwrap();
         let record = self.parse_sam_to_records(name);
         let new_now = Instant::now();
-        let (chr, pos, cigar, cigar_ops) = if record.len() > 0 {
+        let (chr, pos, cigar, cigar_ops) = if !record.is_empty() {
             let rec = &record[0];
             (
                 rec.tid().to_string(),
@@ -283,7 +283,7 @@ impl StarAligner {
         };
         println!(
             "{:?},{:?},{:?},{},{},{},{}",
-            std::str::from_utf8(&read).unwrap(),
+            std::str::from_utf8(read).unwrap(),
             new_now.duration_since(now),
             record.len(),
             chr,
