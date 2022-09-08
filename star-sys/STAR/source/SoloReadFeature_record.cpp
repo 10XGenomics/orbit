@@ -60,8 +60,7 @@ void SoloReadFeature::record(SoloReadBarcode &soloBar, uint nTr, set<uint32> &re
             stats.V[stats.nAmbigFeature]++;
             return;
         };
-        bool sjAnnot;
-        alignOut->extractSpliceJunctions(readSJs, sjAnnot);
+        bool sjAnnot = alignOut->extractSpliceJunctions(readSJs);
         if ( readSJs.empty() || (sjAnnot && readGene.size()==0) ) {//no junctions, or annotated junction buy no gene (i.e. read does not fully match transcript)
             stats.V[stats.nNoFeature]++;
             return;

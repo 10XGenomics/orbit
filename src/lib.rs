@@ -61,7 +61,7 @@ impl StarReference {
 
         // recover stray CStrings to prevent leaked memory
         nvec.into_iter().for_each(|ptr| unsafe {
-            CString::from_raw(ptr);
+            drop(CString::from_raw(ptr));
         });
 
         let inner = InnerStarReference {

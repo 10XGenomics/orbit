@@ -15,14 +15,16 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
     char *G=mapGen.G;
     int Score=0;
 
-    if (sjAB!=((uint) -1) && trA->exons[trA->nExons-1][EX_sjA]==sjAB \
-            && trA->exons[trA->nExons-1][EX_iFrag]==iFragB && rBstart==rAend+1 && gAend+1<gBstart ) {//simple stitching if junction belongs to a database
-        if (mapGen.sjdbMotif[sjAB]==0 && (L<=mapGen.sjdbShiftRight[sjAB] || trA->exons[trA->nExons-1][EX_L]<=mapGen.sjdbShiftLeft[sjAB]) ) {
+    auto& penultimateExon = trA->exons[trA->nExons-1];
+    if (sjAB!=((uint) -1) && penultimateExon[EX_iFrag]==iFragB \
+            && penultimateExon[EX_sjA]==sjAB && rBstart==rAend+1 && gAend+1<gBstart ) {//simple stitching if junction belongs to a database
+        if (mapGen.sjdbMotif[sjAB]==0 && (L<=mapGen.sjdbShiftRight[sjAB] || penultimateExon[EX_L]<=mapGen.sjdbShiftLeft[sjAB]) ) {
             return -1000006; //too large repeats around non-canonical junction
         };
-        trA->exons[trA->nExons][EX_L] = L; //new exon length
-        trA->exons[trA->nExons][EX_R] = rBstart; //new exon r-start
-        trA->exons[trA->nExons][EX_G] = gBstart; //new exon g-start
+        auto& exon = trA->exons[trA->nExons];
+        exon[EX_R] = rBstart; //new exon r-start
+        exon[EX_G] = gBstart; //new exon g-start
+        exon[EX_L] = L; //new exon length
         trA->canonSJ[trA->nExons-1]=mapGen.sjdbMotif[sjAB]; //mark sj-db
         trA->shiftSJ[trA->nExons-1][0]=mapGen.sjdbShiftLeft[sjAB];
         trA->shiftSJ[trA->nExons-1][1]=mapGen.sjdbShiftRight[sjAB];
@@ -36,7 +38,7 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
         trA->sjAnnot[trA->nExons-1]=0;
         trA->sjStr[trA->nExons-1]=0;
 
-        if (trA->exons[trA->nExons-1][EX_iFrag]==iFragB) {//stitch aligns on the same fragment
+        if (penultimateExon[EX_iFrag]==iFragB) {//stitch aligns on the same fragment
             uint gBend=gBstart+L-1;
             uint rBend=rBstart+L-1;
 
@@ -51,7 +53,7 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
 
             //check if r-overlapping fully and exit
             if (rBend<=rAend) return -1000001;
-            if (gBend<=gAend && trA->exons[trA->nExons-1][EX_iFrag]==iFragB) return -1000002;
+            if (gBend<=gAend && penultimateExon[EX_iFrag]==iFragB) return -1000002;
 
             //shift the B 5' if overlaps A 3'
             if (rBstart<=rAend) {
@@ -60,7 +62,9 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
                 L=rBend-rBstart+1;
             };
 
-            for (uint ii=rBstart;ii<=rBend;ii++) Score+=scoreMatch; //add QS for mapped portions
+            if (rBend > rBstart) {
+                Score+=scoreMatch*(rBend-rBstart); //add QS for mapped portions
+            }
 
             int gGap=gBstart-gAend-1; //could be < 0 for insertions
             int rGap=rBstart-rAend-1;//>0 always since we removed overlap
@@ -103,18 +107,24 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
 
                 int Score1=0;
                 int jR1=1; //junction location in R-space
+                int ex_l = trA->exons[trA->nExons-1][EX_L];
                 do { // 1. move left, until the score for MM is less than canonical advantage
                     jR1--;
-                    if ( R[rAend+jR1]!=G[gBstart1+jR1] && G[gBstart1+jR1]<4 && R[rAend+jR1]==G[gAend+jR1]) Score1 -= scoreMatch;
-                }  while ( Score1+P.scoreStitchSJshift >= 0 && int(trA->exons[trA->nExons-1][EX_L]) + jR1 > 1);//>=P.alignSJoverhangMin); //also check that we are still within the exon
+                    auto rEnd = R[rAend+jR1];
+                    auto gStart = G[gBstart1+jR1];
+                    if ( rEnd!=gStart && gStart<4 && rEnd==G[gAend+jR1]) Score1 -= scoreMatch;
+                }  while ( Score1+P.scoreStitchSJshift >= 0 && ex_l + jR1 > 1);//>=P.alignSJoverhangMin); //also check that we are still within the exon
 
                 int maxScore2=-999999;
                 Score1=0;
                 int jPen=0;
                 do { // 2. scan to the right to find the best junction locus
                     // ?TODO? if genome base is N, how to score?
-                    if  ( R[rAend+jR1]==G[gAend+jR1] && R[rAend+jR1]!=G[gBstart1+jR1] )  Score1+=scoreMatch;
-                    if  ( R[rAend+jR1]!=G[gAend+jR1] && R[rAend+jR1]==G[gBstart1+jR1] )  Score1-=scoreMatch;
+                    auto rEnd = R[rAend+jR1];
+                    auto gEnd = G[gAend+jR1];
+                    auto gStart = G[gBstart1+jR1];
+                    if       ( rEnd==gEnd && rEnd!=gStart )  Score1+=scoreMatch;
+                    else if  ( rEnd!=gEnd && rEnd==gStart )  Score1-=scoreMatch;
 
                     int jCan1=-1; //this marks Deletion
                     int jPen1=0;
@@ -122,20 +132,29 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
 
                     if (Del>=P.alignIntronMin) {//only check intron motif for large gaps= non-Dels
                         //check if the intron is canonical, or semi-canonical
-                        if ( G[gAend+jR1+1]==2 && G[gAend+jR1+2]==3 && G[gBstart1+jR1-1]==0 && G[gBstart1+jR1]==2 ) {//GTAG
+                        // Pack into an aligned array to make it easier for the
+                        // compiler to vectorize the comparison.
+                        array<char, 4> g4 { G[gAend+jR1+1], G[gAend+jR1+2], G[gBstart1+jR1-1], G[gBstart1+jR1] };
+                        constexpr array<char, 4> GTAG = { 2, 3, 0, 2 };
+                        constexpr array<char, 4> CTAC = { 1, 3, 0, 1 };
+                        constexpr array<char, 4> GCAG = { 2, 1, 0, 2 };
+                        constexpr array<char, 4> CTGC = { 1, 3, 2, 1 };
+                        constexpr array<char, 4> ATAC = { 0, 3, 0, 1 };
+                        constexpr array<char, 4> GTAT = { 2, 3, 0, 3 };
+                        if ( g4 == GTAG ) {
                             jCan1=1;
-                        } else if ( G[gAend+jR1+1]==1 && G[gAend+jR1+2]==3 && G[gBstart1+jR1-1]==0 && G[gBstart1+jR1]==1 ) {//CTAC
+                        } else if ( g4 == CTAC) {
                             jCan1=2;
-                        } else if ( G[gAend+jR1+1]==2 && G[gAend+jR1+2]==1 && G[gBstart1+jR1-1]==0 && G[gBstart1+jR1]==2 ) {//GCAG
+                        } else if ( g4 == GCAG ) {
                             jCan1=3;
                             jPen1=P.scoreGapGCAG;
-                        } else if ( G[gAend+jR1+1]==1 && G[gAend+jR1+2]==3 && G[gBstart1+jR1-1]==2 && G[gBstart1+jR1]==1 ) {//CTGC
+                        } else if ( g4 == CTGC ) {
                             jCan1=4;
                             jPen1=P.scoreGapGCAG;
-                        } else if ( G[gAend+jR1+1]==0 && G[gAend+jR1+2]==3 && G[gBstart1+jR1-1]==0 && G[gBstart1+jR1]==1 ) {//ATAC
+                        } else if ( g4 == ATAC) {
                             jCan1=5;
                             jPen1=P.scoreGapATAC;
-                        } else if ( G[gAend+jR1+1]==2 && G[gAend+jR1+2]==3 && G[gBstart1+jR1-1]==0 && G[gBstart1+jR1]==3 ) {//GTAT
+                        } else if ( g4 == GTAT ) {
                             jCan1=6;
                             jPen1=P.scoreGapATAC;
                         } else {
@@ -325,18 +344,20 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
                 if (Del==0 && Ins==0) {//no gap => no new exon, extend the boundary of the previous exon
                     trA->exons[trA->nExons-1][EX_L] += rBend-rAend;
                 } else if (Del>0) { //deletion:ca only have Del> or Ins>0
-                    trA->exons[trA->nExons-1][EX_L] += jR; //correct the previous exon boundary
-                    trA->exons[trA->nExons][EX_L] = rBend-rAend-jR; //new exon length
-                    trA->exons[trA->nExons][EX_R] = rAend+jR+1; //new exon r-start
-                    trA->exons[trA->nExons][EX_G] = gBstart1+jR+1; //new exon g-start
+                    trA->exons[trA->nExons-1][EX_L] += jR;
+                    auto& exon = trA->exons[trA->nExons];
+                    exon[EX_L] = rBend-rAend-jR; //new exon length
+                    exon[EX_R] = rAend+jR+1; //new exon r-start
+                    exon[EX_G] = gBstart1+jR+1; //new exon g-start
                     trA->nExons++;
                 } else if (Ins>0) { //Ins>0;
                     trA->nIns += nIns;
                     trA->lIns += Ins;
                     trA->exons[trA->nExons-1][EX_L] += jR; //correct the previous exon boundary
-                    trA->exons[trA->nExons][EX_L] = rBend-rAend-jR-Ins; //new exon length
-                    trA->exons[trA->nExons][EX_R] = rAend+jR+Ins+1; //new exon r-start
-                    trA->exons[trA->nExons][EX_G] = gAend+1+jR; //new exon g-start
+                    auto& exon = trA->exons[trA->nExons];
+                    exon[EX_L] = rBend-rAend-jR-Ins; //new exon length
+                    exon[EX_R] = rAend+jR+Ins+1; //new exon r-start
+                    exon[EX_G] = gAend+1+jR; //new exon g-start
                     trA->canonSJ[trA->nExons-1]=-2; //mark insertion
                     trA->sjAnnot[trA->nExons-1]=0;
                     trA->nExons++;
@@ -364,8 +385,6 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
             //>1
             //AATATTTGGAACACTTATGTGAAAAATGATTTGTTTTTCTGAAATTTACGTTTCTCTCTGAGTCCTGTAACTGTCC
 
-
-            trExtend.reset();
             if ( extendAlign(R, G, rAend+1, gAend+1, 1, 1, DEF_readSeqLengthMax, trA->nMatch, trA->nMM, outFilterMismatchNmaxTotal, P.outFilterMismatchNoverLmax, \
                              P.alignEndsType.ext[trA->exons[trA->nExons-1][EX_iFrag]][1], &trExtend) ) {
 
@@ -375,9 +394,10 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
                 trA->exons[trA->nExons-1][EX_L] += trExtend.extendL;
             };// if extendAlign for read A
 
-            trA->exons[trA->nExons][EX_R] = rBstart;
-            trA->exons[trA->nExons][EX_G] = gBstart;
-            trA->exons[trA->nExons][EX_L] = L;
+            auto& exon = trA->exons[trA->nExons];
+            exon[EX_R] = rBstart;
+            exon[EX_G] = gBstart;
+            exon[EX_L] = L;
             trA->nMatch += L;
 
             trExtend.reset();
@@ -389,9 +409,9 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
                 trA->add(&trExtend);
                 Score += trExtend.maxScore;
 
-                trA->exons[trA->nExons][EX_R] -= trExtend.extendL;
-                trA->exons[trA->nExons][EX_G] -= trExtend.extendL;
-                trA->exons[trA->nExons][EX_L] += trExtend.extendL;
+                exon[EX_R] -= trExtend.extendL;
+                exon[EX_G] -= trExtend.extendL;
+                exon[EX_L] += trExtend.extendL;
             }; //if extendAlign B
 
             trA->canonSJ[trA->nExons-1]=-3; //mark different fragments junction

@@ -8,7 +8,6 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <time.h>
 #include <ctime>
 #include <iomanip>
 #include <vector>
@@ -18,9 +17,9 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <errno.h>
+#include <cerrno>
 #include <limits>
-#include <stdint.h>
+#include <cstdint>
 
 #include "VERSION"
 

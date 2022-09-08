@@ -123,10 +123,11 @@ fn main() {
         .cpp_link_stdlib(Some(libcxx()))
         .define("COMPILATION_TIME_PLACE", "\"build.rs\"")
         .files(FILES)
-        .flag("-std=c++11")
+        .flag("-std=c++17")
         .flag("-Wall")
         .flag("-Wextra")
         .flag("-Werror")
-        .flag("-O3")
+        .flag("-fvisibility=hidden")
+        .flag("-ffunction-sections")
         .compile("orbit");
 }
