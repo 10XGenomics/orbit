@@ -1,3 +1,4 @@
+#include <vector>
 #include "IncludeDefine.h"
 #include "Parameters.h"
 #include "Transcript.h"
@@ -26,8 +27,7 @@ ReadAlign::ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcripto
     splitR[0]=new uint[P.maxNsplit]; splitR[1]=new uint[P.maxNsplit]; splitR[2]=new uint[P.maxNsplit];
     //alignments
     PC=new uiPC[P.seedPerReadNmax];
-    WC=new uiWC[P.alignWindowsPerReadNmax];
-    nWA=new uint[P.alignWindowsPerReadNmax];
+    WC= std::vector<Window>(P.alignWindowsPerReadNmax);
     nWAP=new uint[P.alignWindowsPerReadNmax];
     WALrec=new uint[P.alignWindowsPerReadNmax];
     WlastAnchor=new uint[P.alignWindowsPerReadNmax];
@@ -41,9 +41,7 @@ ReadAlign::ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcripto
     seedChain = new uint [P.seedPerWindowNmax];
 #endif
 
-    WA=new uiWA*[P.alignWindowsPerReadNmax];
-    for (uint ii=0;ii<P.alignWindowsPerReadNmax;ii++)
-        WA[ii]=new uiWA[P.seedPerWindowNmax];
+    WA = vector<vector<uiWA>>(P.alignWindowsPerReadNmax, vector<uiWA>(P.seedPerWindowNmax));
     WAincl = new bool [P.seedPerWindowNmax];
     trAll = new Transcript**[P.alignWindowsPerReadNmax+1];
     nWinTr = new uint[P.alignWindowsPerReadNmax];
@@ -82,7 +80,8 @@ ReadAlign::ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcripto
 
 void ReadAlign::resetN () {//reset resets the counters to 0 for a new read
     mapMarker=0;
-    nA=0;nP=0;nW=0;
+    nA=0;nP=0;
+    WC.clear();
     nTr=0;nTrMate=0;
     nUM[0]=0;nUM[1]=0;
     storedLmin=0; uniqLmax=0; uniqLmaxInd=0; multLmax=0; multLmaxN=0; multNminL=0; multNmin=0; multNmax=0; multNmaxL=0;

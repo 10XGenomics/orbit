@@ -3,7 +3,7 @@
 #include "Stats.h"
 #include "serviceFuns.cpp"
 
-int ReadAlign::mapOneRead() {
+int ReadAlign::mapOneRead(bool all_acgt) {
 
     #ifdef OFF_BEFORE_SEEDING
         #warning OFF_BEFORE_SEEDING
@@ -15,9 +15,10 @@ int ReadAlign::mapOneRead() {
 
     if (Lread>0) {
         //printf("splitting\n");
-        Nsplit=qualitySplit(Read1[0], Qual1[0], Lread, P.Qsplit, P.maxNsplit, P.minLsplit, splitR);
+
+        Nsplit=qualitySplit(Read1[0], Qual1[0], Lread, P.Qsplit, P.maxNsplit, P.minLsplit, splitR, all_acgt);
         // splitR[0][fragnum] => good region start position   (from SequenceFuns.cpp)
-        // splitR[1][fragnum] => good reagion length
+        // splitR[1][fragnum] => good region length
         // splitR[2][fragnum] => fragnum ?
     } else {
         Nsplit=0;
@@ -41,6 +42,7 @@ int ReadAlign::mapOneRead() {
 
     trBest=trInit;
 
+    // Define the maximum length of reads to start with.
     uint seedSearchStartLmax=min(P.seedSearchStartLmax, // 50
                                   (uint) (P.seedSearchStartLmaxOverLread*(Lread-1))); // read length
     // align all good pieces
@@ -73,6 +75,7 @@ int ReadAlign::mapOneRead() {
 
                         //uint seedLength=min(splitR[1][ip] - Lmapped - istart*Lstart, P.seedSearchLmax);
                         uint seedLength=splitR[1][ip] - Lmapped - istart*Lstart; // what's left of the read to align.
+                        // 21% of time in call below
                         maxMappableLength2strands(Shift, seedLength, iDir, 0, mapGen.nSA-1, L, splitR[2][ip]);//L=max mappable length, unique or multiple
                         if (iDir==0 && istart==0 && Lmapped==0 && Shift+L == splitR[1][ip] ) {//this piece maps full length and does not need to be mapped from the opposite direction
                             flagDirMap=false;
@@ -102,19 +105,21 @@ int ReadAlign::mapOneRead() {
     if (Lread<P.outFilterMatchNmin) {//read is too short (trimmed too much?)
         mapMarker=MARKER_READ_TOO_SHORT;
         trBest->rLength=0; //min good piece length
-        nW=0;
+        WC.clear();
     } else if (Nsplit==0) {//no good pieces
         mapMarker=MARKER_NO_GOOD_PIECES;
         trBest->rLength=splitR[1][0]; //min good piece length
-        nW=0;
+        WC.clear();
     } else if (Nsplit>0 && nA==0) {
         mapMarker=MARKER_ALL_PIECES_EXCEED_seedMultimapNmax;
         trBest->rLength=multNminL;
-        nW=0;
+        WC.clear();
     } else if (Nsplit>0 && nA>0) {//otherwise there are no good pieces, or all pieces map too many times: read cannot be mapped
+        // Nigel TODO: This looked like a good idea as it avoids sorting the array as items are inserted
+        // but I gather that was slower
 //         qsort((void*) PC, nP, sizeof(uint)*PC_SIZE, funCompareUint2);//sort PC by rStart and length
         //printf("stitching\n");
-        stitchPieces(Read1, Lread);
+        stitchPieces(Read1, Lread); // 30% of time
         
     };
 

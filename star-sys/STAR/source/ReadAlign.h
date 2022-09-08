@@ -9,6 +9,7 @@
 
 #include <time.h>
 #include <random>
+#include <vector>
 
 class ReadAlign {
     public:
@@ -50,7 +51,7 @@ class ReadAlign {
         char **readNameMates;
         char *readName;
         void multMapSelect();
-        int mapOneRead();
+        int mapOneRead(bool all_acgt);
         const char* outputAlignments();
         void resetN();
     private:
@@ -113,15 +114,15 @@ class ReadAlign {
 
         //alignments
         uiPC *PC; //pieces coordinates
-        uiWC *WC; //windows coordinates
-        uiWA **WA; //aligments per window
+        std::vector<Window> WC = std::vector<Window>(); //windows coordinates
+        std::vector<std::vector<uiWA>> WA; //aligments per window
 
         int unmapType; //marker for why a read is unmapped
 
         uint mapMarker; //alignment marker (typically, if there is something wrong)
-        uint nA, nP, nW, nWall, nUM[2]; //number of all alignments,  pieces, windows, U/M,
-        uint *nWA, *nWAP, *WALrec, *WlastAnchor; //number of alignments per window, per window per piece, min recordable length per window
-        bool *WAincl; //alginment inclusion mask
+        uint nA, nP, nWall, nUM[2]; //number of all alignments,  pieces, windows, U/M,
+        uint *nWAP, *WALrec, *WlastAnchor; //number of alignments per window, per window per piece, min recordable length per window
+        bool *WAincl; //alignment inclusion mask
 
         uint *swWinCov, *swWinGleft, *swWinGright, *swWinRleft, *swWinRright; //read coverage per window
         char *swT;
@@ -157,7 +158,7 @@ class ReadAlign {
         //void resetN();//resets the counters to 0
         //void multMapSelect();
         //int mapOneRead();
-        uint maxMappableLength2strands(uint pieceStart, uint pieceLength, uint iDir, uint iSA1, uint iSA2, uint& maxL, uint iFrag);
+        void maxMappableLength2strands(uint pieceStart, uint pieceLength, uint iDir, uint iSA1, uint iSA2, uint& maxL, uint iFrag);
         void storeAligns (uint iDir, uint Shift, uint Nrep, uint L, uint indStartEnd[2], uint iFrag);
 
         bool outputTranscript(Transcript *trOut, uint nTrOut, ofstream *outBED);

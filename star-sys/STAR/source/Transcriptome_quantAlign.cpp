@@ -44,10 +44,10 @@ int alignToTranscript(Transcript &aG, uint trS1, uint8 trStr1, uint32 *exSE1, ui
                     uint32 trlength=exLenCum1[exN1-1]+exSE1[2*exN1-1]-exSE1[2*exN1-2]+1; //transcript length
                     for (uint32 iex=0; iex<aT.nExons; iex++) {
                         aT.exons[iex][EX_R]=aG.Lread-(aT.exons[iex][EX_R]+aT.exons[iex][EX_L]);
-                        aT.exons[iex][EX_G]=trlength-(aT.exons[iex][EX_G]+aT.exons[iex][EX_L]);
+                        aT.exons[iex][EX_G]=trlength-(aT.exons[iex][EX_G]+aT.exons[iex][EX_L]);  // slow loop
                     };
                     for (uint32 iex=0; iex<aT.nExons/2; iex++) {
-                        swap(aT.exons[iex][EX_R],aT.exons[aT.nExons-1-iex][EX_R]);
+                        swap(aT.exons[iex][EX_R],aT.exons[aT.nExons-1-iex][EX_R]); // also slow
                         swap(aT.exons[iex][EX_G],aT.exons[aT.nExons-1-iex][EX_G]);
                         swap(aT.exons[iex][EX_L],aT.exons[aT.nExons-1-iex][EX_L]);
                         swap(aT.exons[iex][EX_iFrag],aT.exons[aT.nExons-1-iex][EX_iFrag]);

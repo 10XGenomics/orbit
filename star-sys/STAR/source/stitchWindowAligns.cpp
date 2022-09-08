@@ -4,9 +4,10 @@
 #include "binarySearch2.h"
 #include <cmath>
 #include <ctime>
+#include <vector>
 
 void stitchWindowAligns(uint iA, uint nA, int Score, bool WAincl[], uint tR2, uint tG2, Transcript trA, \
-                        uint Lread, uiWA* WA, char* R, const Genome &mapGen, \
+                        uint Lread, vector<uiWA>& WA, char* R, const Genome &mapGen, \
                         const Parameters& P, Transcript** wTr, uint* nWinTr, ReadAlign *RA) {
     //recursively stitch aligns for one gene
     //*nWinTr - number of transcripts for the current window
@@ -310,21 +311,21 @@ void stitchWindowAligns(uint iA, uint nA, int Score, bool WAincl[], uint tR2, ui
     Transcript trAi=trA; //trA copy with this align included, to be used in the 1st recursive call of StitchAlign
     if (trA.nExons>0) {//stitch, a transcript has already been originated
 
-        dScore=stitchAlignToTranscript(tR2, tG2, WA[iA][WA_rStart], WA[iA][WA_gStart], WA[iA][WA_Length], WA[iA][WA_iFrag],  WA[iA][WA_sjA], P, R, mapGen, &trAi, RA->outFilterMismatchNmaxTotal);
+        dScore=stitchAlignToTranscript(tR2, tG2, WA[iA].rStart, WA[iA].gStart, WA[iA].Length, WA[iA].iFrag,  WA[iA].sjA, P, R, mapGen, &trAi, RA->outFilterMismatchNmaxTotal);
         //TODO check if the new stitching creates too many MM, quit this transcript if so
 
     } else { //this is the first align in the transcript
-            trAi.exons[0][EX_R]=trAi.rStart=WA[iA][WA_rStart]; //transcript start/end
-            trAi.exons[0][EX_G]=trAi.gStart=WA[iA][WA_gStart];
-            trAi.exons[0][EX_L]=WA[iA][WA_Length];
-            trAi.exons[0][EX_iFrag]=WA[iA][WA_iFrag];
-            trAi.exons[0][EX_sjA]=WA[iA][WA_sjA];
+            trAi.exons[0][EX_R]=trAi.rStart=WA[iA].rStart; //transcript start/end
+            trAi.exons[0][EX_G]=trAi.gStart=WA[iA].gStart;
+            trAi.exons[0][EX_L]=WA[iA].Length;
+            trAi.exons[0][EX_iFrag]=WA[iA].iFrag;
+            trAi.exons[0][EX_sjA]=WA[iA].sjA;
 
             trAi.nExons=1; //recorded first exon
 
-            for (uint ii=0;ii<WA[iA][WA_Length];ii++) dScore+=scoreMatch; //sum all the scores
+            for (uint ii=0;ii<WA[iA].Length;ii++) dScore+=scoreMatch; //sum all the scores
 
-            trAi.nMatch=WA[iA][WA_Length]; //# of matches
+            trAi.nMatch=WA[iA].Length; //# of matches
 
             for (uint ii=0; ii<nA; ii++) WAincl[ii]=false;
 
@@ -334,16 +335,16 @@ void stitchWindowAligns(uint iA, uint nA, int Score, bool WAincl[], uint tR2, ui
     if (dScore>-1000000) {//include this align
         WAincl[iA]=true;
 
-        if ( WA[iA][WA_Nrep]==1 ) trAi.nUnique++; //unique piece
-        if ( WA[iA][WA_Anchor]>0 ) trAi.nAnchor++; //anchor piece piece
+        if ( WA[iA].Nrep==1 ) trAi.nUnique++; //unique piece
+        if ( WA[iA].Anchor>0 ) trAi.nAnchor++; //anchor piece piece
 
-        stitchWindowAligns(iA+1, nA, Score+dScore, WAincl, WA[iA][WA_rStart]+WA[iA][WA_Length]-1, WA[iA][WA_gStart]+WA[iA][WA_Length]-1, trAi, Lread, WA, R, mapGen, P, wTr, nWinTr, RA);
+        stitchWindowAligns(iA+1, nA, Score+dScore, WAincl, WA[iA].rStart+WA[iA].Length-1, WA[iA].gStart+WA[iA].Length-1, trAi, Lread, WA, R, mapGen, P, wTr, nWinTr, RA);
     } else {
 
     };
 
     //also run a transcript w/o including this align
-    if (WA[iA][WA_Anchor]!=2 || trA.nAnchor>0) {//only allow exclusion if this is not the last anchor, or other anchors have been used
+    if (WA[iA].Anchor!=2 || trA.nAnchor>0) {//only allow exclusion if this is not the last anchor, or other anchors have been used
         WAincl[iA]=false;
         stitchWindowAligns(iA+1, nA, Score, WAincl, tR2, tG2, trA, Lread, WA, R, mapGen, P, wTr, nWinTr, RA);
     };

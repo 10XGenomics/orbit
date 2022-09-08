@@ -1,5 +1,18 @@
 #include "SequenceFuns.h"
 
+
+void revComplementSeqNumbers(char* ReadsIn, char* ReadsOut, uint Lread) {//reverse complement the numeric sequences
+    for (uint jj=0;jj<Lread;jj++) {
+        switch (int(ReadsIn[Lread-1-jj])){
+            case (3): ReadsOut[jj]=char(0);break;
+            case (2): ReadsOut[jj]=char(1);break;
+            case (1): ReadsOut[jj]=char(2);break;
+            case (0): ReadsOut[jj]=char(3);break;
+            default:  ReadsOut[jj]=ReadsIn[Lread - 1 - jj];
+        };
+    };
+};
+
 void complementSeqNumbers(char* ReadsIn, char* ReadsOut, uint Lread) {//complement the numeric sequences
     for (uint jj=0;jj<Lread;jj++) {
         switch (int(ReadsIn[jj])){
@@ -317,36 +330,43 @@ uint localSearchNisMM(const char *x, uint nx, const char *y, uint ny, double pMM
 
 
 
-uint qualitySplit(char* r, char* q, uint L, char Qsplit, uint maxNsplit, uint  minLsplit, uint** splitR) {
+uint qualitySplit(char* r, char* q, uint L, char Qsplit, uint maxNsplit, uint  minLsplit, uint** splitR, bool all_acgt) {
     //splits the read r[L] by quality scores q[L], outputs in splitR - split coordinate/length - per base
     //returns number of good split regions
     uint iR=0,iS=0,iR1,LgoodMin=0, iFrag=0;
-    while ( (iR<L) & (iS<maxNsplit) ) { //main cycle
-        //find next good base
-        while ( (iR<L) && ( (q[iR]<Qsplit) || (r[iR]>3) ) ) {
-            if (r[iR]==MARK_FRAG_SPACER_BASE) iFrag++; //count read fragments
-            iR++;
+    if (all_acgt & (L > minLsplit)) {
+        splitR[0][iS] = 0;   //good region start
+        splitR[1][iS] = L;   //good region length
+        splitR[2][iS] = 0;   //good region fragment
+        iS = 1;
+    } else {
+        while ((iR < L) & (iS < maxNsplit)) { //main cycle
+            //find next good base
+            while ((iR < L) && ((q[iR] < Qsplit) || (r[iR] > 3))) {
+                if (r[iR] == MARK_FRAG_SPACER_BASE) iFrag++; //count read fragments
+                iR++;
+            };
+
+            if (iR == L) break; //exit when reached end of read
+
+            iR1 = iR;
+
+            //find the next bad base
+            while (iR < L && q[iR] >= Qsplit && r[iR] <= 3) {
+                iR++;
+            };
+
+            if ((iR - iR1) > LgoodMin) LgoodMin = iR - iR1;
+            if ((iR - iR1) < minLsplit) continue; //too short for a good region
+
+            splitR[0][iS] = iR1;      //good region start
+            splitR[1][iS] = iR - iR1;   //good region length
+            splitR[2][iS] = iFrag;    //good region fragment
+            iS++;
         };
+        if (iS == 0) splitR[1][0] = LgoodMin; //output min good piece length
+    }
 
-        if (iR==L) break; //exit when reached end of read
-
-        iR1=iR;
-
-        //find the next bad base
-        while ( iR<L && q[iR]>=Qsplit && r[iR]<=3 ) {
-            iR++;
-        };
-
-        if ( (iR-iR1)>LgoodMin ) LgoodMin=iR-iR1;
-        if ( (iR-iR1)<minLsplit ) continue; //too short for a good region
-
-        splitR[0][iS]=iR1;      //good region start
-        splitR[1][iS]=iR-iR1;   //good region length
-        splitR[2][iS]=iFrag;    //good region fragment
-        iS++;
-    };
-
-    if (iS==0) splitR[1][0]=LgoodMin; //output min good piece length
 
     return iS;
 };

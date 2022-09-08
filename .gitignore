@@ -2,3 +2,6 @@
 **/*.rs.bk
 *.o
 *.o.d
+.idea/*
+star-sys/STAR/cmake-build-debug/
+star-sys/STAR/source/CMakeFiles/*

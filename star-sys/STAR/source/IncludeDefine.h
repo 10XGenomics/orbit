@@ -173,20 +173,12 @@ typedef uint8_t uint8;
 #define PC_iFrag 7
 #define PC_SIZE 8
 
-#define WC_Str 0
-#define WC_Chr 1
-#define WC_gStart 2
-#define WC_gEnd 3
-#define WC_SIZE 4
+struct Window {
+    uint Str, Chr, gStart, gEnd;
+};
 
-#define WA_Length 0
-#define WA_rStart 1
-#define WA_gStart 2
-#define WA_Nrep 3
-#define WA_Anchor 4
-#define WA_iFrag 5
-#define WA_sjA 6
-#define WA_SIZE 7
+
+
 
 #define EX_R 0
 #define EX_G 1
@@ -222,8 +214,20 @@ typedef uint8_t uint8;
 
 
 typedef uint uiPC[PC_SIZE];
-typedef uint uiWC[WC_SIZE];
-typedef uint uiWA[WA_SIZE];
+struct uiWA {
+uint Length, rStart, gStart, Nrep, Anchor, iFrag, sjA;
+public:
+    uiWA() = default;
+    uiWA(uint Length, uint rStart, uint gStart, uint Nrep, uint Anchor, uint iFrag, uint sjA) :
+    Length(Length),
+    rStart(rStart),
+    gStart(gStart),
+    Nrep(Nrep),
+    Anchor(Anchor),
+    iFrag(iFrag),
+    sjA(sjA){}
+
+};
 
 // debugging
 //#define DEBUG_Nread 1000000

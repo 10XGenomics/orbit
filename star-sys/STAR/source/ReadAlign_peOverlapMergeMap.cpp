@@ -28,7 +28,7 @@ void ReadAlign::peOverlapMergeMap() {
     //P.alignSplicedMateMapLminOverLmate=P.alignSplicedMateMapLminOverLmate*peMergeRA->readLength[0]/(readLength[0]+readLength[1]);
 
     //map SE
-    peMergeRA->mapOneRead();
+    peMergeRA->mapOneRead(false);
     if (peMergeRA->nW==0) { // || peMergeRA->trBest->maxScore+peOv.nOv < trBest->maxScore) {//no windows, score of the merged align is less. This is a preliminary check, more accurate check is done with alignment score calculated after transforming the SE back to PE
         //cout <<" -2\n";
         //for (uint ii=0;ii<peMergeRA->Lread;ii++) {
@@ -268,7 +268,7 @@ void Transcript::peOverlapSEtoPE(uint* mateStart, Transcript &t) {//convert alig
 
 void ReadAlign::peOverlapSEtoPE(ReadAlign &seRA) {//ReAdAlign: convert SE to PE and copy
 
-    nW=seRA.nW;
+    nW=seRA.WC.size();
     memcpy((void*) nWinTr, (void*) seRA.nWinTr, nW*sizeof(*nWinTr));
 
     uint trNtotal=0;

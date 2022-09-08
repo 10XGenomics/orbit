@@ -1,15 +1,19 @@
 #include "readLoad.h"
 #include "ErrorWarning.h"
 
-int readLoad(istream& readInStream, const Parameters& P, uint iMate, uint& Lread, uint& LreadOriginal, char* readName, char* Seq, char* SeqNum, char* Qual, char* QualNum, uint &clip3pNtotal, uint &clip5pNtotal, uint &clip3pAdapterN, uint &/*iReadAll*/, uint &/*readFilesIndex*/, char &/*readFilter*/, string &readNameExtra){
+int readLoad(istream& readInStream, const Parameters& P, uint iMate, uint& Lread, uint& LreadOriginal, char* readName,
+             char* Seq, char* SeqNum, char* Qual, char* QualNum, uint &clip3pNtotal, uint &clip5pNtotal,
+             uint &clip3pAdapterN, uint &/*iReadAll*/, uint &/*readFilesIndex*/, char &/*readFilter*/, string &readNameExtra, bool& out_all_acgt){
     //load one read from a stream
     int readFileType=0;
+    out_all_acgt = true;
 
 //     readInStream.getline(readName,DEF_readNameLengthMax); //extract name
 
     if (readInStream.peek()!='@' && readInStream.peek()!='>') return -1; //end of the stream
 
     readName[0]=0;//clear char array
+    // Of size 650
     readInStream >> readName; //TODO check that it does not overflow the array
     if (strlen(readName)>=DEF_readNameLengthMax-1) {
         ostringstream errOut;
@@ -23,7 +27,7 @@ int readLoad(istream& readInStream, const Parameters& P, uint iMate, uint& Lread
     //printf("read name is: %s\n", readName);
 
     //readInStream >> iReadAll >> readFilter >> readFilesIndex; //extract read number
-
+    // Can ditch this.
     getline(readInStream, readNameExtra);
     if (!readNameExtra.empty()) {
         size_t n1=readNameExtra.find_first_not_of(" \t");
@@ -39,24 +43,27 @@ int readLoad(istream& readInStream, const Parameters& P, uint iMate, uint& Lread
     readInStream.getline(Seq,DEF_readSeqLengthMax+1); //extract sequence
     //printf("seq is: %s\n", Seq);
 
-    Lread=0;
-    for (int ii=0; ii<readInStream.gcount()-1; ii++) {
-        if (int(Seq[ii])>=32) {
-            Seq[Lread]=Seq[ii];
-            ++Lread;
-        };
-    };
-
-    if (Lread<1) {
-        ostringstream errOut;
-        errOut << "EXITING because of FATAL ERROR in reads input: short read sequence line: " << Lread <<"\n";
-        errOut << "Read Name="<<readName<<"\n";
-        errOut << "Read Sequence="<<Seq<<"===\n";
-        errOut << "DEF_readNameLengthMax="<<DEF_readNameLengthMax<<"\n";
-        errOut << "DEF_readSeqLengthMax="<<DEF_readSeqLengthMax<<"\n";
-        exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
-    };
-    if (Lread>DEF_readSeqLengthMax) {
+// CR-EDIT: This filter non-printable characters out of read, we can skip as we've already validated reads
+//    Lread=0;
+//    for (int ii=0; ii<readInStream.gcount()-1; ii++) {
+//        if (int(Seq[ii])>=32) {
+//            Seq[Lread]=Seq[ii];
+//            ++Lread;
+//        };
+//    };
+//
+//    if (Lread<1) {
+//        ostringstream errOut;
+//        errOut << "EXITING because of FATAL ERROR in reads input: short read sequence line: " << Lread <<"\n";
+//        errOut << "Read Name="<<readName<<"\n";
+//        errOut << "Read Sequence="<<Seq<<"===\n";
+//        errOut << "DEF_readNameLengthMax="<<DEF_readNameLengthMax<<"\n";
+//        errOut << "DEF_readSeqLengthMax="<<DEF_readSeqLengthMax<<"\n";
+//        exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
+//    };
+    Lread = (uint) strlen(Seq) ;
+// END CR-EDIT
+    if (Lread > DEF_readSeqLengthMax) {
         ostringstream errOut;
         errOut << "EXITING because of FATAL ERROR in reads input: Lread>=" << Lread << "   while DEF_readSeqLengthMax=" << DEF_readSeqLengthMax <<"\n";
         errOut << "Read Name="<<readName<<"\n";
@@ -81,31 +88,44 @@ int readLoad(istream& readInStream, const Parameters& P, uint iMate, uint& Lread
 //     };
 //     LreadOriginal=Lread;
     LreadOriginal=Lread;
-    if ( Lread>(P.clip5pNbases[iMate]+P.clip3pNbases[iMate]) ) {
-        Lread=Lread-(P.clip5pNbases[iMate]+P.clip3pNbases[iMate]);
-    } else {
-        Lread=0;
-    };
+    // CR-Edit, we will not support clipping bases or removing adapter sequences.
+    if (P.clip5pNbases[iMate] > 0 | P.clip3pNbases[iMate] > 0 | P.clip3pAdapterSeq.at(iMate).length() > 0 | P.clip3pAfterAdapterNbases[iMate] > 0) {
+         ostringstream errOut;
+         errOut << "EXITING because of FATAL ERROR in setup.\n";
+         errOut << "This 10X version of STAR does not support the parameters: clip5pNbases, clip3pNbases, clip3pAdapterSeq, or clip3pAfterAdapterNbases\n";
+         errOut << "SOLUTION: Do not set these parameters\n";
+         exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
+    }
+    // Ditching this, only valid if user specifies to clip from 5' or 3' a set number of bases
+//    if ( Lread>(P.clip5pNbases[iMate]+P.clip3pNbases[iMate]) ) {
+//        Lread=Lread-(P.clip5pNbases[iMate]+P.clip3pNbases[iMate]);
+//    } else {
+//        Lread=0;
+//    };
+    // Convert ACGT to 0-3, everything else N is encoded as 4, skipping stuff < 32 (which was previously filtered out above)
     convertNucleotidesToNumbersRemoveControls(Seq+P.clip5pNbases[iMate],SeqNum,Lread);
 
-    //clip the adapter
-    if (P.clip3pAdapterSeq.at(iMate).length()>0) {
-        clip3pAdapterN = Lread-localSearch(SeqNum,Lread,P.clip3pAdapterSeqNum[iMate],P.clip3pAdapterSeq.at(iMate).length(),P.clip3pAdapterMMp[iMate]);
-        Lread = Lread>clip3pAdapterN ? Lread-clip3pAdapterN : 0;
-    } else {
-        clip3pAdapterN = 0;
-    };
+//    //clip the adapter
+//    if (P.clip3pAdapterSeq.at(iMate).length()>0) {
+//        clip3pAdapterN = Lread-localSearch(SeqNum,Lread,P.clip3pAdapterSeqNum[iMate],P.clip3pAdapterSeq.at(iMate).length(),P.clip3pAdapterMMp[iMate]);
+//        Lread = Lread>clip3pAdapterN ? Lread-clip3pAdapterN : 0;
+//    } else {
+//        clip3pAdapterN = 0;
+//    };
 
-    //final read length, trim 3p after the adapter was clipped
-    if (Lread>P.clip3pAfterAdapterNbases[iMate]) {
-        Lread =Lread - P.clip3pAfterAdapterNbases[iMate];
-    } else {
-        Lread=0;
-    };
+//    //final read length, trim 3p after the adapter was clipped
+//    if (Lread>P.clip3pAfterAdapterNbases[iMate]) {
+//        Lread =Lread - P.clip3pAfterAdapterNbases[iMate];
+//    } else {
+//        Lread=0;
+//    };
 
-    clip3pNtotal=P.clip3pNbases[iMate] + clip3pAdapterN + P.clip3pAfterAdapterNbases[iMate];
-    clip5pNtotal=P.clip5pNbases[iMate];
-
+//    clip3pNtotal=P.clip3pNbases[iMate] + clip3pAdapterN + P.clip3pAfterAdapterNbases[iMate];
+//    clip5pNtotal=P.clip5pNbases[iMate];
+      clip3pAdapterN =0;
+      clip3pNtotal = 0;
+      clip5pNtotal = 0;
+// END: CR-EDIT
     if (readName[0]=='@') {//fastq format, read qualities
         readFileType=2;
         readInStream.ignore(DEF_readNameLengthMax,'\n'); //extract header line
@@ -141,10 +161,13 @@ int readLoad(istream& readInStream, const Parameters& P, uint iMate, uint& Lread
         exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
     };
 
+    // Note if qualities are every not 1 or 0 the out_all_acgt parameter should be
+    // removed, it's an optimization that depends on this.
     for (uint ii=0;ii<Lread;ii++) {//for now: qualities are all 1
         if (SeqNum[ii]<4) {
             QualNum[ii]=1;
         } else {
+            out_all_acgt = false;
             QualNum[ii]=0;
         };
     };
@@ -160,10 +183,10 @@ int readLoad(istream& readInStream, const Parameters& P, uint iMate, uint& Lread
 
 
     //trim read name
-    for (uint ii=0; ii<P.readNameSeparatorChar.size(); ii++)
-    {
-        char* pSlash=strchr(readName,P.readNameSeparatorChar.at(ii)); //trim everything after ' '
-        if (pSlash!=NULL) *pSlash=0;
-    };
+//    for (uint ii=0; ii<P.readNameSeparatorChar.size(); ii++)
+//    {
+//        char* pSlash=strchr(readName,P.readNameSeparatorChar.at(ii)); //trim everything after ' '
+//        if (pSlash!=NULL) *pSlash=0;
+//    };
     return readFileType;
 };

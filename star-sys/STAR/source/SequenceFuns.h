@@ -6,6 +6,7 @@
 
 #include "IncludeDefine.h"
 
+void revComplementSeqNumbers(char* ReadsIn, char* ReadsOut, uint Lread);
 void complementSeqNumbers(char*, char*, uint);
 void convertNucleotidesToNumbers(const char* R0, char* R1, const uint Lread);
 uint convertNucleotidesToNumbersRemoveControls(const char* R0, char* R1, const uint Lread);
@@ -19,9 +20,9 @@ uint chrFind(uint, uint, uint*); // find chromosome from global locus
 uint localSearch(const char*, uint, const char*, uint, double); //local search to clip adapter
 uint localSearchNisMM(const char *x, uint nx, const char *y, uint ny, double pMM);
 
-uint qualitySplit(char*, char*, uint, char, uint, uint, uint**);
+uint qualitySplit(char*, char*, uint, char, uint, uint, uint**, bool);
 
-int32 convertNuclStrToInt32(const string S, uint32 &intOut);
+int32 convertNuclStrToInt32(const string S, uint32 &intOut, bool all_acgt);
 string convertNuclInt32toString(const uint32 nuclNum, const uint32 L);
 
 int64 convertNuclStrToInt64(const string S, uint64 &intOut);

@@ -45,7 +45,7 @@ void ReadAlign::storeAligns (uint iDir, uint Shift, uint Nrep, uint L, uint indS
 //
     if (nP > P.seedPerReadNmax) {
         ostringstream errOut;
-        errOut <<"EXITING because of FATAL error: too many pieces pere read\n" ;
+        errOut <<"EXITING because of FATAL error: too many pieces per read\n" ;
         errOut <<"SOLUTION: increase input parameter --seedPerReadNmax";
         exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_RUNTIME, P);
     };

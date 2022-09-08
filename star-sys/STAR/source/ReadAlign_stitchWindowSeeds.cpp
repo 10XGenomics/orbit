@@ -11,7 +11,7 @@
 
 void ReadAlign::stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R) {//stitches all seeds in one window: iW
 
-    for (uint iS1=0;iS1<nWA[iW];iS1++) {
+    for (uint iS1=0;iS1<WA[iW].size();iS1++) {
         scoreSeedBest[iS1]=0;
         scoreSeedBestMM[iS1]=0;
         scoreSeedBestInd[iS1]=-1;
@@ -23,14 +23,14 @@ void ReadAlign::stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R) {
             if (iS2<iS1) {
                 trA1.nExons=1;
                 trA1.nMM=scoreSeedBestMM[iS2];
-                trA1.exons[0][EX_R] = WA[iW][iS2][WA_rStart];
-                trA1.exons[0][EX_G] = WA[iW][iS2][WA_gStart];
-                trA1.exons[0][EX_L] = WA[iW][iS2][WA_Length];
-                trA1.exons[0][EX_iFrag]=WA[iW][iS2][WA_iFrag];
-                trA1.exons[0][EX_sjA]=WA[iW][iS2][WA_sjA];
+                trA1.exons[0][EX_R] = WA[iW][iS2].rStart;
+                trA1.exons[0][EX_G] = WA[iW][iS2].gStart;
+                trA1.exons[0][EX_L] = WA[iW][iS2].Length;
+                trA1.exons[0][EX_iFrag]=WA[iW][iS2].iFrag;
+                trA1.exons[0][EX_sjA]=WA[iW][iS2].sjA;
                 score2=\
-                    stitchAlignToTranscript(WA[iW][iS2][WA_rStart]+WA[iW][iS2][WA_Length]-1, WA[iW][iS2][WA_gStart]+WA[iW][iS2][WA_Length]-1,\
-                                        WA[iW][iS1][WA_rStart], WA[iW][iS1][WA_gStart], WA[iW][iS1][WA_Length], WA[iW][iS1][WA_iFrag],  WA[iW][iS1][WA_sjA], \
+                    stitchAlignToTranscript(WA[iW][iS2].rStart+WA[iW][iS2].Length-1, WA[iW][iS2].gStart+WA[iW][iS2].Length-1,\
+                                        WA[iW][iS1].rStart, WA[iW][iS1].gStart, WA[iW][iS1].Length, WA[iW][iS1].iFrag,  WA[iW][iS1].sjA, \
                                         P, R, mapGen, &trA1, outFilterMismatchNmaxTotal);
 
                 if (P.outFilterBySJoutStage==2 && trA1.nExons>1)
@@ -53,14 +53,14 @@ void ReadAlign::stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R) {
                     scoreSeedBestInd[iS1]=iS2;
                 };
             } else {//extend to the left
-                score2=WA[iW][iS1][WA_Length];
-                if ( WA[iW][iS1][WA_rStart]>0 \
-                     && extendAlign(R, mapGen.G, WA[iW][iS1][WA_rStart]-1, WA[iW][iS1][WA_gStart]-1, -1, -1, WA[iW][iS1][WA_rStart], 100000, 0, outFilterMismatchNmaxTotal, P.outFilterMismatchNoverLmax, \
-                                    P.alignEndsType.ext[WA[iW][iS1][WA_iFrag]][trA.Str], &trA1) ) {//if could extend
+                score2=WA[iW][iS1].Length;
+                if ( WA[iW][iS1].rStart>0 \
+                     && extendAlign(R, mapGen.G, WA[iW][iS1].rStart-1, WA[iW][iS1].gStart-1, -1, -1, WA[iW][iS1].rStart, 100000, 0, outFilterMismatchNmaxTotal, P.outFilterMismatchNoverLmax, \
+                                    P.alignEndsType.ext[WA[iW][iS1].iFrag][trA.Str], &trA1) ) {//if could extend
                     score2 += trA1.maxScore;
                 };
 
-                bool exonLongEnough = (WA[iW][iS1][WA_Length]+trA1.extendL) >= P.alignSJoverhangMin; //TODO new parameter to control end exons length
+                bool exonLongEnough = (WA[iW][iS1].Length+trA1.extendL) >= P.alignSJoverhangMin; //TODO new parameter to control end exons length
 
                 if (exonLongEnough && score2 > scoreSeedBest[iS1] ) {
                     scoreSeedBest[iS1]=score2;
@@ -75,18 +75,18 @@ void ReadAlign::stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R) {
     uint scoreBestInd=0;
 
 
-    for (uint iS1=0;iS1<nWA[iW];iS1++) {//find the best alignment
+    for (uint iS1=0;iS1<WA[iW].size();iS1++) {//find the best alignment
         trA1=*trInit;//initialize trA1
-        uint tR2=WA[iW][iS1][WA_rStart]+WA[iW][iS1][WA_Length];
-        uint tG2=WA[iW][iS1][WA_gStart]+WA[iW][iS1][WA_Length];
+        uint tR2=WA[iW][iS1].rStart+WA[iW][iS1].Length;
+        uint tG2=WA[iW][iS1].gStart+WA[iW][iS1].Length;
         if ( tR2 < Lread-1 \
             && extendAlign(R, mapGen.G, tR2, tG2, +1, +1, Lread-tR2, 100000, scoreSeedBestMM[iS1], outFilterMismatchNmaxTotal, P.outFilterMismatchNoverLmax, \
-                           P.alignEndsType.ext[WA[iW][iS1][WA_iFrag]][1-trA.Str], &trA1) )
+                           P.alignEndsType.ext[WA[iW][iS1].iFrag][1-trA.Str], &trA1) )
         {//extend to the right
             scoreSeedBest[iS1]+=trA1.maxScore;
         };
 
-        bool exonLongEnough = (WA[iW][iS1][WA_Length]+trA1.extendL) >= P.alignSJoverhangMin; //TODO new parameter to control end exons length
+        bool exonLongEnough = (WA[iW][iS1].Length+trA1.extendL) >= P.alignSJoverhangMin; //TODO new parameter to control end exons length
 
         if (exonLongEnough && scoreSeedBest[iS1]>scoreBest) {//record new best transcript
             scoreBest=scoreSeedBest[iS1];
@@ -110,16 +110,16 @@ void ReadAlign::stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R) {
         {//initiate transcript
 
             uint iS1=seedChain[seedN-1];
-            Score= WA[iW][iS1][WA_Length];
+            Score= WA[iW][iS1].Length;
             trA.maxScore = Score;
-            trA.nMatch = WA[iW][iS1][WA_Length]; //# of matches
+            trA.nMatch = WA[iW][iS1].Length; //# of matches
             trA.nMM = 0;
 
-            trA.exons[0][EX_R] = trA.rStart = WA[iW][iS1][WA_rStart];
-            trA.exons[0][EX_G] = trA.gStart = WA[iW][iS1][WA_gStart];
-            trA.exons[0][EX_L] = WA[iW][iS1][WA_Length];
-            trA.exons[0][EX_iFrag]=WA[iW][iS1][WA_iFrag];
-            trA.exons[0][EX_sjA]=WA[iW][iS1][WA_sjA];
+            trA.exons[0][EX_R] = trA.rStart = WA[iW][iS1].rStart;
+            trA.exons[0][EX_G] = trA.gStart = WA[iW][iS1].gStart;
+            trA.exons[0][EX_L] = WA[iW][iS1].Length;
+            trA.exons[0][EX_iFrag]=WA[iW][iS1].iFrag;
+            trA.exons[0][EX_sjA]=WA[iW][iS1].sjA;
 
             trA.nExons=1;
 
@@ -127,8 +127,8 @@ void ReadAlign::stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R) {
 
         for (uint iSc=seedN-1; iSc>0; iSc--) {//stitch seeds from the chain
             uint iS1=seedChain[iSc], iS2=seedChain[iSc-1];
-            int scoreStitch= stitchAlignToTranscript(WA[iW][iS1][WA_rStart]+WA[iW][iS1][WA_Length]-1, WA[iW][iS1][WA_gStart]+WA[iW][iS1][WA_Length]-1,\
-                                        WA[iW][iS2][WA_rStart], WA[iW][iS2][WA_gStart], WA[iW][iS2][WA_Length], WA[iW][iS2][WA_iFrag],  WA[iW][iS2][WA_sjA], \
+            int scoreStitch= stitchAlignToTranscript(WA[iW][iS1].rStart+WA[iW][iS1].Length-1, WA[iW][iS1].gStart+WA[iW][iS1].Length-1,\
+                                        WA[iW][iS2].rStart, WA[iW][iS2].gStart, WA[iW][iS2].Length, WA[iW][iS2].iFrag,  WA[iW][iS2].sjA, \
                                         P, R, mapGen, &trA, outFilterMismatchNmaxTotal);
 //            if (scoreStitch>0) {
                 Score+=scoreStitch;
@@ -159,10 +159,11 @@ void ReadAlign::stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R) {
         {//extend to the right
             uint iS1=seedChain[0];
             trA1=*trInit;//initialize trA1
-            uint tR2=WA[iW][iS1][WA_rStart]+WA[iW][iS1][WA_Length];
-            uint tG2=WA[iW][iS1][WA_gStart]+WA[iW][iS1][WA_Length];
+            uint tR2=WA[iW][iS1].rStart+WA[iW][iS1].Length;
+            uint tG2=WA[iW][iS1].gStart+WA[iW][iS1].Length;
             if ( tR2 < Lread \
-                && extendAlign(R, mapGen.G, tR2, tG2, +1, +1, Lread-tR2, 100000, scoreSeedBestMM[iS1], outFilterMismatchNmaxTotal, P.outFilterMismatchNoverLmax, \
+                && extendAlign(R, mapGen.G, tR2, tG2, +1, +1, Lread-tR2,
+                100000, scoreSeedBestMM[iS1], outFilterMismatchNmaxTotal, P.outFilterMismatchNoverLmax, \
                     P.alignEndsType.ext[trA.exons[trA.nExons-1][EX_iFrag]][1-trA.Str], &trA1) ) {//if could extend
                     trA.add(&trA1);
                     trA.exons[trA.nExons-1][EX_L] += trA1.extendL;//extend the length of the last exon

@@ -11,11 +11,22 @@ int ReadAlign::oneRead() {//process one read: load, map, write
     readStatus[0] = 0;
 
     std::istringstream is(readFastq[0]);
-    readStatus[0]=readLoad(is, P, 0, readLength[0], readLengthOriginal[0], readNameMates[0], Read0[0], Read1[0], Qual0[0], Qual1[0], clip3pNtotal[0], clip5pNtotal[0], clip3pAdapterN[0], iReadAll, readFilesIndex, readFilter, readNameExtra[0]);
+    // A boolean we use to short circuit a pass over the read if it's all ACGT bases
+    bool all_acgt = false;
+    // Load the read, converting to numeric values and quality all 0 or 1 (1 if ACGT, 0 otherwise).
+    // lots of clipping and filtering that doesn't apply to Cell Ranger.
+    readStatus[0]=readLoad(is, P, 0, readLength[0], readLengthOriginal[0], readNameMates[0], Read0[0], Read1[0],
+                           Qual0[0], Qual1[0], clip3pNtotal[0], clip5pNtotal[0], clip3pAdapterN[0], iReadAll, readFilesIndex,
+                           readFilter, readNameExtra[0], all_acgt);
     if (readNmates==2) {//read the 2nd mate
+        // The second mate will have a MARK_FRAG_SPACER_BASE which is non-ACGT
+        all_acgt = false;
         std::istringstream is2(readFastq[1]);
-
-        readStatus[1]=readLoad(is2, P, 1, readLength[1], readLengthOriginal[1], readNameMates[1], Read0[1], Read1[0]+readLength[0]+1, Qual0[1], Qual1[0]+readLength[0]+1, clip3pNtotal[1], clip5pNtotal[1], clip3pAdapterN[1], iReadAll, readFilesIndex, readFilter, readNameExtra[1]);
+        bool dummy_variable = false;
+        readStatus[1]=readLoad(is2, P, 1, readLength[1], readLengthOriginal[1], readNameMates[1],
+                               Read0[1], Read1[0]+readLength[0]+1, Qual0[1], Qual1[0]+readLength[0]+1,
+                               clip3pNtotal[1], clip5pNtotal[1], clip3pAdapterN[1], iReadAll,
+                               readFilesIndex, readFilter, readNameExtra[1], dummy_variable);
         if (readStatus[0]!=readStatus[1]) {
             ostringstream errOut;
             errOut << "EXITING because of FATAL ERROR: Read1 and Read2 are not consistent, reached the end of the one before the other one\n";
@@ -60,10 +71,9 @@ int ReadAlign::oneRead() {//process one read: load, map, write
 
     readFileType=readStatus[0];
 
-    complementSeqNumbers(Read1[0],Read1[1],Lread); //returns complement of Reads[ii]
+    revComplementSeqNumbers(Read1[0],Read1[1],Lread); //returns complement of Reads[ii]
     //printf("big strong numbers\n");
     for (uint ii=0;ii<Lread;ii++) {//reverse
-        Read1[2][Lread-ii-1]=Read1[1][ii];
         Qual1[1][Lread-ii-1]=Qual1[0][ii];
     };
 
@@ -71,7 +81,7 @@ int ReadAlign::oneRead() {//process one read: load, map, write
     outFilterMismatchNmaxTotal=min(P.outFilterMismatchNmax, (uint) (P.outFilterMismatchNoverReadLmax*(readLength[0]+readLength[1])));
     //printf("about to map!\n");
     //map the read
-    mapOneRead();
+    mapOneRead(all_acgt);
     //printf("best %llu\n", trBest->gStart);
     multMapSelect();
     mappedFilter();

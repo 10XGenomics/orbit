@@ -22,10 +22,11 @@ int ReadAlign::createExtendWindowsWithAlign(uint a1, uint aStr) {
                 };
                 if (iBin==0) break;
             };
+            // Only merge if on the same chromosome (?)
             flagMergeLeft = flagMergeLeft && (mapGen.chrBin[iBin>>P.winBinChrNbits]==mapGen.chrBin[aBin>>P.winBinChrNbits]);
             if (flagMergeLeft) {//this align can be merged into the existing window
                 iWin=wB[iBin];
-                iBinLeft=WC[iWin][WC_gStart];
+                iBinLeft=WC[iWin].gStart;
                 for (uint ii=iBin+1; ii<=aBin; ii++) {//mark al bins with the existing windows ID
                     wB[ii]=iWin;
                 };
@@ -57,23 +58,24 @@ int ReadAlign::createExtendWindowsWithAlign(uint a1, uint aStr) {
             };
         };
 
-
         if (!flagMergeLeft && !flagMergeRight) {//no merging, a new window was added
-            wB[aBin]=iWin=nW; //add new window ID for now, may change it later
-            WC[iWin][WC_Chr]=mapGen.chrBin[aBin >> P.winBinChrNbits];
-            WC[iWin][WC_Str]=aStr;
-            WC[iWin][WC_gEnd]=WC[iWin][WC_gStart]=aBin;
-            ++nW;
-            if (nW>=P.alignWindowsPerReadNmax) {
-                nW=P.alignWindowsPerReadNmax-1;
+            wB[aBin] = iWin = WC.size(); //add new window ID for now, may change it later
+            Window new_window;
+            new_window.Chr=mapGen.chrBin[aBin >> P.winBinChrNbits];
+            new_window.Str=aStr;
+            new_window.gEnd=new_window.gStart=aBin;
+
+            WC.push_back(new_window);
+            if (WC.size()>=P.alignWindowsPerReadNmax) {
+                WC.resize(P.alignWindowsPerReadNmax);
                 return EXIT_createExtendWindowsWithAlign_TOO_MANY_WINDOWS; //too many windows, do not record TODO: record a marker
             };
         } else {//record windows after merging
-            WC[iWin][WC_gStart]=iBinLeft;
-            WC[iWin][WC_gEnd]=iBinRight;
+            WC[iWin].gStart=iBinLeft;
+            WC[iWin].gEnd=iBinRight;
             if (flagMergeLeft && flagMergeRight) {//kill right window, it was merged with the left one
-                WC[iWinRight][WC_gStart]=1;
-                WC[iWinRight][WC_gEnd]=0;
+                WC[iWinRight].gStart=1;
+                WC[iWinRight].gEnd=0;
             };
         };
     };

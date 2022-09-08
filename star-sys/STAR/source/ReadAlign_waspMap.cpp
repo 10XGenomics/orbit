@@ -60,7 +60,7 @@ void ReadAlign::waspMap() {
                 waspRA->Read1[2][Lread-1-vr]=3-nt2;
             };
 
-            waspRA->mapOneRead();
+            waspRA->mapOneRead(false);
             waspRA->multMapSelect();
             waspRA->mappedFilter();
 
