@@ -193,82 +193,6 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
 //         };
     };
 
-    //TODO remove windows that have too many alignments
-    //aligns are still sorted by original read coordinates, change direction for negative strand
-    // DOES NOT HELP!!!
-//     for ( uint iW=0;iW<nW;iW++ ) {
-//         if (WA[iW][0][WA_rStart]>WA[iW][nWA[iW]-1][WA_rStart]) {//swap
-//             for (uint iA=0;iA<nWA[iW]/2;iA++) {
-//                 for (uint ii=0;ii<WA_SIZE;ii++) {
-//                     uint dummy=WA[iW][iA][ii];
-//                     WA[iW][iA][ii]=WA[iW][nWA[iW]-1-iA][ii];
-//                     WA[iW][nWA[iW]-1-iA][ii]=dummy;
-//                 };
-//             };
-//         };
-//     };
-
-#ifdef COMPILE_FOR_LONG_READS
-uint swWinCovMax=0;
-for (uint iW=0;iW<nW;iW++) {//check each window
-    swWinCov[iW]=0;
-    if (nWA[iW]>0) {
-        //select good windows by coverage
-        uint rLast=0;
-
-        for (uint ia=0; ia<nWA[iW]; ia++) {//calculate coverage from all aligns
-            uint L1=WA[iW][ia][WA_Length];
-            uint r1=WA[iW][ia][WA_rStart];
-
-            if (r1+L1>rLast+1) {
-                if (r1>rLast) {
-                    swWinCov[iW] += L1;
-                } else {
-                    swWinCov[iW] += r1+L1-(rLast+1);
-                };
-                rLast=r1+L1-1;
-            };
-        };//for (uint ia=0; ia<nWA[iW]; ia++)
-
-        if (swWinCov[iW]>swWinCovMax) swWinCovMax=swWinCov[iW];
-    };//if (nWA[iW]>0)
-};//for (uint iW=0;iW<nW;iW++)
-for (uint iW=0;iW<nW;iW++) {
-    if (swWinCov[iW]<swWinCovMax*P.winReadCoverageRelativeMin || swWinCov[iW]<P.winReadCoverageBasesMin) {//remove windows that are not good enough
-        nWA[iW]=0;
-    } else {//merge pieces that are adjacent in R- and G-spaces
-        uint ia1=0;
-        for (uint ia=1; ia<nWA[iW]; ia++) {
-            if ( WA[iW][ia][WA_rStart] == (WA[iW][ia1][WA_rStart]+WA[iW][ia1][WA_Length]) \
-              && WA[iW][ia][WA_gStart] == (WA[iW][ia1][WA_gStart]+WA[iW][ia1][WA_Length]) \
-              && WA[iW][ia][WA_iFrag]  ==  WA[iW][ia1][WA_iFrag]     ) {//merge
-
-                WA[iW][ia1][WA_Length] += WA[iW][ia][WA_Length];
-                WA[iW][ia1][WA_Anchor]=max(WA[iW][ia1][WA_Anchor],WA[iW][ia][WA_Anchor]);
-                //NOTE: I am not updating sjA and Nrep fields - this could cause trouble in some cases
-
-            } else {//do not merge
-                ia1++;
-                if (ia1!=ia) {//move from ia to ia1
-                    for (uint ii=0; ii<WA_SIZE; ii++) {
-                        WA[iW][ia1][ii]=WA[iW][ia][ii];
-                    };
-                };
-            };
-        };
-        nWA[iW]=ia1+1;
-    };
-};
-
-//mapping time initialize
-std::time(&timeStart);
-#endif
-
-    #ifdef OFF_BEFORE_STITCH
-        #warning OFF_BEFORE_STITCH
-        nW=0;
-        return;
-    #endif
     //generate transcript for each window, choose the best
     trBest =trInit; //initialize next/best
     uint iW1=0;//index of non-empty windows
@@ -279,10 +203,6 @@ std::time(&timeStart);
 
         if (WA[iW].size()==0) continue; //the window does not contain any aligns because it was merged with other windows
 
-//         {//debug
-//             if ( WA[iW][0][WA_iFrag]==WA[iW][nWA[iW]-1][WA_iFrag] ) continue;
-//         };
-//
         if (WlastAnchor[iW]<WA[iW].size()) {
             WA[ iW ][ WlastAnchor[iW] ].Anchor=2; //mark the last anchor
         };
@@ -294,7 +214,6 @@ std::time(&timeStart);
         trA.Str = WC[iW].Str;
         trA.roStr = revertStrand ? 1-trA.Str : trA.Str; //original strand of the read
         trA.maxScore=0;
-        //printf("something something trAll %llu\n", trNtotal);
         trAll[iW1]=trArrayPointer+trNtotal;
         if (trNtotal+P.alignTranscriptsPerWindowNmax >= P.alignTranscriptsPerReadNmax) {
             P.inOut->logMain << "WARNING: not enough space allocated for transcript. Did not process all windows for read "<< readName+1 <<endl;
@@ -305,31 +224,8 @@ std::time(&timeStart);
         *(trAll[iW1][0])=trA;
         nWinTr[iW1]=0; //initialize number of transcripts per window
 
-
-    #ifdef COMPILE_FOR_LONG_READS
-        stitchWindowSeeds(iW, iW1, NULL, R[trA.roStr==0 ? 0:2]);
-        if (P.pCh.segmentMin>0) {
-            for (uint ia=0;ia<nWA[iW];ia++)
-            {//mark all seeds that overlap the best (and only for now) transcript trA
-                if (WAincl[ia]) continue;
-                for (uint iex=0;iex<trA.nExons;iex++)
-                {
-                    if ( WA[iW][ia][WA_rStart] < (trA.exons[iex][EX_R]+trA.exons[iex][EX_L]) && \
-                        (WA[iW][ia][WA_rStart]+WA[iW][ia][WA_Length]) > trA.exons[iex][EX_R] && \
-                         WA[iW][ia][WA_gStart] < (trA.exons[iex][EX_G]+trA.exons[iex][EX_L]) && \
-                        (WA[iW][ia][WA_gStart]+WA[iW][ia][WA_Length]) > trA.exons[iex][EX_G] )
-                    {
-                        WAincl[ia]=true;
-                        break;
-                    };
-
-                };
-            };
-            stitchWindowSeeds(iW, iW1, WAincl, R[trA.roStr==0 ? 0:2]);
-        };
-    #else
         stitchWindowAligns(0, WA[iW].size(), 0, WAincl, 0, 0, trA, Lread, WA[iW], R[trA.roStr==0 ? 0:2], mapGen, P, trAll[iW1], nWinTr+iW1, this);
-    #endif
+
         if (nWinTr[iW1]==0) {
             continue;
         };
