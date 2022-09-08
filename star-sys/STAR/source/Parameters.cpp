@@ -346,7 +346,11 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
     };
 
     inOut->logMain << "STAR version=" << STAR_VERSION << "\n";
+#ifdef COMPILATION_TIME_PLACE
     inOut->logMain << "STAR compilation time,server,dir=" << COMPILATION_TIME_PLACE << "\n";
+#else
+    inOut->logMain << "STAR compilation time,server,dir=" << "COMPILATION_TIME_PLACE not set." << "\n";
+#endif
     #ifdef COMPILE_FOR_LONG_READS
            inOut->logMain << "Compiled for LONG reads" << "\n";
     #endif

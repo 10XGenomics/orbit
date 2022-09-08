@@ -2,7 +2,7 @@
 #include "orbit.h"
 
 int main() {
-    char** input = (char *[]){
+    char* input[16] = {
     "STAR",
     "--genomeDir",
     "/Users/nigel.delaney/refdata/refdata-gex-GRCh38-2020-A/star",
@@ -24,7 +24,7 @@ int main() {
     Aligner* al = init_aligner_from_ref(ref);
     const char* read = "@a\nGGATCACTTGAGGTCAGGAGTCCAAGACCAGCCTGGCCAACATGGTGAAACCCCCATCTCTACTCAAAATCCAAAAATTAGCCAGGCATA\n+\nJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ\n";
     //const char* read = "@a\nGGATCACTTGAGGTCAGGAGTCCAAGACCAGCCTGGCCAACATGGTGAAACCCNCATCTCTACTCAAAATCCAAAAATTAGCCAGGCATA\n+\nJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ\n";
-    for(int i =0; i< 10000; i++) {
+    for(int i =0; i< 100000; i++) {
         align_read(al, read);
     }
     return 0;

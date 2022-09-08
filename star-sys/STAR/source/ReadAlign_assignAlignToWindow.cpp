@@ -99,7 +99,7 @@ void ReadAlign::assignAlignToWindow(uint a1, uint aLength, uint aStr, uint aNrep
             //TODO binary search
             if (aRstart < cWA[iA].rStart) break;
         };
-        cWA.insert(cWA.begin() + iA1, 1,
+        cWA.insert(cWA.begin() + iA, 1,
                    uiWA(aLength, aRstart, a1,
                         aNrep, int(aAnchor), aFrag, sjA));
         nWAP[iW]++;

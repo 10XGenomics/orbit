@@ -4,4 +4,5 @@
 *.o.d
 .idea/*
 star-sys/STAR/cmake-build-debug/
-star-sys/STAR/source/CMakeFiles/*
+star-sys/STAR/source/CMakeFiles/**
+star-sys/STAR/build/**

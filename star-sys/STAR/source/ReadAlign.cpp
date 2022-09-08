@@ -40,8 +40,9 @@ ReadAlign::ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcripto
     scoreSeedBestMM = new uint [P.seedPerWindowNmax];
     seedChain = new uint [P.seedPerWindowNmax];
 #endif
-
-    WA = vector<vector<uiWA>>(P.alignWindowsPerReadNmax, vector<uiWA>(P.seedPerWindowNmax));
+    // Create a P.alignWindowsPerReadNmax x P.seedPerWindowNmax by reserving but not filling all the memory
+    WA = vector<vector<uiWA>>(P.alignWindowsPerReadNmax);
+    std::for_each(WA.begin(), WA.end(), [this](std::vector<uiWA> &row) { row.reserve(P.seedPerWindowNmax); });
     WAincl = new bool [P.seedPerWindowNmax];
     trAll = new Transcript**[P.alignWindowsPerReadNmax+1];
     nWinTr = new uint[P.alignWindowsPerReadNmax];
