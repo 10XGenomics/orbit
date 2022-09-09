@@ -5,7 +5,7 @@
 #include "ReadAlign.h"
 
 ReadAlign::ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcriptome *TrIn, int iChunk)
-                    : mapGen(genomeIn), readFastq{nullptr, nullptr}, P(Pin), chunkTr(TrIn)
+                    : mapGen(genomeIn), readFastq{nullptr, nullptr}, P(Pin), chunkTr(TrIn), trInit()
 {
     iRead = 0;
     readFilesIndex = 0;
@@ -49,7 +49,6 @@ ReadAlign::ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcripto
     trArrayPointer =  new Transcript*[P.alignTranscriptsPerReadNmax];
     for (uint ii=0;ii<P.alignTranscriptsPerReadNmax;ii++)
         trArrayPointer[ii]= &(trArray[ii]);
-    trInit = new Transcript;
     //read
     Read0 = new char*[2];
     Read0[0]  = new char [DEF_readSeqLengthMax+1];

@@ -131,7 +131,7 @@ class ReadAlign {
         uint nTr, nTrMate; // number of transcripts called
         intScore maxScore;//maximum alignment score
 
-        Transcript trA, trA1, *trBest, *trInit; //transcript, best tr, next best tr, initialized tr
+        Transcript trA, trA1, *trBest, trInit; //transcript, best tr, next best tr, initialized tr
         Transcript ***trAll; //all transcripts for all windows
         uint *nWinTr; //number of recorded transcripts per window
 

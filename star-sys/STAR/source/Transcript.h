@@ -28,7 +28,7 @@ public:
     uint readNmates;
     char *readName;
 
-    int iFrag; //frag number of the transcript, if the the transcript contains only one frag
+    int iFrag; //frag number of the transcript, if the transcript contains only one frag
 
     //loci
     uint rStart = 0; //read
@@ -69,6 +69,8 @@ public:
     string generateCigarP() const; //generates CIGAR
     void peOverlapSEtoPE(const uint* mSta, const Transcript &t);
     bool extractSpliceJunctions(vector<array<uint64,2>> &sjOut) const;
+
+    Transcript() = default;
 };
 
 #endif

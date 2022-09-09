@@ -188,7 +188,7 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
     };
 
     //generate transcript for each window, choose the best
-    trBest =trInit; //initialize next/best
+    trBest =&trInit; //initialize next/best
     uint iW1=0;//index of non-empty windows
     uint trNtotal=0; //total number of recorded transcripts
 
@@ -204,7 +204,7 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
         //  making that more specific and not allocating a bool for all elements.
         for (uint ii=0;ii<WA[iW].size();ii++) WA[iW][ii].include=false; //initialize mask
 
-        trA=*trInit; //that one is initialized
+        trA=trInit; //that one is initialized
         trA.Chr = WC[iW].Chr;
         trA.Str = WC[iW].Str;
         trA.roStr = revertStrand ? 1-trA.Str : trA.Str; //original strand of the read

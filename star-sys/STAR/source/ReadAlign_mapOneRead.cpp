@@ -29,18 +29,18 @@ int ReadAlign::mapOneRead(bool all_acgt) {
     resetN(); //reset aligns counters to 0
 
     //reset/initialize a transcript
-    trInit->reset();
-    trInit->Chr=0;    trInit->Str=0; trInit->roStr=0;    trInit->cStart=0;     trInit->gLength=0; //to generate nice output of 0 for non-mapped reads
-    trInit->iRead=iRead;
-    trInit->Lread=Lread;
-    trInit->nExons=0;
-    trInit->readLengthOriginal=readLengthOriginal;
-    trInit->readLengthPairOriginal=readLengthPairOriginal;
-    trInit->readLength=readLength;
-    trInit->readNmates=readNmates;
-    trInit->readName=readName;
+    trInit.reset();
+    trInit.Chr=0;    trInit.Str=0; trInit.roStr=0;    trInit.cStart=0;     trInit.gLength=0; //to generate nice output of 0 for non-mapped reads
+    trInit.iRead=iRead;
+    trInit.Lread=Lread;
+    trInit.nExons=0;
+    trInit.readLengthOriginal=readLengthOriginal;
+    trInit.readLengthPairOriginal=readLengthPairOriginal;
+    trInit.readLength=readLength;
+    trInit.readNmates=readNmates;
+    trInit.readName=readName;
 
-    trBest=trInit;
+    trBest= &trInit;
 
     // Define the maximum length of reads to start with.
     uint seedSearchStartLmax=min(P.seedSearchStartLmax, // 50
