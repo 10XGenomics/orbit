@@ -200,7 +200,8 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
         if (WlastAnchor[iW]<WA[iW].size()) {
             WA[ iW ][ WlastAnchor[iW] ].Anchor=2; //mark the last anchor
         };
-
+        // TODO: The `.include` value likely is only relevant for a WA[iW] row, consider
+        //  making that more specific and not allocating a bool for all elements.
         for (uint ii=0;ii<WA[iW].size();ii++) WA[iW][ii].include=false; //initialize mask
 
         trA=*trInit; //that one is initialized
