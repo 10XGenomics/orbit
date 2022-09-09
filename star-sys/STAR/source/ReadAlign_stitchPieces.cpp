@@ -9,27 +9,6 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
     //zero-out winBin
     memset(winBin[0],255,sizeof(winBin[0][0])*P.winBinN);
     memset(winBin[1],255,sizeof(winBin[0][0])*P.winBinN);
-
-//     for (uint iWin=0;iWin<nWall;iWin++) {//zero out winBin
-//         if (WC[iWin][WC_gStart]<=WC[iWin][WC_gEnd]) {//otherwise the window is dead
-//             memset(&(winBin[WC[iWin][WC_Str]][WC[iWin][WC_gStart]]),255,sizeof(winBin[0][0])*(WC[iWin][WC_gEnd]-WC[iWin][WC_gStart]+1));
-//         };
-// //         for (uint ii=C[iWin][WC_gStart]; ii<WC[iWin][WC_gEnd]; ii++) {
-// //             winBin[WC[WC_Str]
-// //         };
-//     };
-
-//     //debug
-//     for (uint ii=0;ii<P.winBinN;ii++){
-//         if (winBin[0][ii]!=uintWinBinMax || winBin[1][ii]!=uintWinBinMax) {
-//             cerr<< "BUG in stitchPieces: ii="<<ii<<"   "<< winBin[0][ii] <<"   "<<winBin[1][ii] <<"   iRead="<<iRead<<"   nW="<<nW<<endl;
-//             for (uint iWin=0;iWin<nW;iWin++) {
-//                 cerr <<WC[iWin][WC_gStart]<<"   " <<WC[iWin][WC_gEnd] <<"   "<<WC[iWin][WC_Str] <<endl;
-//             };
-//             exit(1);
-//         };
-//     };
-
     WC.clear(); //number of windows
 //    for (uint iP=0; iP<nP; iP++) {
 //        cout << "NREP: " << PC[iP][PC_Nrep] << endl;
