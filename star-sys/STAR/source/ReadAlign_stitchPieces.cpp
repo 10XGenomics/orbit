@@ -1,14 +1,8 @@
 #include "IncludeDefine.h"
-#include "Parameters.h"
-#include "Transcript.h"
 #include "ReadAlign.h"
-#include "SequenceFuns.h"
 #include "stitchWindowAligns.h"
 #include "sjAlignSplit.cpp"
-#include "PackedArray.h"
 #include "alignSmithWaterman.h"
-#include "GlobalVariables.h"
-#include <time.h>
 
 void ReadAlign::stitchPieces(char **R, uint Lread) {
 
@@ -207,7 +201,7 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
             WA[ iW ][ WlastAnchor[iW] ].Anchor=2; //mark the last anchor
         };
 
-        for (uint ii=0;ii<WA[iW].size();ii++) WAincl[ii]=false; //initialize mask
+        for (uint ii=0;ii<WA[iW].size();ii++) WA[iW][ii].include=false; //initialize mask
 
         trA=*trInit; //that one is initialized
         trA.Chr = WC[iW].Chr;
@@ -224,7 +218,7 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
         *(trAll[iW1][0])=trA;
         nWinTr[iW1]=0; //initialize number of transcripts per window
 
-        stitchWindowAligns(0, WA[iW].size(), 0, WAincl, 0, 0, trA, Lread, WA[iW], R[trA.roStr==0 ? 0:2], mapGen, P, trAll[iW1], nWinTr+iW1, this);
+        stitchWindowAligns(0, WA[iW].size(), 0, 0, 0, trA, Lread, WA[iW], R[trA.roStr==0 ? 0:2], mapGen, P, trAll[iW1], nWinTr+iW1, this);
 
         if (nWinTr[iW1]==0) {
             continue;

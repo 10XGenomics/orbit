@@ -215,6 +215,8 @@ struct Window {
 typedef uint uiPC[PC_SIZE];
 struct uiWA {
 uint Length, rStart, gStart, Nrep, Anchor, iFrag, sjA;
+// TODO: C Repr possibly not optimal here, check if Anchor and iFrag could be packed in.
+bool include;
 public:
     uiWA() = default;
     uiWA(uint Length, uint rStart, uint gStart, uint Nrep, uint Anchor, uint iFrag, uint sjA) :
@@ -224,8 +226,9 @@ public:
     Nrep(Nrep),
     Anchor(Anchor),
     iFrag(iFrag),
-    sjA(sjA){}
-
+    sjA(sjA),
+    include(false)
+    {}
 };
 
 // debugging

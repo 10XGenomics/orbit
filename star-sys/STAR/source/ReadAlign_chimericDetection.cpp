@@ -5,14 +5,6 @@
 #include "BAMfunctions.h"
 #include "blocksOverlap.h"
 
-//#include "SequenceFuns.h"
-//#include "stitchWindowAligns.h"
-//#include "sjSplitAlign.cpp"
-//#include "PackedArray.h"
-//#include "alignSmithWaterman.h"
-//#include "GlobalVariables.h"
-//#include <time.h>
-
 void ReadAlign::chimericDetection() {
 
     chimRecord=false;

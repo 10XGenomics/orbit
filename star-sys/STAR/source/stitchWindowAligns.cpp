@@ -3,10 +3,9 @@
 #include "ErrorWarning.h"
 #include "binarySearch2.h"
 #include <cmath>
-#include <ctime>
 #include <vector>
 
-void stitchWindowAligns(uint iA, uint nA, int Score, bool WAincl[], uint tR2, uint tG2, Transcript trA, \
+void stitchWindowAligns(uint iA, uint nA, int Score, uint tR2, uint tG2, Transcript trA, \
                         uint Lread, vector<uiWA>& WA, char* R, const Genome &mapGen, \
                         const Parameters& P, Transcript** wTr, uint* nWinTr, ReadAlign *RA) {
     //recursively stitch aligns for one gene
@@ -327,26 +326,26 @@ void stitchWindowAligns(uint iA, uint nA, int Score, bool WAincl[], uint tR2, ui
 
             trAi.nMatch=WA[iA].Length; //# of matches
 
-            for (uint ii=0; ii<nA; ii++) WAincl[ii]=false;
+            for (uint ii=0; ii<nA; ii++) WA[ii].include=false;
 
 
     };
 
     if (dScore>-1000000) {//include this align
-        WAincl[iA]=true;
+        WA[iA].include=true;
 
         if ( WA[iA].Nrep==1 ) trAi.nUnique++; //unique piece
         if ( WA[iA].Anchor>0 ) trAi.nAnchor++; //anchor piece piece
 
-        stitchWindowAligns(iA+1, nA, Score+dScore, WAincl, WA[iA].rStart+WA[iA].Length-1, WA[iA].gStart+WA[iA].Length-1, trAi, Lread, WA, R, mapGen, P, wTr, nWinTr, RA);
+        stitchWindowAligns(iA+1, nA, Score+dScore, WA[iA].rStart+WA[iA].Length-1, WA[iA].gStart+WA[iA].Length-1, trAi, Lread, WA, R, mapGen, P, wTr, nWinTr, RA);
     } else {
 
     };
 
     //also run a transcript w/o including this align
     if (WA[iA].Anchor!=2 || trA.nAnchor>0) {//only allow exclusion if this is not the last anchor, or other anchors have been used
-        WAincl[iA]=false;
-        stitchWindowAligns(iA+1, nA, Score, WAincl, tR2, tG2, trA, Lread, WA, R, mapGen, P, wTr, nWinTr, RA);
+        WA[iA].include=false;
+        stitchWindowAligns(iA+1, nA, Score, tR2, tG2, trA, Lread, WA, R, mapGen, P, wTr, nWinTr, RA);
     };
     return;
 };
