@@ -32,14 +32,6 @@ ReadAlign::ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcripto
     WALrec=new uint[P.alignWindowsPerReadNmax];
     WlastAnchor=new uint[P.alignWindowsPerReadNmax];
 
-#ifdef COMPILE_FOR_LONG_READS
-    swWinCov = new uint[P.alignWindowsPerReadNmax];
-    scoreSeedToSeed = new intScore [P.seedPerWindowNmax*(P.seedPerWindowNmax+1)/2];
-    scoreSeedBest = new intScore [P.seedPerWindowNmax];
-    scoreSeedBestInd = new uint [P.seedPerWindowNmax];
-    scoreSeedBestMM = new uint [P.seedPerWindowNmax];
-    seedChain = new uint [P.seedPerWindowNmax];
-#endif
     // Create a P.alignWindowsPerReadNmax x P.seedPerWindowNmax by reserving but not filling all the memory
     WA = vector<vector<uiWA>>(P.alignWindowsPerReadNmax);
     std::for_each(WA.begin(), WA.end(), [this](std::vector<uiWA> &row) { row.reserve(P.seedPerWindowNmax); });
@@ -89,8 +81,5 @@ void ReadAlign::resetN () {//reset resets the counters to 0 for a new read
     for (uint ii=0; ii<P.readNmates; ii++) {
         maxScoreMate[ii]=0;
     };
-
-//     for (uint ii=0;ii<P.alignTranscriptsPerReadNmax;ii++) trArrayPointer[ii]= &(trArray[ii]);
-
 };
 
