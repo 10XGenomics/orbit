@@ -97,7 +97,7 @@ void ReadAlign::stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R) {
     uint seedN=0;
     while (true) {//construct the sequence of seeds
         seedChain[seedN++]=scoreBestInd;
-        WA[scoreBestInd].include=true;
+        WAincl[scoreBestInd]=true;
         if (scoreBestInd>scoreSeedBestInd[scoreBestInd]){//keep going
             scoreBestInd=scoreSeedBestInd[scoreBestInd];
         } else {//this seed is the first one

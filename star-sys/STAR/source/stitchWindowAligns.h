@@ -5,7 +5,7 @@
 #include "stitchAlignToTranscript.h"
 #include "ReadAlign.h"
 
-void stitchWindowAligns(uint iA, uint nA, int Score, uint tR2, uint tG2, Transcript trA, \
+void stitchWindowAligns(uint iA, uint nA, int Score, bool WAincl[], uint tR2, uint tG2, Transcript trA, \
                         uint Lread, vector<uiWA>& WA, char* R, const Genome &mapGen, \
                         const Parameters& P, Transcript** wTr, uint* nWinTr, ReadAlign *RA);
     //recursively stitch aligns for one gene

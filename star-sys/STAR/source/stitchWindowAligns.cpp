@@ -5,12 +5,11 @@
 #include <cmath>
 #include <vector>
 
-void stitchWindowAligns(uint iA, uint nA, int Score, uint tR2, uint tG2, Transcript trA, \
+void stitchWindowAligns(uint iA, uint nA, int Score, bool WAincl[], uint tR2, uint tG2, Transcript trA, \
                         uint Lread, vector<uiWA>& WA, char* R, const Genome &mapGen, \
                         const Parameters& P, Transcript** wTr, uint* nWinTr, ReadAlign *RA) {
     //recursively stitch aligns for one gene
     //*nWinTr - number of transcripts for the current window
-
     if (iA>=nA && tR2==0) return; //no aligns in the transcript
 
     if (iA>=nA) {//no more aligns to add, finalize the transcript
@@ -326,26 +325,26 @@ void stitchWindowAligns(uint iA, uint nA, int Score, uint tR2, uint tG2, Transcr
 
             trAi.nMatch=WA[iA].Length; //# of matches
 
-            for (uint ii=0; ii<nA; ii++) WA[ii].include=false;
+            for (uint ii=0; ii<nA; ii++) WAincl[ii]=false;
 
 
     };
 
     if (dScore>-1000000) {//include this align
-        WA[iA].include=true;
+        WAincl[iA]=true;
 
         if ( WA[iA].Nrep==1 ) trAi.nUnique++; //unique piece
         if ( WA[iA].Anchor>0 ) trAi.nAnchor++; //anchor piece piece
 
-        stitchWindowAligns(iA+1, nA, Score+dScore, WA[iA].rStart+WA[iA].Length-1, WA[iA].gStart+WA[iA].Length-1, trAi, Lread, WA, R, mapGen, P, wTr, nWinTr, RA);
+        stitchWindowAligns(iA+1, nA, Score+dScore, WAincl, WA[iA].rStart+WA[iA].Length-1, WA[iA].gStart+WA[iA].Length-1, trAi, Lread, WA, R, mapGen, P, wTr, nWinTr, RA);
     } else {
 
     };
 
     //also run a transcript w/o including this align
     if (WA[iA].Anchor!=2 || trA.nAnchor>0) {//only allow exclusion if this is not the last anchor, or other anchors have been used
-        WA[iA].include=false;
-        stitchWindowAligns(iA+1, nA, Score, tR2, tG2, trA, Lread, WA, R, mapGen, P, wTr, nWinTr, RA);
+        WAincl[iA]=false;
+        stitchWindowAligns(iA+1, nA, Score, WAincl, tR2, tG2, trA, Lread, WA, R, mapGen, P, wTr, nWinTr, RA);
     };
     return;
 };

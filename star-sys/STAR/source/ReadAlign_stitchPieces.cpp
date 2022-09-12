@@ -175,7 +175,7 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
         };
         // TODO: The `.include` value likely is only relevant for a WA[iW] row, consider
         //  making that more specific and not allocating a bool for all elements.
-        for (uint ii=0;ii<WA[iW].size();ii++) WA[iW][ii].include=false; //initialize mask
+        for (uint ii=0;ii<WA[iW].size();ii++) WAincl[ii]=false; //initialize mask
 
         trA=trInit; //that one is initialized
         trA.Chr = WC[iW].Chr;
@@ -192,7 +192,7 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
         *(trAll[iW1][0])=trA;
         nWinTr[iW1]=0; //initialize number of transcripts per window
 
-        stitchWindowAligns(0, WA[iW].size(), 0, 0, 0, trA, Lread, WA[iW], R[trA.roStr==0 ? 0:2], mapGen, P, trAll[iW1], nWinTr+iW1, this);
+        stitchWindowAligns(0, WA[iW].size(), 0, WAincl, 0, 0, trA, Lread, WA[iW], R[trA.roStr==0 ? 0:2], mapGen, P, trAll[iW1], nWinTr+iW1, this);
 
         if (nWinTr[iW1]==0) {
             continue;

@@ -167,8 +167,7 @@ struct uiWA {
     // else is the index of the splice junction sequence this represents
     // (first splice junction in suffix array is 0);
     uint sjA;
-    // TODO: C Repr possibly not optimal here, check if Anchor and iFrag could be packed in.
-    bool include;
+
     public:
         uiWA() = default;
         uiWA(uint Length, uint rStart, uint gStart, uint Nrep, uint Anchor, uint iFrag, uint sjA) :
@@ -178,8 +177,7 @@ struct uiWA {
         Nrep(Nrep),
         Anchor(Anchor),
         iFrag(iFrag),
-        sjA(sjA),
-        include(false)
+        sjA(sjA)
         {}
 };
 
