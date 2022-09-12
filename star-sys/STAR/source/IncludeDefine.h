@@ -127,14 +127,7 @@ typedef uint8_t uint8;
 #define MAX_N_MULTMAP 100000 //max number of multiple mappers
 #define MAX_SJ_REPEAT_SEARCH 255 //max length of a repeat to search around a SJ
 
-#define PC_rStart 0
-#define PC_Length 1
-#define PC_Dir 3
-#define PC_Nrep 4
-#define PC_SAstart 5
-#define PC_SAend 6
-#define PC_iFrag 7
-#define PC_SIZE 8
+
 
 struct Window {
     uint Str, Chr, gStart, gEnd;
@@ -153,7 +146,10 @@ struct Exon {
 #define MARKER_TOO_MANY_ANCHORS_PER_WINDOW 999905
 #define MARKER_READ_TOO_SHORT 999910
 
-typedef uint uiPC[PC_SIZE];
+struct PC {
+uint rStart, Length, Dir, Nrep, SAstart, SAend, iFrag;
+};
+
 struct uiWA {
     uint Length, rStart, gStart, Nrep, Anchor;
     // Which fragment is this read from? (typically 0 for single end data,

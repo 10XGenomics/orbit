@@ -113,7 +113,7 @@ class ReadAlign {
         uintWinBin **winBin; //binned genome: window ID (number) per bin
 
         //alignments
-        uiPC *PC; //pieces coordinates
+        PC *PC; //pieces coordinates
         std::vector<Window> WC = std::vector<Window>(); //windows coordinates
         std::vector<std::vector<uiWA>> WA; //aligments per window
 

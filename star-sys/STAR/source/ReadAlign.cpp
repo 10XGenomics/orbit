@@ -26,7 +26,7 @@ ReadAlign::ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcripto
     splitR=new uint*[3];
     splitR[0]=new uint[P.maxNsplit]; splitR[1]=new uint[P.maxNsplit]; splitR[2]=new uint[P.maxNsplit];
     //alignments
-    PC=new uiPC[P.seedPerReadNmax];
+    PC=new struct PC[P.seedPerReadNmax];
     WC= std::vector<Window>(P.alignWindowsPerReadNmax);
     nWAP=new uint[P.alignWindowsPerReadNmax];
     WALrec=new uint[P.alignWindowsPerReadNmax];

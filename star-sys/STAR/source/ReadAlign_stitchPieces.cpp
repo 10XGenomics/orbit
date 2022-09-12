@@ -11,9 +11,9 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
     memset(winBin[1],255,sizeof(winBin[0][0])*P.winBinN);
     WC.clear(); //number of windows
 //    for (uint iP=0; iP<nP; iP++) {
-//        cout << "NREP: " << PC[iP][PC_Nrep] << endl;
-//        cout << "Dir: " << PC[iP][PC_Dir] << endl;
-//        cout << "Length: " << PC[iP][PC_Length] << endl;
+//        cout << "NREP: " << PC[iP].Nrep << endl;
+//        cout << "Dir: " << PC[iP].Dir << endl;
+//        cout << "Length: " << PC[iP].Length << endl;
 //        cout << endl;
 //    }
     // Alignment windows are binned regions of the genome that anchor pieces lie in.
@@ -21,13 +21,13 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
         // np is number of pieces (stored seed alignments)
 
 
-//          if (PC[iP][PC_Nrep]<=P.winAnchorMultimapNmax || PC[iP][PC_Length]>=readLength[PC[iP][PC_iFrag]] ) {//proceed if piece is an anchor, i.e. maps few times or is long enough
-       if (PC[iP][PC_Nrep]<=P.winAnchorMultimapNmax ) {//proceed if piece is an anchor, i.e. maps few times
+//          if (PC[iP].Nrep<=P.winAnchorMultimapNmax || PC[iP].Length>=readLength[PC[iP].iFrag] ) {//proceed if piece is an anchor, i.e. maps few times or is long enough
+       if (PC[iP].Nrep<=P.winAnchorMultimapNmax ) {//proceed if piece is an anchor, i.e. maps few times
 
-            uint aDir   = PC[iP][PC_Dir];
-            uint aLength= PC[iP][PC_Length];
+            uint aDir   = PC[iP].Dir;
+            uint aLength= PC[iP].Length;
 
-            for (uint iSA=PC[iP][PC_SAstart]; iSA<=PC[iP][PC_SAend]; iSA++) {//scan through all alignments of this piece
+            for (uint iSA=PC[iP].SAstart; iSA<=PC[iP].SAend; iSA++) {//scan through all alignments of this piece
                 // going through ordered positions in the suffix array from PC_SAstart to PC_SAend
                 uint a1 = mapGen.SA[iSA];
                 //printf("a1 %llu\n", a1);
@@ -68,8 +68,8 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
                         break;
                     };
                 };
-            }; //for (uint iSA=PC[iP][PC_SAstart]; iSA<=PC[iP][PC_SAend]; iSA++) //scan through all alignments of this piece
-        };//if (PC[iP][PC_Nrep]<=P.winAnchorMultimapNmax) //proceed if anchor
+            }; //for (uint iSA=PC[iP].SAstart; iSA<=PC[iP].SAend; iSA++) //scan through all alignments of this piece
+        };//if (PC[iP].Nrep<=P.winAnchorMultimapNmax) //proceed if anchor
     };//for (uint iP=0; iP<nP; iP++) //scan through all anchor pieces, create alignment windows
 
 
@@ -101,10 +101,10 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
 
     //scan through all pieces/aligns, add them to alignment windows, create alignment coordinates
     for (uint iP=0; iP<nP; iP++) {
-        uint aNrep=PC[iP][PC_Nrep];
-        uint aFrag=PC[iP][PC_iFrag];
-        uint aLength=PC[iP][PC_Length];
-        uint aDir=PC[iP][PC_Dir];
+        uint aNrep=PC[iP].Nrep;
+        uint aFrag=PC[iP].iFrag;
+        uint aLength=PC[iP].Length;
+        uint aDir=PC[iP].Dir;
 
         bool aAnchor=(aNrep<=P.winAnchorMultimapNmax); //this align is an anchor or not
 
@@ -113,12 +113,12 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
         };
 
 
-        for (uint iSA=PC[iP][PC_SAstart]; iSA<=PC[iP][PC_SAend]; iSA++) {//scan through all alignments
+        for (uint iSA=PC[iP].SAstart; iSA<=PC[iP].SAend; iSA++) {//scan through all alignments
 
             uint a1 = mapGen.SA[iSA];
             uint aStr = a1 >> mapGen.GstrandBit;
             a1 &= mapGen.GstrandMask; //remove strand bit
-            uint aRstart=PC[iP][PC_rStart];
+            uint aRstart=PC[iP].rStart;
 
             //convert to positive strand
             if (aDir==1 && aStr==0) {
