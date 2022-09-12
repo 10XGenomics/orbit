@@ -98,12 +98,6 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
         WlastAnchor[iWin]=-1;
     };
 
-    #ifdef OFF_BEFORE_SEEDdistribution
-        #warning OFF_BEFORE_SEEDdistribution
-        nW=0;
-        nTr=0;
-        return;
-    #endif
 
     //scan through all pieces/aligns, add them to alignment windows, create alignment coordinates
     for (uint iP=0; iP<nP; iP++) {

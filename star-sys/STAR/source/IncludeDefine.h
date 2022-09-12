@@ -159,21 +159,28 @@ struct Window {
 
 typedef uint uiPC[PC_SIZE];
 struct uiWA {
-uint Length, rStart, gStart, Nrep, Anchor, iFrag, sjA;
-// TODO: C Repr possibly not optimal here, check if Anchor and iFrag could be packed in.
-bool include;
-public:
-    uiWA() = default;
-    uiWA(uint Length, uint rStart, uint gStart, uint Nrep, uint Anchor, uint iFrag, uint sjA) :
-    Length(Length),
-    rStart(rStart),
-    gStart(gStart),
-    Nrep(Nrep),
-    Anchor(Anchor),
-    iFrag(iFrag),
-    sjA(sjA),
-    include(false)
-    {}
+    uint Length, rStart, gStart, Nrep, Anchor;
+    // Which fragment is this read from? (typically 0 for single end data,
+    // can be > for paired end.
+    uint iFrag;
+    // sjA is (uint) -1 if the alignment is not from a splice junction, or
+    // else is the index of the splice junction sequence this represents
+    // (first splice junction in suffix array is 0);
+    uint sjA;
+    // TODO: C Repr possibly not optimal here, check if Anchor and iFrag could be packed in.
+    bool include;
+    public:
+        uiWA() = default;
+        uiWA(uint Length, uint rStart, uint gStart, uint Nrep, uint Anchor, uint iFrag, uint sjA) :
+        Length(Length),
+        rStart(rStart),
+        gStart(gStart),
+        Nrep(Nrep),
+        Anchor(Anchor),
+        iFrag(iFrag),
+        sjA(sjA),
+        include(false)
+        {}
 };
 
 // debugging
