@@ -5,11 +5,12 @@
 #include <cmath>
 #include <vector>
 
-void stitchWindowAligns(uint iA, uint nA, int Score, bool WAincl[], uint tR2, uint tG2, Transcript trA, \
+void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, Transcript trA, \
                         uint Lread, vector<uiWA>& WA, char* R, const Genome &mapGen, \
                         const Parameters& P, Transcript** wTr, uint* nWinTr, ReadAlign *RA) {
     //recursively stitch aligns for one gene
     //*nWinTr - number of transcripts for the current window
+    uint nA = WA.size();
     if (iA>=nA && tR2==0) return; //no aligns in the transcript
 
     if (iA>=nA) {//no more aligns to add, finalize the transcript
