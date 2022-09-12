@@ -86,12 +86,12 @@ intSWscore alignSmithWaterman(char *R, uint rL, char *G, uint gL, \
     while (T[ir+ig*rL1]>0 && ir>0 && ig>0) {
         if (T[ir+ig*rL1]==2) {
             if (prevOper==2) {//increase length
-                trA.exons[trA.nExons][EX_L]++;
+                trA.exons[trA.nExons].L++;
             } else {//new exon
                 ++trA.nExons;
-                trA.exons[trA.nExons][EX_L]=1;
-                trA.exons[trA.nExons][EX_R]=ir;
-                trA.exons[trA.nExons][EX_G]=ig;
+                trA.exons[trA.nExons].L=1;
+                trA.exons[trA.nExons].R=ir;
+                trA.exons[trA.nExons].G=ig;
                 prevOper=2;
             };
             --ir;
@@ -107,18 +107,16 @@ intSWscore alignSmithWaterman(char *R, uint rL, char *G, uint gL, \
 
     ++trA.nExons;
     for (uint ii=0;ii<trA.nExons;ii++) {//subtract length
-        trA.exons[ii][EX_R] -= trA.exons[ii][EX_L]; //note that exon loci have extra +1 because T matrix is shifted by +1
-        trA.exons[ii][EX_G] -= trA.exons[ii][EX_L];
+        trA.exons[ii].R -= trA.exons[ii].L; //note that exon loci have extra +1 because T matrix is shifted by +1
+        trA.exons[ii].G -= trA.exons[ii].L;
     };
 
     for (uint ii=0;ii<trA.nExons/2;ii++) {//reverse order
-        for (uint jj=0;jj<EX_SIZE;jj++) {
-            swap(trA.exons[ii][jj],trA.exons[trA.nExons-1-ii][jj]);
-        };
+        swap(trA.exons[ii],trA.exons[trA.nExons-1-ii]);
     };
 
 //     for (uint ii=1;ii<trA.nExons;ii++) {//subtract EX_G of the first exon
-//         trA.exons[ii][EX_G] -= trA.exons[0][EX_G];
+//         trA.exons[ii].G -= trA.exons[0].G;
 //     };
 
 

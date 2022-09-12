@@ -141,14 +141,10 @@ struct Window {
 };
 
 
+struct Exon {
+    uint R, G, L, iFrag, sjA;
+};
 
-
-#define EX_R 0
-#define EX_G 1
-#define EX_L 2
-#define EX_iFrag 3
-#define EX_sjA 4
-#define EX_SIZE 5
 
 
 #define MARKER_ALL_PIECES_EXCEED_seedMultimapNmax 999901 //marks the reads that map too many time, more than seedMultimapNmax

@@ -42,7 +42,7 @@ void Stats::transcriptStats(Transcript &T, uint Lread) {
 
     uint mappedL=0;
     for (uint ii=0; ii<T.nExons; ii++) {
-        mappedL += T.exons[ii][EX_L];
+        mappedL += T.exons[ii].L;
     };
     for (uint ii=0; ii<T.nExons-1; ii++) {
         if (T.canonSJ[ii]>=0) splicesN[T.canonSJ[ii]]++;

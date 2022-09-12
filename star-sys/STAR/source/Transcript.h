@@ -10,7 +10,7 @@
 
 class Transcript {
 public:
-    std::array<std::array<uint, EX_SIZE>, MAX_N_EXONS> exons; //coordinates of all exons: r-start, g-start, length
+    std::array<Exon, MAX_N_EXONS> exons; //coordinates of all exons: r-start, g-start, length
     std::array<std::array<uint, 2>, MAX_N_EXONS> shiftSJ; //shift of the SJ coordinates due to genomic micro-repeats
     std::array<int, MAX_N_EXONS> canonSJ; //canonicity of each junction
     std::array<uint8, MAX_N_EXONS> sjAnnot; //anotated or not

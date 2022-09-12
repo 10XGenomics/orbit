@@ -14,7 +14,7 @@ void Transcriptome::geneCountsAddAlign(uint nA, Transcript **aAll, vector<int32>
 
          for (int ib=a.nExons-1; ib>=0; ib--) {//scan through all blocks of the alignments
 
-             uint64 g1=a.exons[ib][EX_G]+a.exons[ib][EX_L]-1;//end of the block
+             uint64 g1=a.exons[ib].G+a.exons[ib].L-1;//end of the block
 
 //              if ((uint)ib==a.nExons-1)
 //              {//binary search for the first time: end of the block among the starts of exons
@@ -27,8 +27,8 @@ void Transcriptome::geneCountsAddAlign(uint nA, Transcript **aAll, vector<int32>
 //                  };
 //              };
 
-             while (e1>=0 && exG.eMax[e1]>=a.exons[ib][EX_G]) {//these exons may overlap this block
-                 if (exG.e[e1]>=a.exons[ib][EX_G]) {//this exon overlaps the block
+             while (e1>=0 && exG.eMax[e1]>=a.exons[ib].G) {//these exons may overlap this block
+                 if (exG.e[e1]>=a.exons[ib].G) {//this exon overlaps the block
                      uint str1=(uint)exG.str[e1]-1;
                      for (int itype=0; itype<quants->geneCounts.nType; itype++) {
                          //str1<2 (i.e. strand=0) requirement means that genes w/o strand will accept reads from both strands

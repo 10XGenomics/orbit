@@ -16,15 +16,15 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
     int Score=0;
 
     auto& penultimateExon = trA->exons[trA->nExons-1];
-    if (sjAB!=((uint) -1) && penultimateExon[EX_iFrag]==iFragB \
-            && penultimateExon[EX_sjA]==sjAB && rBstart==rAend+1 && gAend+1<gBstart ) {//simple stitching if junction belongs to a database
-        if (mapGen.sjdbMotif[sjAB]==0 && (L<=mapGen.sjdbShiftRight[sjAB] || penultimateExon[EX_L]<=mapGen.sjdbShiftLeft[sjAB]) ) {
+    if (sjAB!=((uint) -1) && penultimateExon.iFrag==iFragB \
+            && penultimateExon.sjA==sjAB && rBstart==rAend+1 && gAend+1<gBstart ) {//simple stitching if junction belongs to a database
+        if (mapGen.sjdbMotif[sjAB]==0 && (L<=mapGen.sjdbShiftRight[sjAB] || penultimateExon.L<=mapGen.sjdbShiftLeft[sjAB]) ) {
             return -1000006; //too large repeats around non-canonical junction
         };
         auto& exon = trA->exons[trA->nExons];
-        exon[EX_R] = rBstart; //new exon r-start
-        exon[EX_G] = gBstart; //new exon g-start
-        exon[EX_L] = L; //new exon length
+        exon.R = rBstart; //new exon r-start
+        exon.G = gBstart; //new exon g-start
+        exon.L = L; //new exon length
         trA->canonSJ[trA->nExons-1]=mapGen.sjdbMotif[sjAB]; //mark sj-db
         trA->shiftSJ[trA->nExons-1][0]=mapGen.sjdbShiftLeft[sjAB];
         trA->shiftSJ[trA->nExons-1][1]=mapGen.sjdbShiftRight[sjAB];
@@ -38,22 +38,22 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
         trA->sjAnnot[trA->nExons-1]=0;
         trA->sjStr[trA->nExons-1]=0;
 
-        if (penultimateExon[EX_iFrag]==iFragB) {//stitch aligns on the same fragment
+        if (penultimateExon.iFrag==iFragB) {//stitch aligns on the same fragment
             uint gBend=gBstart+L-1;
             uint rBend=rBstart+L-1;
 
 //             {//debug
-//                 if (sjAB!=((uint) -1) && trA->exons[trA->nExons-1][EX_sjA]!=((uint) -1) && rBend<=rAend) {//
+//                 if (sjAB!=((uint) -1) && trA->exons[trA->nExons-1].sjA!=((uint) -1) && rBend<=rAend) {//
 //                     Score -= rAend-rBstart+1;
 //                     gAend -= rAend-rBstart+1;
 //                     rAend = rBstart-1;
-//                     trA->exons[trA->nExons-1][EX_L] =rAend-trA->exons[trA->nExons-1][EX_R]+1;
+//                     trA->exons[trA->nExons-1].L =rAend-trA->exons[trA->nExons-1].R+1;
 //                 };
 //             };
 
             //check if r-overlapping fully and exit
             if (rBend<=rAend) return -1000001;
-            if (gBend<=gAend && penultimateExon[EX_iFrag]==iFragB) return -1000002;
+            if (gBend<=gAend && penultimateExon.iFrag==iFragB) return -1000002;
 
             //shift the B 5' if overlaps A 3'
             if (rBstart<=rAend) {
@@ -107,7 +107,7 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
 
                 int Score1=0;
                 int jR1=1; //junction location in R-space
-                int ex_l = trA->exons[trA->nExons-1][EX_L];
+                int ex_l = trA->exons[trA->nExons-1].L;
                 do { // 1. move left, until the score for MM is less than canonical advantage
                     jR1--;
                     auto rEnd = R[rAend+jR1];
@@ -186,7 +186,7 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
 
                 if (jCan<=0) {//flush deletions and non-canonical junction to the left
                     jR-=jjL;
-                    if (int(trA->exons[trA->nExons-1][EX_L])+jR<1) return -1000005;
+                    if (int(trA->exons[trA->nExons-1].L)+jR<1) return -1000005;
                     jjR+=jjL;
                     jjL=0;
                 };
@@ -233,7 +233,7 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
                         } else {//annotated
                             jCan=mapGen.sjdbMotif[sjdbInd];
                             if (mapGen.sjdbMotif[sjdbInd]==0) {//shift to match annotations
-                                if (L<=mapGen.sjdbShiftLeft[sjdbInd] || trA->exons[trA->nExons-1][EX_L]<=mapGen.sjdbShiftLeft[sjdbInd]) {
+                                if (L<=mapGen.sjdbShiftLeft[sjdbInd] || trA->exons[trA->nExons-1].L<=mapGen.sjdbShiftLeft[sjdbInd]) {
                                     return -1000006;
                                 };
                                 jR += (int) mapGen.sjdbShiftLeft[sjdbInd];
@@ -342,22 +342,22 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
 
                 //modify exons
                 if (Del==0 && Ins==0) {//no gap => no new exon, extend the boundary of the previous exon
-                    trA->exons[trA->nExons-1][EX_L] += rBend-rAend;
+                    trA->exons[trA->nExons-1].L += rBend-rAend;
                 } else if (Del>0) { //deletion:ca only have Del> or Ins>0
-                    trA->exons[trA->nExons-1][EX_L] += jR;
+                    trA->exons[trA->nExons-1].L += jR;
                     auto& exon = trA->exons[trA->nExons];
-                    exon[EX_L] = rBend-rAend-jR; //new exon length
-                    exon[EX_R] = rAend+jR+1; //new exon r-start
-                    exon[EX_G] = gBstart1+jR+1; //new exon g-start
+                    exon.L = rBend-rAend-jR; //new exon length
+                    exon.R = rAend+jR+1; //new exon r-start
+                    exon.G = gBstart1+jR+1; //new exon g-start
                     trA->nExons++;
                 } else if (Ins>0) { //Ins>0;
                     trA->nIns += nIns;
                     trA->lIns += Ins;
-                    trA->exons[trA->nExons-1][EX_L] += jR; //correct the previous exon boundary
+                    trA->exons[trA->nExons-1].L += jR; //correct the previous exon boundary
                     auto& exon = trA->exons[trA->nExons];
-                    exon[EX_L] = rBend-rAend-jR-Ins; //new exon length
-                    exon[EX_R] = rAend+jR+Ins+1; //new exon r-start
-                    exon[EX_G] = gAend+1+jR; //new exon g-start
+                    exon.L = rBend-rAend-jR-Ins; //new exon length
+                    exon.R = rAend+jR+Ins+1; //new exon r-start
+                    exon.G = gAend+1+jR; //new exon g-start
                     trA->canonSJ[trA->nExons-1]=-2; //mark insertion
                     trA->sjAnnot[trA->nExons-1]=0;
                     trA->nExons++;
@@ -365,9 +365,9 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
             } else {//stitching was not accepted
                 return -1000007;
             };
-        } else if (gBstart+trA->exons[0][EX_R]+P.alignEndsProtrude.nBasesMax >= trA->exons[0][EX_G] || trA->exons[0][EX_G] < trA->exons[0][EX_R]){//if (iFragA==iFragB) stitch aligns from different fragments
+        } else if (gBstart+trA->exons[0].R+P.alignEndsProtrude.nBasesMax >= trA->exons[0].G || trA->exons[0].G < trA->exons[0].R){//if (iFragA==iFragB) stitch aligns from different fragments
                                                                                                             //CHECK: this second confdition does not make sense
-            if (P.alignMatesGapMax>0 && gBstart > trA->exons[trA->nExons-1][EX_G] + trA->exons[trA->nExons-1][EX_L] + P.alignMatesGapMax) {
+            if (P.alignMatesGapMax>0 && gBstart > trA->exons[trA->nExons-1].G + trA->exons[trA->nExons-1].L + P.alignMatesGapMax) {
                 return -1000004; //gap between mates too large
             };
             //extend the fragments inside
@@ -386,32 +386,32 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
             //AATATTTGGAACACTTATGTGAAAAATGATTTGTTTTTCTGAAATTTACGTTTCTCTCTGAGTCCTGTAACTGTCC
 
             if ( extendAlign(R, G, rAend+1, gAend+1, 1, 1, DEF_readSeqLengthMax, trA->nMatch, trA->nMM, outFilterMismatchNmaxTotal, P.outFilterMismatchNoverLmax, \
-                             P.alignEndsType.ext[trA->exons[trA->nExons-1][EX_iFrag]][1], &trExtend) ) {
+                             P.alignEndsType.ext[trA->exons[trA->nExons-1].iFrag][1], &trExtend) ) {
 
                 trA->add(&trExtend);
                 Score += trExtend.maxScore;
 
-                trA->exons[trA->nExons-1][EX_L] += trExtend.extendL;
+                trA->exons[trA->nExons-1].L += trExtend.extendL;
             };// if extendAlign for read A
 
             auto& exon = trA->exons[trA->nExons];
-            exon[EX_R] = rBstart;
-            exon[EX_G] = gBstart;
-            exon[EX_L] = L;
+            exon.R = rBstart;
+            exon.G = gBstart;
+            exon.L = L;
             trA->nMatch += L;
 
             trExtend.reset();
             //if end extension needs to be forced, use large length. Otherwise, only extend until the beginning of the transcript
-            uint extlen=P.alignEndsType.ext[iFragB][1] ? DEF_readSeqLengthMax : gBstart-trA->exons[0][EX_G]+trA->exons[0][EX_R];
+            uint extlen=P.alignEndsType.ext[iFragB][1] ? DEF_readSeqLengthMax : gBstart-trA->exons[0].G+trA->exons[0].R;
             if ( extendAlign(R, G, rBstart-1, gBstart-1, -1, -1, extlen, trA->nMatch, trA->nMM, outFilterMismatchNmaxTotal, P.outFilterMismatchNoverLmax, \
                              P.alignEndsType.ext[iFragB][1], &trExtend) ) {
 
                 trA->add(&trExtend);
                 Score += trExtend.maxScore;
 
-                exon[EX_R] -= trExtend.extendL;
-                exon[EX_G] -= trExtend.extendL;
-                exon[EX_L] += trExtend.extendL;
+                exon.R -= trExtend.extendL;
+                exon.G -= trExtend.extendL;
+                exon.L += trExtend.extendL;
             }; //if extendAlign B
 
             trA->canonSJ[trA->nExons-1]=-3; //mark different fragments junction
@@ -423,8 +423,8 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
         };
     };
 
-    trA->exons[trA->nExons-1][EX_iFrag]=iFragB; //the new exon belongs to fragment iFragB
-    trA->exons[trA->nExons-1][EX_sjA]=sjAB;
+    trA->exons[trA->nExons-1].iFrag=iFragB; //the new exon belongs to fragment iFragB
+    trA->exons[trA->nExons-1].sjA=sjAB;
 
     return Score;
 };

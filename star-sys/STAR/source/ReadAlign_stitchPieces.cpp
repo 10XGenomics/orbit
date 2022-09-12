@@ -192,7 +192,7 @@ void ReadAlign::stitchPieces(char **R, uint Lread) {
         *(trAll[iW1][0])=trA;
         nWinTr[iW1]=0; //initialize number of transcripts per window
 
-        stitchWindowAligns(0, WA[iW].size(), 0, WAincl, 0, 0, trA, Lread, WA[iW], R[trA.roStr==0 ? 0:2], mapGen, P, trAll[iW1], nWinTr+iW1, this);
+        stitchWindowAligns(0, 0, WAincl, 0, 0, trA, Lread, WA[iW], R[trA.roStr==0 ? 0:2], mapGen, P, trAll[iW1], nWinTr+iW1, this);
 
         if (nWinTr[iW1]==0) {
             continue;

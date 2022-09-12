@@ -65,7 +65,7 @@ void ReadAlign::multMapSelect() {//select multiple mappers from all transcripts 
 //         Transcript **t=new Transcript*[nTr];
 //         for (uint itr=0; itr<nTr; itr++)
 //         {//fill the array of starts and pointers
-//             s[itr*2]=trMult[itr]->exons[0][EX_G];
+//             s[itr*2]=trMult[itr]->exons[0].G;
 //             s[itr*2+1]=itr;
 //             t[itr]=trMult[itr];
 //         };

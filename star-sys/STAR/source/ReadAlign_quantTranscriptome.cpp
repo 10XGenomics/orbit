@@ -11,7 +11,7 @@ uint ReadAlign::quantTranscriptome (Transcriptome *Tr, uint nAlignG, Transcript 
         if (!P.quant.trSAM.indel && (alignG[iag]->nDel>0 || alignG[iag]->nIns>0) ) {//prevent indels if requested
             continue;
         };
-        if (!P.quant.trSAM.singleEnd && (P.readNmates==2 && alignG[iag]->exons[0][EX_iFrag]==alignG[iag]->exons[alignG[iag]->nExons-1][EX_iFrag]) )
+        if (!P.quant.trSAM.singleEnd && (P.readNmates==2 && alignG[iag]->exons[0].iFrag==alignG[iag]->exons[alignG[iag]->nExons-1].iFrag) )
         {//prevent single end alignments
             continue;
         };
@@ -22,30 +22,30 @@ uint ReadAlign::quantTranscriptome (Transcriptome *Tr, uint nAlignG, Transcript 
             for (uint32 iab=0; iab<alignG[iag]->nExons; iab++) {
                 uint left1=0,right1=0;//how many bases to move left or right
                 if (iab==0) {
-                    left1=alignG[iag]->exons[iab][EX_R];
+                    left1=alignG[iag]->exons[iab].R;
                 } else if (alignG[iag]->canonSJ[iab-1]==-3) {
-                    left1=alignG[iag]->exons[iab][EX_R]-readLength[alignG[iag]->exons[iab-1][EX_iFrag]]-1;
+                    left1=alignG[iag]->exons[iab].R-readLength[alignG[iag]->exons[iab-1].iFrag]-1;
                 };
                 if (iab==alignG[iag]->nExons-1) {//last block of left mates
-                    right1=Lread-alignG[iag]->exons[iab][EX_R]-alignG[iag]->exons[iab][EX_L];
+                    right1=Lread-alignG[iag]->exons[iab].R-alignG[iag]->exons[iab].L;
 
                 } else if (alignG[iag]->canonSJ[iab]==-3) {//last block of the right mate (i.e. whole read)
-                    right1=readLength[alignG[iag]->exons[iab][EX_iFrag]]-alignG[iag]->exons[iab][EX_R]-alignG[iag]->exons[iab][EX_L];
+                    right1=readLength[alignG[iag]->exons[iab].iFrag]-alignG[iag]->exons[iab].R-alignG[iag]->exons[iab].L;
                 };
 
                 for (uint b=1; b<=left1 ; b++) {//extend to the left
-                    char r1=R[alignG[iag]->exons[iab][EX_R]-b];
-                    char g1=mapGen.G[alignG[iag]->exons[iab][EX_G]-b];
+                    char r1=R[alignG[iag]->exons[iab].R-b];
+                    char g1=mapGen.G[alignG[iag]->exons[iab].G-b];
                     if ( r1!=g1 && r1<4 && g1<4) ++nMM1;
                 };
                 for (uint b=0; b<right1 ; b++) {//extend to the left
-                    char r1=R[alignG[iag]->exons[iab][EX_R]+alignG[iag]->exons[iab][EX_L]+b];
-                    char g1=mapGen.G[alignG[iag]->exons[iab][EX_G]+alignG[iag]->exons[iab][EX_L]+b];
+                    char r1=R[alignG[iag]->exons[iab].R+alignG[iag]->exons[iab].L+b];
+                    char g1=mapGen.G[alignG[iag]->exons[iab].G+alignG[iag]->exons[iab].L+b];
                     if ( r1!=g1 && r1<4 && g1<4) ++nMM1;
                 };
-                alignG[iag]->exons[iab][EX_R] -= left1;
-                alignG[iag]->exons[iab][EX_G] -= left1;
-                alignG[iag]->exons[iab][EX_L] += left1+right1;
+                alignG[iag]->exons[iab].R -= left1;
+                alignG[iag]->exons[iab].G -= left1;
+                alignG[iag]->exons[iab].L += left1+right1;
             };
 
             if ( (alignG[iag]->nMM + nMM1) > min(outFilterMismatchNmaxTotal, (uint) (P.outFilterMismatchNoverLmax*(Lread-1)) ) ) {

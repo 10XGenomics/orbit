@@ -167,37 +167,37 @@ void Transcript::peOverlapSEtoPE(const uint* mateStart, const Transcript &t) {//
 
 //     uint iex=0;
 //     for ( ; iex<t.nExons; iex++) {//first, cycle through the exons from mate1
-//         if (t.exons[iex][EX_R] >= mEnd[0] || t.exons[iex][EX_R]+t.exons[iex][EX_L] < mSta[0]) {//this exon is only in mate2, break this cycle
+//         if (t.exons[iex].R >= mEnd[0] || t.exons[iex].R+t.exons[iex].L < mSta[0]) {//this exon is only in mate2, break this cycle
 //             break;
 //         };
 //         //record these exons for mate1
 //
-//         exons[iex][EX_iFrag]=t.Str;
-//         exons[iex][EX_sjA]=t.exons[iex][EX_sjA];
+//         exons[iex].iFrag=t.Str;
+//         exons[iex].sjA=t.exons[iex].sjA;
 //         canonSJ[iex]=t.canonSJ[iex];
 //         sjAnnot[iex]=t.sjAnnot[iex];
 //         sjStr[iex]=t.sjStr[iex];
 //         shiftSJ[iex][0]=t.shiftSJ[iex][0];
 //         shiftSJ[iex][1]=t.shiftSJ[iex][1];
 //
-//         exons[iex][EX_R]=t.exons[iex][EX_R]-mSta[0];
-//         exons[iex][EX_G]=t.exons[iex][EX_G];
-//         if (t.exons[iex][EX_R]+t.exons[iex][EX_L] < mEnd[0]) {//exon is fully in mate1
-//             exons[iex][EX_L]=t.exons[iex][EX_L];
+//         exons[iex].R=t.exons[iex].R-mSta[0];
+//         exons[iex].G=t.exons[iex].G;
+//         if (t.exons[iex].R+t.exons[iex].L < mEnd[0]) {//exon is fully in mate1
+//             exons[iex].L=t.exons[iex].L;
 //         } else {
-//             exons[iex][EX_L]=mEnd[0]-t.exons[iex][EX_R];
+//             exons[iex].L=mEnd[0]-t.exons[iex].R;
 //         };
 //     };
 
     nExons=0;
     for (uint imate=0; imate<2; imate++) {//cycle over mate 1,2
         for (uint iex=0; iex<t.nExons; iex++) {//cycle through the exons
-            if (t.exons[iex][EX_R] >= mEnd[imate] || t.exons[iex][EX_R]+t.exons[iex][EX_L] <= mSta[imate]) {//this exon is only in mate2, do not record here
+            if (t.exons[iex].R >= mEnd[imate] || t.exons[iex].R+t.exons[iex].L <= mSta[imate]) {//this exon is only in mate2, do not record here
                 continue;
             };
 
-            exons[nExons][EX_iFrag]=(imate==0 ? t.Str : 1-t.Str);
-            exons[nExons][EX_sjA]=t.exons[iex][EX_sjA];
+            exons[nExons].iFrag=(imate==0 ? t.Str : 1-t.Str);
+            exons[nExons].sjA=t.exons[iex].sjA;
             if (iex<t.nExons-1) {
                 canonSJ[nExons]=t.canonSJ[iex];
                 sjAnnot[nExons]=t.sjAnnot[iex];
@@ -206,19 +206,19 @@ void Transcript::peOverlapSEtoPE(const uint* mateStart, const Transcript &t) {//
                 shiftSJ[nExons][1]=t.shiftSJ[iex][1];
             };
             //record these exons for mate2
-            if (t.exons[iex][EX_R]>=mSta[imate]) {//exon left is inside the mate
-                exons[nExons][EX_G]=t.exons[iex][EX_G];
-                exons[nExons][EX_L]=t.exons[iex][EX_L];
-                exons[nExons][EX_R]=t.exons[iex][EX_R]-mSta[imate]+mSta2[imate];
+            if (t.exons[iex].R>=mSta[imate]) {//exon left is inside the mate
+                exons[nExons].G=t.exons[iex].G;
+                exons[nExons].L=t.exons[iex].L;
+                exons[nExons].R=t.exons[iex].R-mSta[imate]+mSta2[imate];
             } else {//need to split the exon
-                exons[nExons][EX_R]=mSta2[imate];//exon starts at the mate start
-                uint delta=mSta[imate]-t.exons[iex][EX_R]; //shorten exon by this length
-                exons[nExons][EX_L]=t.exons[iex][EX_L]-delta;
-                exons[nExons][EX_G]=t.exons[iex][EX_G]+delta;
+                exons[nExons].R=mSta2[imate];//exon starts at the mate start
+                uint delta=mSta[imate]-t.exons[iex].R; //shorten exon by this length
+                exons[nExons].L=t.exons[iex].L-delta;
+                exons[nExons].G=t.exons[iex].G+delta;
             };
 
-            if (t.exons[iex][EX_R]+t.exons[iex][EX_L] > mEnd[imate]) {//exon right is to the left of the mate end, shorten the exon
-                exons[nExons][EX_L]-=t.exons[iex][EX_R]+t.exons[iex][EX_L]-mEnd[imate];
+            if (t.exons[iex].R+t.exons[iex].L > mEnd[imate]) {//exon right is to the left of the mate end, shorten the exon
+                exons[nExons].L-=t.exons[iex].R+t.exons[iex].L-mEnd[imate];
             };
 
             ++nExons;
@@ -245,10 +245,10 @@ void Transcript::peOverlapSEtoPE(const uint* mateStart, const Transcript &t) {//
 
     rLength=0;
     for (uint iex=0;iex<nExons;iex++) {//caclulate total mapped length
-        rLength += exons[iex][EX_L];
+        rLength += exons[iex].L;
     };
     mappedLength=rLength ;
-    rStart = exons[0][EX_R];
+    rStart = exons[0].R;
     roStart = (roStr == 0) ? rStart : Lread - rStart - rLength;
 
     //extendL; //do not need

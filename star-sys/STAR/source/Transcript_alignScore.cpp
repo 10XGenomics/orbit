@@ -7,9 +7,9 @@ intScore Transcript::alignScore(const char **Read1, const char *G, const Paramet
     nMatch=0;
     const char* R=Read1[roStr==0 ? 0:2];
     for (uint iex=0;iex<nExons;iex++) {
-        for (uint ii=0;ii<exons[iex][EX_L];ii++) {
-            char r1=R[ii+exons[iex][EX_R]];
-            char g1=G[ii+exons[iex][EX_G]];
+        for (uint ii=0;ii<exons[iex].L;ii++) {
+            char r1=R[ii+exons[iex].R];
+            char g1=G[ii+exons[iex].G];
             if (r1>3 || g1>3) {//nothing to do
             } else if (r1==g1) {//match
                 ++maxScore;
@@ -28,10 +28,10 @@ intScore Transcript::alignScore(const char **Read1, const char *G, const Paramet
                 case -3: //mate pair, no scoring
                     break;
                 case -2: //insertion
-                    maxScore += (exons[iex+1][EX_R]-exons[iex][EX_R]-exons[iex][EX_L])*P.scoreInsBase + P.scoreInsOpen;
+                    maxScore += (exons[iex+1].R-exons[iex].R-exons[iex].L)*P.scoreInsBase + P.scoreInsOpen;
                     break;
                 case -1: //deletion
-                    maxScore += (exons[iex+1][EX_G]-exons[iex][EX_G]-exons[iex][EX_L])*P.scoreDelBase + P.scoreDelOpen;
+                    maxScore += (exons[iex+1].G-exons[iex].G-exons[iex].L)*P.scoreDelBase + P.scoreDelOpen;
                     break;
                 case 0: //non-canonical
                     maxScore += P.scoreGapNoncan+P.scoreGap;
@@ -49,7 +49,7 @@ intScore Transcript::alignScore(const char **Read1, const char *G, const Paramet
         };
     };
     if (P.scoreGenomicLengthLog2scale!=0) {//add gap length score
-        maxScore += int(ceil( log2( (double) ( max(1LLU,exons[nExons-1][EX_G]+exons[nExons-1][EX_L] - exons[0][EX_G]) ) ) \
+        maxScore += int(ceil( log2( (double) ( max(1LLU,exons[nExons-1].G+exons[nExons-1].L - exons[0].G) ) ) \
                  * P.scoreGenomicLengthLog2scale - 0.5));
     };
     return maxScore;

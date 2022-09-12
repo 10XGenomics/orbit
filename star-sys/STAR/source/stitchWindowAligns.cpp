@@ -40,7 +40,7 @@ void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, T
 
             if (trA.rStart>0) {// if transcript does not start at base, extend to the read start
                 trAstep1.reset();
-                uint imate=trA.exons[0][EX_iFrag];
+                uint imate=trA.exons[0].iFrag;
                 if ( extendAlign(R, mapGen.G, trA.rStart-1, trA.gStart-1, -1, -1, trA.rStart, tR2-trA.rStart+1, \
                                  trA.nMM, RA->outFilterMismatchNmaxTotal, P.outFilterMismatchNoverLmax, \
                                  P.alignEndsType.ext[imate][(int)(trA.Str!=imate)], &trAstep1) ) {//if could extend
@@ -48,9 +48,9 @@ void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, T
                     trA.add(&trAstep1);
                     Score += trAstep1.maxScore;
 
-                    trA.exons[0][EX_R] = trA.rStart = trA.rStart - trAstep1.extendL;
-                    trA.exons[0][EX_G] = trA.gStart = trA.gStart - trAstep1.extendL;
-                    trA.exons[0][EX_L] += trAstep1.extendL;
+                    trA.exons[0].R = trA.rStart = trA.rStart - trAstep1.extendL;
+                    trA.exons[0].G = trA.gStart = trA.gStart - trAstep1.extendL;
+                    trA.exons[0].L += trAstep1.extendL;
 
                 };
             //TODO penalize the unmapped bases at the start
@@ -61,7 +61,7 @@ void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, T
 
             if ( tR2<Lread ) {//extend alignment to the read end
                 trAstep1.reset();
-                uint imate=trA.exons[trA.nExons-1][EX_iFrag];
+                uint imate=trA.exons[trA.nExons-1].iFrag;
                 if ( extendAlign(R, mapGen.G, tR2+1, tG2+1, +1, +1, Lread-tR2-1, tR2-trA.rStart+1, \
                                  trA.nMM, RA->outFilterMismatchNmaxTotal,  P.outFilterMismatchNoverLmax, \
                                  P.alignEndsType.ext[imate][(int)(imate==trA.Str)], &trAstep1) ) {//if could extend
@@ -72,7 +72,7 @@ void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, T
                     tR2 += trAstep1.extendL;
                     tG2 += trAstep1.extendL;
 
-                    trA.exons[trA.nExons-1][EX_L] += trAstep1.extendL;//extend the length of the last exon
+                    trA.exons[trA.nExons-1].L += trAstep1.extendL;//extend the length of the last exon
 
                 };
             //TODO penalize unmapped bases at the end
@@ -81,15 +81,15 @@ void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, T
         };
 
         if (!P.alignSoftClipAtReferenceEnds.yes &&  \
-                ( (trA.exons[trA.nExons-1][EX_G] + Lread-trA.exons[trA.nExons-1][EX_R]) > (mapGen.chrStart[trA.Chr]+mapGen.chrLength[trA.Chr]) || \
-                   trA.exons[0][EX_G]<(mapGen.chrStart[trA.Chr]+trA.exons[0][EX_R]) ) ) {
+                ( (trA.exons[trA.nExons-1].G + Lread-trA.exons[trA.nExons-1].R) > (mapGen.chrStart[trA.Chr]+mapGen.chrLength[trA.Chr]) || \
+                   trA.exons[0].G<(mapGen.chrStart[trA.Chr]+trA.exons[0].R) ) ) {
             return; //no soft clipping past the ends of the chromosome
         };
 
 
         trA.rLength = 0;
         for (uint isj=0;isj<trA.nExons;isj++) {
-            trA.rLength += trA.exons[isj][EX_L];
+            trA.rLength += trA.exons[isj].L;
         };
         trA.gLength = tG2+1-trA.gStart;
 
@@ -97,15 +97,15 @@ void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, T
         for (uint isj=0;isj<trA.nExons-1;isj++) {//check exons for min length, if they are not annotated and precede a junction
             if ( trA.canonSJ[isj]>=0 ) {//junction
                 if (trA.sjAnnot[isj]==1) {//sjdb
-                    if (  ( trA.exons[isj][EX_L]   < P.alignSJDBoverhangMin && (isj==0            || trA.canonSJ[isj-1]==-3 || (trA.sjAnnot[isj-1]==0 && trA.canonSJ[isj-1]>=0) ) )\
-                       || ( trA.exons[isj+1][EX_L] < P.alignSJDBoverhangMin && (isj==trA.nExons-2 || trA.canonSJ[isj+1]==-3 || (trA.sjAnnot[isj+1]==0 && trA.canonSJ[isj+1]>=0) ) ) )return;
+                    if (  ( trA.exons[isj].L   < P.alignSJDBoverhangMin && (isj==0            || trA.canonSJ[isj-1]==-3 || (trA.sjAnnot[isj-1]==0 && trA.canonSJ[isj-1]>=0) ) )\
+                       || ( trA.exons[isj+1].L < P.alignSJDBoverhangMin && (isj==trA.nExons-2 || trA.canonSJ[isj+1]==-3 || (trA.sjAnnot[isj+1]==0 && trA.canonSJ[isj+1]>=0) ) ) )return;
                 } else {//non-sjdb
-                    if (  trA.exons[isj][EX_L] < P.alignSJoverhangMin + trA.shiftSJ[isj][0] \
-                       || trA.exons[isj+1][EX_L] < P.alignSJoverhangMin + trA.shiftSJ[isj][1]   ) return;
+                    if (  trA.exons[isj].L < P.alignSJoverhangMin + trA.shiftSJ[isj][0] \
+                       || trA.exons[isj+1].L < P.alignSJoverhangMin + trA.shiftSJ[isj][1]   ) return;
                 };
             };
         };
-        if (trA.nExons>1 && trA.sjAnnot[trA.nExons-2]==1 && trA.exons[trA.nExons-1][EX_L] < P.alignSJDBoverhangMin) return; //this exon was not checkedin the cycle above
+        if (trA.nExons>1 && trA.sjAnnot[trA.nExons-2]==1 && trA.exons[trA.nExons-1].L < P.alignSJDBoverhangMin) return; //this exon was not checkedin the cycle above
 
         //filter strand consistency
         uint sjN=0;
@@ -152,9 +152,9 @@ void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, T
         {//check mapped length for each mate
             uint nsj=0,exl=0;
             for (uint iex=0;iex<trA.nExons;iex++) {//
-                exl+=trA.exons[iex][EX_L];
+                exl+=trA.exons[iex].L;
                 if (iex==trA.nExons-1 || trA.canonSJ[iex]==-3) {//mate is completed, make the checks
-                    if (nsj>0 && (exl<P.alignSplicedMateMapLmin || exl < (uint) (P.alignSplicedMateMapLminOverLmate*RA->readLength[trA.exons[iex][EX_iFrag]])) ) {
+                    if (nsj>0 && (exl<P.alignSplicedMateMapLmin || exl < (uint) (P.alignSplicedMateMapLminOverLmate*RA->readLength[trA.exons[iex].iFrag])) ) {
                         return; //do not record this transcript
                     };
                     exl=0;nsj=0;
@@ -167,15 +167,15 @@ void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, T
         if (P.outFilterBySJoutStage==2) {//junctions have to be present in the filtered set P.sjnovel
             for (uint iex=0;iex<trA.nExons-1;iex++) {
                 if (trA.canonSJ[iex]>=0 && trA.sjAnnot[iex]==0) {
-                    uint jS=trA.exons[iex][EX_G]+trA.exons[iex][EX_L];
-                    uint jE=trA.exons[iex+1][EX_G]-1;
+                    uint jS=trA.exons[iex].G+trA.exons[iex].L;
+                    uint jE=trA.exons[iex+1].G-1;
                     if ( binarySearch2(jS,jE,P.sjNovelStart,P.sjNovelEnd,P.sjNovelN) < 0 ) return;
                 };
             };
         };
 
-        if ( trA.exons[0][EX_iFrag]!=trA.exons[trA.nExons-1][EX_iFrag] ) {//check for correct overlap between mates
-            if (trA.exons[trA.nExons-1][EX_G]+trA.exons[trA.nExons-1][EX_L] <= trA.exons[0][EX_G]) return; //to avoid negative insert size
+        if ( trA.exons[0].iFrag!=trA.exons[trA.nExons-1].iFrag ) {//check for correct overlap between mates
+            if (trA.exons[trA.nExons-1].G+trA.exons[trA.nExons-1].L <= trA.exons[0].G) return; //to avoid negative insert size
             uint iexM2=trA.nExons;
             for (uint iex=0;iex<trA.nExons-1;iex++) {//find the first exon of the second mate
                 if (trA.canonSJ[iex]==-3) {//
@@ -184,17 +184,17 @@ void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, T
                 };
             };
 
-            if ( trA.exons[iexM2-1][EX_G] + trA.exons[iexM2-1][EX_L] > trA.exons[iexM2][EX_G] ) {//mates overlap - check consistency of junctions
+            if ( trA.exons[iexM2-1].G + trA.exons[iexM2-1].L > trA.exons[iexM2].G ) {//mates overlap - check consistency of junctions
 
-                if (trA.exons[0][EX_G] > \
-                    trA.exons[iexM2][EX_G]+trA.exons[0][EX_R]+P.alignEndsProtrude.nBasesMax) return; //LeftMateStart > RightMateStart + allowance
-                if (trA.exons[iexM2-1][EX_G]+trA.exons[iexM2-1][EX_L] > \
-                   trA.exons[trA.nExons-1][EX_G]+Lread-trA.exons[trA.nExons-1][EX_R]+P.alignEndsProtrude.nBasesMax) return; //LeftMateEnd   > RightMateEnd +allowance
+                if (trA.exons[0].G > \
+                    trA.exons[iexM2].G+trA.exons[0].R+P.alignEndsProtrude.nBasesMax) return; //LeftMateStart > RightMateStart + allowance
+                if (trA.exons[iexM2-1].G+trA.exons[iexM2-1].L > \
+                   trA.exons[trA.nExons-1].G+Lread-trA.exons[trA.nExons-1].R+P.alignEndsProtrude.nBasesMax) return; //LeftMateEnd   > RightMateEnd +allowance
 
                 //check for junctions consistency
                 uint iex1=1, iex2=iexM2+1; //last exons of the junction
                 for  (; iex1<iexM2; iex1++) {//find first junction that overlaps 2nd mate
-                    if (trA.exons[iex1][EX_G] >= trA.exons[iex2-1][EX_G] + trA.exons[iex2-1][EX_L]) break;
+                    if (trA.exons[iex1].G >= trA.exons[iex2-1].G + trA.exons[iex2-1].L) break;
                 };
                 while (iex1<iexM2 && iex2<trA.nExons) {//cycle through all overlapping exons
                     if (trA.canonSJ[iex1-1]<0) {//skip non-junctions
@@ -206,7 +206,7 @@ void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, T
                         continue;
                     };
 
-                    if ( ( trA.exons[iex1][EX_G]!=trA.exons[iex2][EX_G] ) || ( (trA.exons[iex1-1][EX_G]+trA.exons[iex1-1][EX_L]) != (trA.exons[iex2-1][EX_G]+trA.exons[iex2-1][EX_L]) ) ) {
+                    if ( ( trA.exons[iex1].G!=trA.exons[iex2].G ) || ( (trA.exons[iex1-1].G+trA.exons[iex1-1].L) != (trA.exons[iex2-1].G+trA.exons[iex2-1].L) ) ) {
                         return; //inconsistent junctions on overlapping mates
                     };
                     iex1++;
@@ -217,7 +217,7 @@ void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, T
         };//check for correct overlap between mates
 
         if (P.scoreGenomicLengthLog2scale!=0) {//add gap length score
-            Score += int(ceil( log2( (double) ( trA.exons[trA.nExons-1][EX_G]+trA.exons[trA.nExons-1][EX_L] - trA.exons[0][EX_G]) ) \
+            Score += int(ceil( log2( (double) ( trA.exons[trA.nExons-1].G+trA.exons[trA.nExons-1].L - trA.exons[0].G) ) \
                      * P.scoreGenomicLengthLog2scale - 0.5));
             Score = max(0,Score);
         };
@@ -227,8 +227,8 @@ void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, T
         trA.roStart = (trA.roStr == 0) ? trA.rStart : Lread - trA.rStart - trA.rLength;
         trA.maxScore=Score;
 
-        if (trA.exons[0][EX_iFrag]==trA.exons[trA.nExons-1][EX_iFrag]) {//mark single fragment transcripts
-            trA.iFrag=trA.exons[0][EX_iFrag];
+        if (trA.exons[0].iFrag==trA.exons[trA.nExons-1].iFrag) {//mark single fragment transcripts
+            trA.iFrag=trA.exons[0].iFrag;
             RA->maxScoreMate[trA.iFrag] = max (RA->maxScoreMate[trA.iFrag] , Score);
         } else {
             trA.iFrag=-1;
@@ -250,7 +250,7 @@ void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, T
 //             if (P.alignEndsType.in=="EndToEnd") {//check that the alignment is end-to-end
 //                 uint rTotal=trA.rLength+trA.lIns;
 // //                 for (uint iex=1;iex<trA.nExons;iex++) {//find the inside exons
-// //                     rTotal+=trA.exons[iex][EX_R]-trA.exons[iex-1][EX_R];
+// //                     rTotal+=trA.exons[iex].R-trA.exons[iex-1].R;
 // //                 };
 //                 if ( (trA.iFrag<0 && rTotal<(RA->readLength[0]+RA->readLength[1])) || (trA.iFrag>=0 && rTotal<RA->readLength[trA.iFrag])) return;
 //             };
@@ -259,7 +259,7 @@ void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, T
 
             trA.mappedLength=0;
             for (uint iex=0;iex<trA.nExons;iex++) {//caclulate total mapped length
-                trA.mappedLength += trA.exons[iex][EX_L];
+                trA.mappedLength += trA.exons[iex].L;
             };
 
             while (iTr < *nWinTr) {//scan through all recorded transcripts for this window - check for duplicates
@@ -314,11 +314,11 @@ void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, T
         //TODO check if the new stitching creates too many MM, quit this transcript if so
 
     } else { //this is the first align in the transcript
-            trAi.exons[0][EX_R]=trAi.rStart=WA[iA].rStart; //transcript start/end
-            trAi.exons[0][EX_G]=trAi.gStart=WA[iA].gStart;
-            trAi.exons[0][EX_L]=WA[iA].Length;
-            trAi.exons[0][EX_iFrag]=WA[iA].iFrag;
-            trAi.exons[0][EX_sjA]=WA[iA].sjA;
+            trAi.exons[0].R=trAi.rStart=WA[iA].rStart; //transcript start/end
+            trAi.exons[0].G=trAi.gStart=WA[iA].gStart;
+            trAi.exons[0].L=WA[iA].Length;
+            trAi.exons[0].iFrag=WA[iA].iFrag;
+            trAi.exons[0].sjA=WA[iA].sjA;
 
             trAi.nExons=1; //recorded first exon
 
@@ -335,9 +335,9 @@ void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, T
         WAincl[iA]=true;
 
         if ( WA[iA].Nrep==1 ) trAi.nUnique++; //unique piece
-        if ( WA[iA].Anchor>0 ) trAi.nAnchor++; //anchor piece piece
+        if ( WA[iA].Anchor>0 ) trAi.nAnchor++; //anchor piece
 
-        stitchWindowAligns(iA+1, nA, Score+dScore, WAincl, WA[iA].rStart+WA[iA].Length-1, WA[iA].gStart+WA[iA].Length-1, trAi, Lread, WA, R, mapGen, P, wTr, nWinTr, RA);
+        stitchWindowAligns(iA+1, Score+dScore, WAincl, WA[iA].rStart+WA[iA].Length-1, WA[iA].gStart+WA[iA].Length-1, trAi, Lread, WA, R, mapGen, P, wTr, nWinTr, RA);
     } else {
 
     };
@@ -345,7 +345,7 @@ void stitchWindowAligns(uint iA, int Score, bool WAincl[], uint tR2, uint tG2, T
     //also run a transcript w/o including this align
     if (WA[iA].Anchor!=2 || trA.nAnchor>0) {//only allow exclusion if this is not the last anchor, or other anchors have been used
         WAincl[iA]=false;
-        stitchWindowAligns(iA+1, nA, Score, WAincl, tR2, tG2, trA, Lread, WA, R, mapGen, P, wTr, nWinTr, RA);
+        stitchWindowAligns(iA+1, Score, WAincl, tR2, tG2, trA, Lread, WA, R, mapGen, P, wTr, nWinTr, RA);
     };
     return;
 };

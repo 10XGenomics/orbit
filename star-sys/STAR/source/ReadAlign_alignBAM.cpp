@@ -10,9 +10,9 @@ void ReadAlign::samAttrNM_MD (Transcript const &trOut, uint iEx1, uint iEx2, uin
     char* R=Read1[trOut.roStr==0 ? 0:2];
     uint matchN=0;
     for (uint iex=iEx1;iex<=iEx2;iex++) {
-        for (uint ii=0;ii<trOut.exons[iex][EX_L];ii++) {
-            char r1=R[ii+trOut.exons[iex][EX_R]];
-            char g1=mapGen.G[ii+trOut.exons[iex][EX_G]];
+        for (uint ii=0;ii<trOut.exons[iex].L;ii++) {
+            char r1=R[ii+trOut.exons[iex].R];
+            char g1=mapGen.G[ii+trOut.exons[iex].G];
             if ( r1!=g1 || r1==4 || g1==4) {
                 ++tagNM;
                 tagMD+=to_string(matchN);
@@ -24,14 +24,14 @@ void ReadAlign::samAttrNM_MD (Transcript const &trOut, uint iEx1, uint iEx2, uin
         };
         if (iex<iEx2) {
             if (trOut.canonSJ[iex]==-1) {//deletion
-                tagNM+=trOut.exons[iex+1][EX_G]-(trOut.exons[iex][EX_G]+trOut.exons[iex][EX_L]);
+                tagNM+=trOut.exons[iex+1].G-(trOut.exons[iex].G+trOut.exons[iex].L);
                 tagMD+=to_string(matchN) + "^";
-                for (uint ii=trOut.exons[iex][EX_G]+trOut.exons[iex][EX_L];ii<trOut.exons[iex+1][EX_G];ii++) {
+                for (uint ii=trOut.exons[iex].G+trOut.exons[iex].L;ii<trOut.exons[iex+1].G;ii++) {
                     tagMD+=P.genomeNumToNT[(uint8) mapGen.G[ii]];
                 };
                 matchN=0;
             } else if (trOut.canonSJ[iex]==-2) {//insertion
-                tagNM+=trOut.exons[iex+1][EX_R]-trOut.exons[iex][EX_R]-trOut.exons[iex][EX_L];
+                tagNM+=trOut.exons[iex+1].R-trOut.exons[iex].R-trOut.exons[iex].L;
             };
         };
     };
@@ -211,8 +211,8 @@ int ReadAlign::alignBAM(Transcript const &trOut, uint nTrOut, uint iTrOut, uint 
 
     uint tLen=0,leftMostMate=0;
     if (nMates>1 && P.outSAMtlen==2) {
-        tLen=max(trOut.exons[trOut.nExons-1][EX_G]+trOut.exons[trOut.nExons-1][EX_L],trOut.exons[iExMate][EX_G]+trOut.exons[iExMate][EX_L])-min(trOut.exons[0][EX_G],trOut.exons[iExMate+1][EX_G]);
-        leftMostMate=(trOut.exons[0][EX_G]<=trOut.exons[iExMate+1][EX_G] ? 0 : 1);
+        tLen=max(trOut.exons[trOut.nExons-1].G+trOut.exons[trOut.nExons-1].L,trOut.exons[iExMate].G+trOut.exons[iExMate].L)-min(trOut.exons[0].G,trOut.exons[iExMate+1].G);
+        leftMostMate=(trOut.exons[0].G<=trOut.exons[iExMate+1].G ? 0 : 1);
     };
 
     uint leftMate=0; //the mate (0 or 1) which is on the left
@@ -249,7 +249,7 @@ int ReadAlign::alignBAM(Transcript const &trOut, uint nTrOut, uint iTrOut, uint 
                     };
                     mateChr=trOut.Chr;
                     trChrStart=mapGen.chrStart[mateChr];
-                    mateStart=trOut.exons[0][EX_G] - trChrStart;
+                    mateStart=trOut.exons[0].G - trChrStart;
                     mateStrand= trOut.Str == (1-imate) ? 0 : 1;
 
                     if (!trOut.primaryFlag && P.outSAMunmapped.keepPairs)
@@ -303,7 +303,7 @@ int ReadAlign::alignBAM(Transcript const &trOut, uint nTrOut, uint iTrOut, uint 
 
             iEx1 = (imate==0 ? 0 : iExMate+1);
             iEx2 = (imate==0 ? iExMate : trOut.nExons-1);
-            Mate=trOut.exons[iEx1][EX_iFrag];
+            Mate=trOut.exons[iEx1].iFrag;
             Str= trOut.Str;//note that Strand = the mate on the left
 
             if (Mate==0) {
@@ -333,7 +333,7 @@ int ReadAlign::alignBAM(Transcript const &trOut, uint nTrOut, uint iTrOut, uint 
 
             nCIGAR=0; //number of CIGAR operations
 
-            trimL1 = trimL + trOut.exons[iEx1][EX_R] - (trOut.exons[iEx1][EX_R]<readLength[leftMate] ? 0 : readLength[leftMate]+1);
+            trimL1 = trimL + trOut.exons[iEx1].R - (trOut.exons[iEx1].R<readLength[leftMate] ? 0 : readLength[leftMate]+1);
             if (trimL1>0) {
                 packedCIGAR[nCIGAR++]=trimL1<<BAM_CIGAR_OperationShift | (alignType==-11 ? BAM_CIGAR_H : BAM_CIGAR_S);
             };
@@ -343,8 +343,8 @@ int ReadAlign::alignBAM(Transcript const &trOut, uint nTrOut, uint iTrOut, uint 
 
             for (uint ii=iEx1;ii<=iEx2;ii++) {
                 if (ii>iEx1) {//record gaps
-                    uint gapG=trOut.exons[ii][EX_G]-(trOut.exons[ii-1][EX_G]+trOut.exons[ii-1][EX_L]);
-                    uint gapR=trOut.exons[ii][EX_R]-trOut.exons[ii-1][EX_R]-trOut.exons[ii-1][EX_L];
+                    uint gapG=trOut.exons[ii].G-(trOut.exons[ii-1].G+trOut.exons[ii-1].L);
+                    uint gapR=trOut.exons[ii].R-trOut.exons[ii-1].R-trOut.exons[ii-1].L;
                     //it's possible to have a D or N and I at the same time
                     if (gapR>0){
 
@@ -354,13 +354,13 @@ int ReadAlign::alignBAM(Transcript const &trOut, uint nTrOut, uint iTrOut, uint 
 
                         packedCIGAR[nCIGAR++]=gapG<<BAM_CIGAR_OperationShift | BAM_CIGAR_N;
                         SJmotif.push_back(trOut.canonSJ[ii-1] + (trOut.sjAnnot[ii-1]==0 ? 0 : SJ_SAM_AnnotatedMotifShift)); //record junction type
-                        SJintron.push_back((int32) (trOut.exons[ii-1][EX_G] + trOut.exons[ii-1][EX_L] + 1 - trChrStart) );//record intron start
-                        SJintron.push_back((int32) (trOut.exons[ii][EX_G] - trChrStart)); //record intron end
+                        SJintron.push_back((int32) (trOut.exons[ii-1].G + trOut.exons[ii-1].L + 1 - trChrStart) );//record intron start
+                        SJintron.push_back((int32) (trOut.exons[ii].G - trChrStart)); //record intron end
                     } else if (gapG>0) {//deletion: N
                         packedCIGAR[nCIGAR++]=gapG<<BAM_CIGAR_OperationShift | BAM_CIGAR_D;
                     };
                 };
-                packedCIGAR[nCIGAR++]=trOut.exons[ii][EX_L]<<BAM_CIGAR_OperationShift | BAM_CIGAR_M;
+                packedCIGAR[nCIGAR++]=trOut.exons[ii].L<<BAM_CIGAR_OperationShift | BAM_CIGAR_M;
             };
 
             if (SJmotif.size()==0) {//no junctions recorded, mark with -1
@@ -368,9 +368,9 @@ int ReadAlign::alignBAM(Transcript const &trOut, uint nTrOut, uint iTrOut, uint 
                 SJintron.push_back(-1);
             };
 
-            trimR1=(trOut.exons[iEx1][EX_R]<readLength[leftMate] ? \
+            trimR1=(trOut.exons[iEx1].R<readLength[leftMate] ? \
                 readLengthOriginal[leftMate] : readLength[leftMate]+1+readLengthOriginal[Mate]) \
-                - trOut.exons[iEx2][EX_R]-trOut.exons[iEx2][EX_L] - trimL;
+                - trOut.exons[iEx2].R-trOut.exons[iEx2].L - trimL;
             if ( trimR1 > 0 ) {
                 packedCIGAR[nCIGAR++]=trimR1<<BAM_CIGAR_OperationShift | (alignType==-12 ? BAM_CIGAR_H : BAM_CIGAR_S);
             };
@@ -431,10 +431,10 @@ int ReadAlign::alignBAM(Transcript const &trOut, uint nTrOut, uint iTrOut, uint 
                         {
                             vector <int32> rb;
                             for (uint ii=iEx1;ii<=iEx2;ii++) {
-                                rb.push_back( (int32) trOut.exons[ii][EX_R]+1 );
-                                rb.push_back( (int32) trOut.exons[ii][EX_R]+trOut.exons[ii][EX_L]);
-                                rb.push_back( (int32) (trOut.exons[ii][EX_G]-mapGen.chrStart[trOut.Chr]+1) );
-                                rb.push_back( (int32) (trOut.exons[ii][EX_G]-mapGen.chrStart[trOut.Chr]+trOut.exons[ii][EX_L]) );
+                                rb.push_back( (int32) trOut.exons[ii].R+1 );
+                                rb.push_back( (int32) trOut.exons[ii].R+trOut.exons[ii].L);
+                                rb.push_back( (int32) (trOut.exons[ii].G-mapGen.chrStart[trOut.Chr]+1) );
+                                rb.push_back( (int32) (trOut.exons[ii].G-mapGen.chrStart[trOut.Chr]+trOut.exons[ii].L) );
                             };
                             attrN+=bamAttrArrayWrite(rb,"rB",attrOutArray+attrN);
                         };
@@ -542,14 +542,14 @@ int ReadAlign::alignBAM(Transcript const &trOut, uint nTrOut, uint iTrOut, uint 
 
         //2: pos: 0-based leftmost coordinate (= POS - 1): int32_t
         if (alignType<0) {
-            pBAM[2]=trOut.exons[iEx1][EX_G] - trChrStart;
+            pBAM[2]=trOut.exons[iEx1].G - trChrStart;
         } else {
             pBAM[2]=(uint32) -1;
         };
 
         //3: bin mq nl bin<<16|MAPQ<<8|l read name; bin is computed by the > reg2bin() function in Section 4.3; l read name is the length> of read name below (= length(QNAME) + 1).> uint32 t
         if (alignType<0) {
-            pBAM[3]=( ( reg2bin(trOut.exons[iEx1][EX_G] - trChrStart,trOut.exons[iEx2][EX_G] + trOut.exons[iEx2][EX_L] - trChrStart) << 16 ) \
+            pBAM[3]=( ( reg2bin(trOut.exons[iEx1].G - trChrStart,trOut.exons[iEx2].G + trOut.exons[iEx2].L - trChrStart) << 16 ) \
                    |( MAPQ<<8 ) | ( strlen(readName) ) ); //note:read length includes 0-char
         } else {
             pBAM[3]=( reg2bin(-1,0) << 16 |  strlen(readName) );//4680=reg2bin(-1,0)
@@ -572,7 +572,7 @@ int ReadAlign::alignBAM(Transcript const &trOut, uint nTrOut, uint iTrOut, uint 
 
         //7: next pos 0-based leftmost pos of the next segment (= PNEXT 􀀀 1)
         if (nMates>1) {
-            pBAM[7]=trOut.exons[(imate==0 ? iExMate+1 : 0)][EX_G] - trChrStart;
+            pBAM[7]=trOut.exons[(imate==0 ? iExMate+1 : 0)].G - trChrStart;
         } else if (mateChr<mapGen.nChrReal){
             pBAM[7]=mateStart;
         } else {
@@ -582,7 +582,7 @@ int ReadAlign::alignBAM(Transcript const &trOut, uint nTrOut, uint iTrOut, uint 
         //8: tlen Template length (= TLEN)
         if (nMates>1) {
             if (P.outSAMtlen==1) {
-                int32 tlen=trOut.exons[trOut.nExons-1][EX_G]+trOut.exons[trOut.nExons-1][EX_L]-trOut.exons[0][EX_G];
+                int32 tlen=trOut.exons[trOut.nExons-1].G+trOut.exons[trOut.nExons-1].L-trOut.exons[0].G;
                 pBAM[8]=(imate==0 ? tlen : -tlen);
             } else if (P.outSAMtlen==2) {
                 int32 tlen=(int32)tLen;

@@ -96,8 +96,8 @@ const char* ReadAlign::outputAlignments() {
             for (uint iTr=0;iTr<nTrOut;iTr++) {//write all transcripts
                 //mateMapped1 = true if a mate is present in this transcript
                 bool mateMapped1[2]={false,false};
-                mateMapped1[trMult[iTr]->exons[0][EX_iFrag]]=true;
-                mateMapped1[trMult[iTr]->exons[trMult[iTr]->nExons-1][EX_iFrag]]=true;
+                mateMapped1[trMult[iTr]->exons[0].iFrag]=true;
+                mateMapped1[trMult[iTr]->exons[trMult[iTr]->nExons-1].iFrag]=true;
 
                 if (P.outSAMbool && outSAMfilterYes) {//SAM output
                     //printf("samout\n");
@@ -109,8 +109,8 @@ const char* ReadAlign::outputAlignments() {
                 };
             };
 
-            mateMapped[trBest->exons[0][EX_iFrag]]=true;
-            mateMapped[trBest->exons[trBest->nExons-1][EX_iFrag]]=true;
+            mateMapped[trBest->exons[0].iFrag]=true;
+            mateMapped[trBest->exons[trBest->nExons-1].iFrag]=true;
 
             if (readNmates>1 && !(mateMapped[0] && mateMapped[1]) ) {
                 unmapType=4;

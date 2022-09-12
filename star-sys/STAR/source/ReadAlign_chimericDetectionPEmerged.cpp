@@ -33,15 +33,15 @@ void ReadAlign::chimericDetectionPEmerged(ReadAlign &seRA) {
             segLen[ii][0]=0;
             segLen[ii][1]=0;
             for (uint iex=0; iex<trChim[ii].nExons; iex++) {
-                if (trChim[ii].exons[iex][EX_iFrag]==trChim[ii].exons[0][EX_iFrag]) {
-                    segLen[ii][0]+=trChim[ii].exons[iex][EX_L];
+                if (trChim[ii].exons[iex].iFrag==trChim[ii].exons[0].iFrag) {
+                    segLen[ii][0]+=trChim[ii].exons[iex].L;
                     segEx[ii]=iex;
                 } else {
-                    segLen[ii][1]+=trChim[ii].exons[iex][EX_L];
+                    segLen[ii][1]+=trChim[ii].exons[iex].L;
                 };
             };
             for (uint jj=0; jj<2; jj++) {
-                if (segLen[ii][jj]<segLmin || (segLen[ii][jj]==segLmin && trChim[ii].exons[0][EX_G]>trChim[ii-1].exons[0][EX_G])) {
+                if (segLen[ii][jj]<segLmin || (segLen[ii][jj]==segLmin && trChim[ii].exons[0].G>trChim[ii-1].exons[0].G)) {
                     segLmin=segLen[ii][jj];
                     i1=ii;//trChim of the shortest segment length
                     i2=jj;//mate of the shortest segment length
@@ -54,9 +54,7 @@ void ReadAlign::chimericDetectionPEmerged(ReadAlign &seRA) {
         } else {//eliminate mate 0: shift mate1 exon to the beginning
             for (uint iex=0; iex<trChim[i1].nExons; iex++) {
                 uint iex1=iex+segEx[i1]+1;
-                for (uint ii=0; ii<EX_SIZE; ii++) {
-                    trChim[i1].exons[iex][ii]=trChim[i1].exons[iex1][ii];
-                };
+                trChim[i1].exons[iex]=trChim[i1].exons[iex1];
                 trChim[i1].canonSJ[iex]=trChim[i1].canonSJ[iex1];
                 trChim[i1].sjAnnot[iex]=trChim[i1].sjAnnot[iex1];
                 trChim[i1].sjStr[iex]=trChim[i1].sjStr[iex1];

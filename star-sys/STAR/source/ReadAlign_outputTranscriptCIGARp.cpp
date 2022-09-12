@@ -10,20 +10,20 @@ string ReadAlign::outputTranscriptCIGARp(Transcript const &trOut) {//generates C
     uint leftMate=0;
     if (P.readFilesIn.size()>1) leftMate=trOut.Str;
 
-    uint trimL=trOut.exons[0][EX_R] - (trOut.exons[0][EX_R]<readLengthOriginal[leftMate] ? 0 : readLengthOriginal[leftMate]+1);
+    uint trimL=trOut.exons[0].R - (trOut.exons[0].R<readLengthOriginal[leftMate] ? 0 : readLengthOriginal[leftMate]+1);
     if (trimL>0) {
         samStreamCIGAR << trimL << "S"; //initial trimming
     };
 
     for (uint ii=0;ii<trOut.nExons;ii++) {//cycle over all exons, record CIGAR
         if (ii>0) {//record gaps
-            uint gapG=trOut.exons[ii][EX_G]-(trOut.exons[ii-1][EX_G]+trOut.exons[ii-1][EX_L]);
+            uint gapG=trOut.exons[ii].G-(trOut.exons[ii-1].G+trOut.exons[ii-1].L);
 
-            if (trOut.exons[ii][EX_G] >= (trOut.exons[ii-1][EX_G]+trOut.exons[ii-1][EX_L]) ) {//
+            if (trOut.exons[ii].G >= (trOut.exons[ii-1].G+trOut.exons[ii-1].L) ) {//
                 if (trOut.canonSJ[ii-1]==-3) {//gap between mates
                     //soft clipping of the second mate
-                    uint s1=readLengthOriginal[leftMate]-(trOut.exons[ii-1][EX_R]+trOut.exons[ii-1][EX_L]);
-                    uint s2=trOut.exons[ii][EX_R]-(readLengthOriginal[leftMate]+1);
+                    uint s1=readLengthOriginal[leftMate]-(trOut.exons[ii-1].R+trOut.exons[ii-1].L);
+                    uint s2=trOut.exons[ii].R-(readLengthOriginal[leftMate]+1);
                     if (s1>0){
                         samStreamCIGAR << s1 << "S";
                     };
@@ -34,7 +34,7 @@ string ReadAlign::outputTranscriptCIGARp(Transcript const &trOut) {//generates C
 
                 } else {
                     //it's possible to have a D or N and I for at the same time
-                    uint gapR=trOut.exons[ii][EX_R]-trOut.exons[ii-1][EX_R]-trOut.exons[ii-1][EX_L]; //gapR>0 always
+                    uint gapR=trOut.exons[ii].R-trOut.exons[ii-1].R-trOut.exons[ii-1].L; //gapR>0 always
                     if (gapR>0){
                         samStreamCIGAR << gapR << "I";
                     };
@@ -45,14 +45,14 @@ string ReadAlign::outputTranscriptCIGARp(Transcript const &trOut) {//generates C
                     };
                 };
             } else {//mates overlap
-                samStreamCIGAR << "-" << (trOut.exons[ii-1][EX_G]+trOut.exons[ii-1][EX_L]) - trOut.exons[ii][EX_G] << "p";
+                samStreamCIGAR << "-" << (trOut.exons[ii-1].G+trOut.exons[ii-1].L) - trOut.exons[ii].G << "p";
             };
         };
-        samStreamCIGAR << trOut.exons[ii][EX_L] << "M";
+        samStreamCIGAR << trOut.exons[ii].L << "M";
     };
 
 
-    trimL=(trOut.exons[trOut.nExons-1][EX_R]<readLengthOriginal[leftMate] ? readLengthOriginal[leftMate] : readLengthPairOriginal) - trOut.exons[trOut.nExons-1][EX_R]-trOut.exons[trOut.nExons-1][EX_L];
+    trimL=(trOut.exons[trOut.nExons-1].R<readLengthOriginal[leftMate] ? readLengthOriginal[leftMate] : readLengthPairOriginal) - trOut.exons[trOut.nExons-1].R-trOut.exons[trOut.nExons-1].L;
     if ( trimL > 0 ) {
         samStreamCIGAR << trimL << "S"; //final trimming
     };

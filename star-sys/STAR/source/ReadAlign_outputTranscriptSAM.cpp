@@ -40,7 +40,7 @@ uint ReadAlign::outputTranscriptSAM(Transcript const &trOut, uint nTrOut, uint i
                 *outStream << readName+1 <<"\t"<< samFLAG \
                         <<"\t"<< '*' <<"\t"<< '0' <<"\t"<< '0' <<"\t"<< '*';
                 if (mateMapped[1-imate]) {//mate is mapped
-                    *outStream <<"\t"<< mapGen.chrName[trOut.Chr] <<"\t"<< trOut.exons[0][EX_G] + 1 - mapGen.chrStart[trOut.Chr];
+                    *outStream <<"\t"<< mapGen.chrName[trOut.Chr] <<"\t"<< trOut.exons[0].G + 1 - mapGen.chrStart[trOut.Chr];
                 } else {
                     *outStream <<"\t"<< '*' <<"\t"<< '0';
                 };
@@ -81,8 +81,8 @@ uint ReadAlign::outputTranscriptSAM(Transcript const &trOut, uint nTrOut, uint i
         } else
         {//paired align
             if (P.alignEndsProtrude.concordantPair || \
-                ( (trOut.exons[0][EX_G] <= trOut.exons[iExMate+1][EX_G]+trOut.exons[0][EX_R]) && \
-                   (trOut.exons[iExMate][EX_G]+trOut.exons[iExMate][EX_L] <= trOut.exons[trOut.nExons-1][EX_G]+Lread-trOut.exons[trOut.nExons-1][EX_R]) )  )
+                ( (trOut.exons[0].G <= trOut.exons[iExMate+1].G+trOut.exons[0].R) && \
+                   (trOut.exons[iExMate].G+trOut.exons[iExMate].L <= trOut.exons[trOut.nExons-1].G+Lread-trOut.exons[trOut.nExons-1].R) )  )
             {//properly paired
                 samFlagCommon+=0x0002;
             };
@@ -111,7 +111,7 @@ uint ReadAlign::outputTranscriptSAM(Transcript const &trOut, uint nTrOut, uint i
 
         uint iEx1 = (imate==0 ? 0 : iExMate+1);
         uint iEx2 = (imate==0 ? iExMate : trOut.nExons-1);
-        uint Mate=trOut.exons[iEx1][EX_iFrag];
+        uint Mate=trOut.exons[iEx1].iFrag;
 
         if (Mate==0) {
             samFLAG|= Str*0x10;
@@ -146,15 +146,15 @@ uint ReadAlign::outputTranscriptSAM(Transcript const &trOut, uint nTrOut, uint i
             trimL=clip5pNtotal[Mate];
         };
 
-        uint trimL1 = trimL + trOut.exons[iEx1][EX_R] - (trOut.exons[iEx1][EX_R]<readLength[leftMate] ? 0 : readLength[leftMate]+1);
+        uint trimL1 = trimL + trOut.exons[iEx1].R - (trOut.exons[iEx1].R<readLength[leftMate] ? 0 : readLength[leftMate]+1);
         if (trimL1>0) {
             samStreamCIGAR << trimL1 << "S"; //initial trimming
         };
 
         for (uint ii=iEx1;ii<=iEx2;ii++) {
             if (ii>iEx1) {//record gaps
-                uint gapG=trOut.exons[ii][EX_G]-(trOut.exons[ii-1][EX_G]+trOut.exons[ii-1][EX_L]);
-                uint gapR=trOut.exons[ii][EX_R]-trOut.exons[ii-1][EX_R]-trOut.exons[ii-1][EX_L];
+                uint gapG=trOut.exons[ii].G-(trOut.exons[ii-1].G+trOut.exons[ii-1].L);
+                uint gapR=trOut.exons[ii].R-trOut.exons[ii-1].R-trOut.exons[ii-1].L;
                 //it's possible to have a D or N and I at the same time
                 if (gapR>0){
                     samStreamCIGAR << gapR;
@@ -165,14 +165,14 @@ uint ReadAlign::outputTranscriptSAM(Transcript const &trOut, uint nTrOut, uint i
                     samStreamCIGAR << "N";
                     samStreamSJmotif <<','<< trOut.canonSJ[ii-1] + (trOut.sjAnnot[ii-1]==0 ? 0 : SJ_SAM_AnnotatedMotifShift); //record junction type
 //                     samStreamSJannot <<','<< (int) trOut.sjAnnot[ii-1]; //record annotation type
-                    samStreamSJintron <<','<< trOut.exons[ii-1][EX_G] + trOut.exons[ii-1][EX_L] + 1 - mapGen.chrStart[trOut.Chr] <<','\
-                                   << trOut.exons[ii][EX_G] - mapGen.chrStart[trOut.Chr]; //record intron loci
+                    samStreamSJintron <<','<< trOut.exons[ii-1].G + trOut.exons[ii-1].L + 1 - mapGen.chrStart[trOut.Chr] <<','\
+                                   << trOut.exons[ii].G - mapGen.chrStart[trOut.Chr]; //record intron loci
                 } else if (gapG>0) {//deletion: N
                     samStreamCIGAR << gapG;
                     samStreamCIGAR << "D";
                 };
             };
-            samStreamCIGAR << trOut.exons[ii][EX_L] << "M";
+            samStreamCIGAR << trOut.exons[ii].L << "M";
         };
 
         string SJmotif = samStreamSJmotif.str();
@@ -185,10 +185,10 @@ uint ReadAlign::outputTranscriptSAM(Transcript const &trOut, uint nTrOut, uint i
 //             SJannot=",-1";
         };
 
-        //printf("weird trimming time  %llu %llu %llu %llu %llu %llu\n", trOut.exons[iEx1][EX_R], readLength[leftMate], readLengthOriginal[Mate], trOut.exons[iEx2][EX_R], trOut.exons[iEx2][EX_L], trimL);
-        uint trimR1=(trOut.exons[iEx1][EX_R]<readLength[leftMate] ? \
+        //printf("weird trimming time  %llu %llu %llu %llu %llu %llu\n", trOut.exons[iEx1].R, readLength[leftMate], readLengthOriginal[Mate], trOut.exons[iEx2].R, trOut.exons[iEx2].L, trimL);
+        uint trimR1=(trOut.exons[iEx1].R<readLength[leftMate] ? \
             readLengthOriginal[leftMate] : readLength[leftMate]+1+readLengthOriginal[Mate]) \
-            - trOut.exons[iEx2][EX_R]-trOut.exons[iEx2][EX_L] - trimL;
+            - trOut.exons[iEx2].R-trOut.exons[iEx2].L - trimL;
         if ( trimR1 > 0 ) {
             samStreamCIGAR << trimR1 << "S"; //final trimming
         };
@@ -221,12 +221,12 @@ uint ReadAlign::outputTranscriptSAM(Transcript const &trOut, uint nTrOut, uint i
             MAPQ=3;
         };
 
-        *outStream << readName+1 <<"\t"<< ((samFLAG & P.outSAMflagAND) | P.outSAMflagOR) <<"\t"<< mapGen.chrName[trOut.Chr] <<"\t"<< trOut.exons[iEx1][EX_G] + 1 - mapGen.chrStart[trOut.Chr]
+        *outStream << readName+1 <<"\t"<< ((samFLAG & P.outSAMflagAND) | P.outSAMflagOR) <<"\t"<< mapGen.chrName[trOut.Chr] <<"\t"<< trOut.exons[iEx1].G + 1 - mapGen.chrStart[trOut.Chr]
                 <<"\t"<< MAPQ <<"\t"<< CIGAR;
 
         if (nMates>1) {
-            *outStream <<"\t"<< "=" <<"\t"<< trOut.exons[(imate==0 ? iExMate+1 : 0)][EX_G]+  1 - mapGen.chrStart[trOut.Chr]
-                     <<"\t"<< (imate==0? "":"-") << trOut.exons[trOut.nExons-1][EX_G]+trOut.exons[trOut.nExons-1][EX_L]-trOut.exons[0][EX_G];
+            *outStream <<"\t"<< "=" <<"\t"<< trOut.exons[(imate==0 ? iExMate+1 : 0)].G+  1 - mapGen.chrStart[trOut.Chr]
+                     <<"\t"<< (imate==0? "":"-") << trOut.exons[trOut.nExons-1].G+trOut.exons[trOut.nExons-1].L-trOut.exons[0].G;
         } else if (mateChr<mapGen.nChrReal){//mateChr is given in the function parameters
             *outStream <<"\t"<< mapGen.chrName[mateChr] <<"\t"<< mateStart+1-mapGen.chrStart[mateChr] <<"\t"<< 0;
         } else {
@@ -250,9 +250,9 @@ uint ReadAlign::outputTranscriptSAM(Transcript const &trOut, uint nTrOut, uint i
             char* R=Read1[trOut.roStr==0 ? 0:2];
             uint matchN=0;
             for (uint iex=iEx1;iex<=iEx2;iex++) {
-                for (uint ii=0;ii<trOut.exons[iex][EX_L];ii++) {
-                    char r1 = R[ii+trOut.exons[iex][EX_R]];
-                    char g1 = mapGen.G[ii+trOut.exons[iex][EX_G]];
+                for (uint ii=0;ii<trOut.exons[iex].L;ii++) {
+                    char r1 = R[ii+trOut.exons[iex].R];
+                    char g1 = mapGen.G[ii+trOut.exons[iex].G];
                     if ( r1!=g1 || r1==4 || g1==4) {
                         ++tagNM;
 //                         if (matchN>0 || (ii==0 && iex>0 && trOut.canonSJ[iex]==-1) ) {
@@ -266,14 +266,14 @@ uint ReadAlign::outputTranscriptSAM(Transcript const &trOut, uint nTrOut, uint i
                 };
                 if (iex<iEx2) {
                     if (trOut.canonSJ[iex]==-1) {//deletion
-                        tagNM+=trOut.exons[iex+1][EX_G]-(trOut.exons[iex][EX_G]+trOut.exons[iex][EX_L]);
+                        tagNM+=trOut.exons[iex+1].G-(trOut.exons[iex].G+trOut.exons[iex].L);
                         tagMD+=to_string(matchN) + "^";
-                        for (uint ii=trOut.exons[iex][EX_G]+trOut.exons[iex][EX_L];ii<trOut.exons[iex+1][EX_G];ii++) {
+                        for (uint ii=trOut.exons[iex].G+trOut.exons[iex].L;ii<trOut.exons[iex+1].G;ii++) {
                             tagMD+=P.genomeNumToNT[(uint8) mapGen.G[ii]];
                         };
                         matchN=0;
                     } else if (trOut.canonSJ[iex]==-2) {//insertion
-                        tagNM+=trOut.exons[iex+1][EX_R]-trOut.exons[iex][EX_R]-trOut.exons[iex][EX_L];
+                        tagNM+=trOut.exons[iex+1].R-trOut.exons[iex].R-trOut.exons[iex].L;
                     };
                 };
             };

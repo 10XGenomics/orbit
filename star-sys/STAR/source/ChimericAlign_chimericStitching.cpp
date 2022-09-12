@@ -19,25 +19,25 @@ void ChimericAlign::chimericStitching(char *genSeq, char **Read1) {
 
     chimRepeat1=0; chimRepeat2=0; chimJ1=0; chimJ2=0; chimMotif=0;
 
-    if ( a1.exons[ex1][EX_iFrag] < a2.exons[ex2][EX_iFrag] ) {//mates bracket the chimeric junction
+    if ( a1.exons[ex1].iFrag < a2.exons[ex2].iFrag ) {//mates bracket the chimeric junction
         chimMotif=-1;
         if (a1.Str==1) {//negative strand
-            chimJ1=a1.exons[ex1][EX_G]-1;
+            chimJ1=a1.exons[ex1].G-1;
         } else {
-            chimJ1=a1.exons[ex1][EX_G]+a1.exons[ex1][EX_L];
+            chimJ1=a1.exons[ex1].G+a1.exons[ex1].L;
         };
         if (a2.Str==0) {//positive strand
-            chimJ2=a2.exons[ex2][EX_G]-1;
+            chimJ2=a2.exons[ex2].G-1;
         } else {
-            chimJ2=a2.exons[ex2][EX_G]+a2.exons[ex2][EX_L];
+            chimJ2=a2.exons[ex2].G+a2.exons[ex2].L;
         };
     } else {//chimeric junctions is within one of the mates, check and shift chimeric junction if necessary
-        uint roStart0 = a1.Str==0 ? a1.exons[ex1][EX_R] : a1.Lread - a1.exons[ex1][EX_R] - a1.exons[ex1][EX_L];
-        uint roStart1 = a2.Str==0 ? a2.exons[ex2][EX_R] : a1.Lread - a2.exons[ex2][EX_R] - a2.exons[ex2][EX_L];
+        uint roStart0 = a1.Str==0 ? a1.exons[ex1].R : a1.Lread - a1.exons[ex1].R - a1.exons[ex1].L;
+        uint roStart1 = a2.Str==0 ? a2.exons[ex2].R : a1.Lread - a2.exons[ex2].R - a2.exons[ex2].L;
 
         uint jR, jRbest=0;
         int jScore=0,jMotif=0,jScoreBest=-999999,jScoreJ=0;
-        uint jRmax = roStart1+a2.exons[ex2][EX_L];
+        uint jRmax = roStart1+a2.exons[ex2].L;
         jRmax = jRmax>roStart0 ? jRmax-roStart0-1 : 0;
         for (jR=0; jR<jRmax; jR++) {//scan through the exons to find a canonical junction, and check for mismatches
 
@@ -47,16 +47,16 @@ void ChimericAlign::chimericStitching(char *genSeq, char **Read1) {
 
             char b0,b1;
             if (a1.Str==0) {
-                b0=genSeq[a1.exons[ex1][EX_G]+jR];
+                b0=genSeq[a1.exons[ex1].G+jR];
             } else {
-                b0=genSeq[a1.exons[ex1][EX_G]+a1.exons[ex1][EX_L]-1-jR];
+                b0=genSeq[a1.exons[ex1].G+a1.exons[ex1].L-1-jR];
                 if (b0<4) b0=3-b0;
             };
 
             if (a2.Str==0) {
-                b1=genSeq[a2.exons[ex2][EX_G]-roStart1+roStart0+jR];
+                b1=genSeq[a2.exons[ex2].G-roStart1+roStart0+jR];
             } else {
-                b1=genSeq[a2.exons[ex2][EX_G]+a2.exons[ex2][EX_L]-1+roStart1-roStart0-jR];
+                b1=genSeq[a2.exons[ex2].G+a2.exons[ex2].L-1+roStart1-roStart0-jR];
                 if (b1<4) b1=3-b1;
             };
 
@@ -67,21 +67,21 @@ void ChimericAlign::chimericStitching(char *genSeq, char **Read1) {
 
             char b01,b02,b11,b12;
             if (a1.Str==0) {
-                b01=genSeq[a1.exons[ex1][EX_G]+jR+1];
-                b02=genSeq[a1.exons[ex1][EX_G]+jR+2];
+                b01=genSeq[a1.exons[ex1].G+jR+1];
+                b02=genSeq[a1.exons[ex1].G+jR+2];
             } else {
-                b01=genSeq[a1.exons[ex1][EX_G]+a1.exons[ex1][EX_L]-1-jR-1];
+                b01=genSeq[a1.exons[ex1].G+a1.exons[ex1].L-1-jR-1];
                 if (b01<4) b01=3-b01;
-                b02=genSeq[a1.exons[ex1][EX_G]+a1.exons[ex1][EX_L]-1-jR-2];
+                b02=genSeq[a1.exons[ex1].G+a1.exons[ex1].L-1-jR-2];
                 if (b02<4) b02=3-b02;
             };
             if (a2.Str==0) {
-                b11=genSeq[a2.exons[ex2][EX_G]-roStart1+roStart0+jR-1];
-                b12=genSeq[a2.exons[ex2][EX_G]-roStart1+roStart0+jR];
+                b11=genSeq[a2.exons[ex2].G-roStart1+roStart0+jR-1];
+                b12=genSeq[a2.exons[ex2].G-roStart1+roStart0+jR];
             } else {
-                b11=genSeq[a2.exons[ex2][EX_G]+a2.exons[ex2][EX_L]-1+roStart1-roStart0-jR+1];
+                b11=genSeq[a2.exons[ex2].G+a2.exons[ex2].L-1+roStart1-roStart0-jR+1];
                 if (b11<4) b11=3-b11;
-                b12=genSeq[a2.exons[ex2][EX_G]+a2.exons[ex2][EX_L]-1+roStart1-roStart0-jR];
+                b12=genSeq[a2.exons[ex2].G+a2.exons[ex2].L-1+roStart1-roStart0-jR];
                 if (b12<4) b12=3-b12;
             };
 
@@ -114,23 +114,23 @@ void ChimericAlign::chimericStitching(char *genSeq, char **Read1) {
 
         //shift junction in trChim
         if (a1.Str==1) {
-            a1.exons[ex1][EX_R] +=a1.exons[ex1][EX_L]-jRbest-1;
-            a1.exons[ex1][EX_G] +=a1.exons[ex1][EX_L]-jRbest-1;
-            a1.exons[ex1][EX_L]=jRbest+1;
-            chimJ1=a1.exons[ex1][EX_G]-1;
+            a1.exons[ex1].R +=a1.exons[ex1].L-jRbest-1;
+            a1.exons[ex1].G +=a1.exons[ex1].L-jRbest-1;
+            a1.exons[ex1].L=jRbest+1;
+            chimJ1=a1.exons[ex1].G-1;
         } else {
-            a1.exons[ex1][EX_L]=jRbest+1;
-            chimJ1=a1.exons[ex1][EX_G]+a1.exons[ex1][EX_L];
+            a1.exons[ex1].L=jRbest+1;
+            chimJ1=a1.exons[ex1].G+a1.exons[ex1].L;
         };
 
         if (a2.Str==0) {
-            a2.exons[ex2][EX_R] +=roStart0+jRbest+1-roStart1;
-            a2.exons[ex2][EX_G] +=roStart0+jRbest+1-roStart1;
-            a2.exons[ex2][EX_L]=roStart1+a2.exons[ex2][EX_L]-roStart0-jRbest-1;
-            chimJ2=a2.exons[ex2][EX_G]-1;
+            a2.exons[ex2].R +=roStart0+jRbest+1-roStart1;
+            a2.exons[ex2].G +=roStart0+jRbest+1-roStart1;
+            a2.exons[ex2].L=roStart1+a2.exons[ex2].L-roStart0-jRbest-1;
+            chimJ2=a2.exons[ex2].G-1;
         } else {
-            a2.exons[ex2][EX_L]=roStart1+a2.exons[ex2][EX_L]-roStart0-jRbest-1;
-            chimJ2=a2.exons[ex2][EX_G]+a2.exons[ex2][EX_L];
+            a2.exons[ex2].L=roStart1+a2.exons[ex2].L-roStart0-jRbest-1;
+            chimJ2=a2.exons[ex2].G+a2.exons[ex2].L;
         };
         //find repeats
         char b0,b1;
@@ -170,7 +170,7 @@ void ChimericAlign::chimericStitching(char *genSeq, char **Read1) {
         chimRepeat1=jR;
     };//chimeric junction is within a mate
 
-    if (chimMotif>=0 && (a1.exons[ex1][EX_L]<P.pCh.junctionOverhangMin || a2.exons[ex2][EX_L]<P.pCh.junctionOverhangMin) ) {
+    if (chimMotif>=0 && (a1.exons[ex1].L<P.pCh.junctionOverhangMin || a2.exons[ex2].L<P.pCh.junctionOverhangMin) ) {
         //filter out cases where linear junctions that are very close to chimeric junction
         chimScore=0;
         return;

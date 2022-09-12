@@ -12,13 +12,13 @@ void ReadAlign::outputTranscriptSJ(Transcript const &trOut, uint nTrOut, OutSJ *
     for (uint iex=0;iex<trOut.nExons-1;iex++) {//record all junctions
         if (trOut.canonSJ[iex]>=0) {//only record junctions, not indels or mate gap
             chunkOutSJ->oneSJ.junctionPointer(chunkOutSJ->data, chunkOutSJ->N);//get pointer to an empty junction in the data array
-            *chunkOutSJ->oneSJ.start=trOut.exons[iex][EX_G]+trOut.exons[iex][EX_L]; //start of the intron
-            *chunkOutSJ->oneSJ.gap=trOut.exons[iex+1][EX_G]-*chunkOutSJ->oneSJ.start;
+            *chunkOutSJ->oneSJ.start=trOut.exons[iex].G+trOut.exons[iex].L; //start of the intron
+            *chunkOutSJ->oneSJ.gap=trOut.exons[iex+1].G-*chunkOutSJ->oneSJ.start;
             //overhangs: basic method
-            //*chunkOutSJ->oneSJ.overhangLeft  = (uint32) trOut.exons[iex][EX_L];//TODO calculate the lengh of overhangs taking into account indels
-            //*chunkOutSJ->oneSJ.overhangRight = (uint32) trOut.exons[iex+1][EX_L];
+            //*chunkOutSJ->oneSJ.overhangLeft  = (uint32) trOut.exons[iex].L;//TODO calculate the lengh of overhangs taking into account indels
+            //*chunkOutSJ->oneSJ.overhangRight = (uint32) trOut.exons[iex+1].L;
             //overhangs: min method
-            *chunkOutSJ->oneSJ.overhangLeft = min ( (uint32) trOut.exons[iex][EX_L],(uint32) trOut.exons[iex+1][EX_L] );
+            *chunkOutSJ->oneSJ.overhangLeft = min ( (uint32) trOut.exons[iex].L,(uint32) trOut.exons[iex+1].L );
             *chunkOutSJ->oneSJ.overhangRight = *chunkOutSJ->oneSJ.overhangLeft;
 
             //check if this junction has been recorded from this read - this happens when the mates overlap and cross the same junctions

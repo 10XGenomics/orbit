@@ -6,7 +6,7 @@ void ReadAlign::calcCIGAR(Transcript const &trOut, uint nMates, uint iExMate, ui
 
         uint iEx1 = (imate==0 ? 0 : iExMate+1);
         uint iEx2 = (imate==0 ? iExMate : trOut.nExons-1);
-        uint Mate=trOut.exons[iEx1][EX_iFrag];
+        uint Mate=trOut.exons[iEx1].iFrag;
         uint Str= trOut.Str;
 
         samStreamCIGAR.str(std::string());
@@ -22,15 +22,15 @@ void ReadAlign::calcCIGAR(Transcript const &trOut, uint nMates, uint iExMate, ui
             trimL=clip5pNtotal[Mate];
         };
 
-        uint trimL1 = trimL + trOut.exons[iEx1][EX_R] - (trOut.exons[iEx1][EX_R]<readLength[leftMate] ? 0 : readLength[leftMate]+1);
+        uint trimL1 = trimL + trOut.exons[iEx1].R - (trOut.exons[iEx1].R<readLength[leftMate] ? 0 : readLength[leftMate]+1);
         if (trimL1>0) {
             samStreamCIGAR << trimL1 << "S"; //initial trimming
         };
 
         for (uint ii=iEx1;ii<=iEx2;ii++) {
             if (ii>iEx1) {//record gaps
-                uint gapG=trOut.exons[ii][EX_G]-(trOut.exons[ii-1][EX_G]+trOut.exons[ii-1][EX_L]);
-                uint gapR=trOut.exons[ii][EX_R]-trOut.exons[ii-1][EX_R]-trOut.exons[ii-1][EX_L];
+                uint gapG=trOut.exons[ii].G-(trOut.exons[ii-1].G+trOut.exons[ii-1].L);
+                uint gapR=trOut.exons[ii].R-trOut.exons[ii-1].R-trOut.exons[ii-1].L;
                 //it's possible to have a D or N and I at the same time
                 if (gapR>0){
                     samStreamCIGAR << gapR;
@@ -44,12 +44,12 @@ void ReadAlign::calcCIGAR(Transcript const &trOut, uint nMates, uint iExMate, ui
                     samStreamCIGAR << "D";
                 };
             };
-            samStreamCIGAR << trOut.exons[ii][EX_L] << "M";
+            samStreamCIGAR << trOut.exons[ii].L << "M";
         };
 
-        uint trimR1=(trOut.exons[iEx1][EX_R]<readLength[leftMate] ? \
+        uint trimR1=(trOut.exons[iEx1].R<readLength[leftMate] ? \
             readLengthOriginal[leftMate] : readLength[leftMate]+1+readLengthOriginal[Mate]) \
-            - trOut.exons[iEx2][EX_R]-trOut.exons[iEx2][EX_L] - trimL;
+            - trOut.exons[iEx2].R-trOut.exons[iEx2].L - trimL;
         if ( trimR1 > 0 ) {
             samStreamCIGAR << trimR1 << "S"; //final trimming
         };

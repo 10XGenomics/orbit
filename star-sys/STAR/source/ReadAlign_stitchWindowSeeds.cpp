@@ -23,11 +23,11 @@ void ReadAlign::stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R) {
             if (iS2<iS1) {
                 trA1.nExons=1;
                 trA1.nMM=scoreSeedBestMM[iS2];
-                trA1.exons[0][EX_R] = WA[iW][iS2].rStart;
-                trA1.exons[0][EX_G] = WA[iW][iS2].gStart;
-                trA1.exons[0][EX_L] = WA[iW][iS2].Length;
-                trA1.exons[0][EX_iFrag]=WA[iW][iS2].iFrag;
-                trA1.exons[0][EX_sjA]=WA[iW][iS2].sjA;
+                trA1.exons[0].R = WA[iW][iS2].rStart;
+                trA1.exons[0].G = WA[iW][iS2].gStart;
+                trA1.exons[0].L = WA[iW][iS2].Length;
+                trA1.exons[0].iFrag=WA[iW][iS2].iFrag;
+                trA1.exons[0].sjA=WA[iW][iS2].sjA;
                 score2=\
                     stitchAlignToTranscript(WA[iW][iS2].rStart+WA[iW][iS2].Length-1, WA[iW][iS2].gStart+WA[iW][iS2].Length-1,\
                                         WA[iW][iS1].rStart, WA[iW][iS1].gStart, WA[iW][iS1].Length, WA[iW][iS1].iFrag,  WA[iW][iS1].sjA, \
@@ -38,14 +38,14 @@ void ReadAlign::stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R) {
                     uint iex=0;
                     if (trA1.canonSJ[iex]>=0 && trA1.sjAnnot[iex]==0)
                     {
-                        uint jS=trA1.exons[iex][EX_G]+trA1.exons[iex][EX_L];
-                        uint jE=trA1.exons[iex+1][EX_G]-1;
+                        uint jS=trA1.exons[iex].G+trA1.exons[iex].L;
+                        uint jE=trA1.exons[iex+1].G-1;
                         if ( binarySearch2(jS,jE,P.sjNovelStart,P.sjNovelEnd,P.sjNovelN) < 0 ) return;
                     };
                 };
 
                 //check the length of the iS2 exon. TODO: build the transcripts vs iS1, check the actual exon length
-                bool exonLongEnough = trA1.exons[0][EX_L] >= ( trA1.sjAnnot[0]==0 ? P.alignSJoverhangMin : P.alignSJDBoverhangMin );
+                bool exonLongEnough = trA1.exons[0].L >= ( trA1.sjAnnot[0]==0 ? P.alignSJoverhangMin : P.alignSJDBoverhangMin );
 
                 if (exonLongEnough && score2>0 && score2+scoreSeedBest[iS2] > scoreSeedBest[iS1] ) {
                     scoreSeedBest[iS1]=score2+scoreSeedBest[iS2];
@@ -115,11 +115,11 @@ void ReadAlign::stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R) {
             trA.nMatch = WA[iW][iS1].Length; //# of matches
             trA.nMM = 0;
 
-            trA.exons[0][EX_R] = trA.rStart = WA[iW][iS1].rStart;
-            trA.exons[0][EX_G] = trA.gStart = WA[iW][iS1].gStart;
-            trA.exons[0][EX_L] = WA[iW][iS1].Length;
-            trA.exons[0][EX_iFrag]=WA[iW][iS1].iFrag;
-            trA.exons[0][EX_sjA]=WA[iW][iS1].sjA;
+            trA.exons[0].R = trA.rStart = WA[iW][iS1].rStart;
+            trA.exons[0].G = trA.gStart = WA[iW][iS1].gStart;
+            trA.exons[0].L = WA[iW][iS1].Length;
+            trA.exons[0].iFrag=WA[iW][iS1].iFrag;
+            trA.exons[0].sjA=WA[iW][iS1].sjA;
 
             trA.nExons=1;
 
@@ -142,17 +142,17 @@ void ReadAlign::stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R) {
 
         {//extend to the left
             trA1=*trInit;
-            if ( trA.exons[0][EX_R]>0 \
-                 && extendAlign(R, mapGen.G, trA.exons[0][EX_R]-1, trA.exons[0][EX_G]-1, -1, -1, trA.exons[0][EX_R], 100000, 0, outFilterMismatchNmaxTotal, P.outFilterMismatchNoverLmax,
-                    P.alignEndsType.ext[trA.exons[0][EX_iFrag]][trA.Str], &trA1) ) {//if could extend
+            if ( trA.exons[0].R>0 \
+                 && extendAlign(R, mapGen.G, trA.exons[0].R-1, trA.exons[0].G-1, -1, -1, trA.exons[0].R, 100000, 0, outFilterMismatchNmaxTotal, P.outFilterMismatchNoverLmax,
+                    P.alignEndsType.ext[trA.exons[0].iFrag][trA.Str], &trA1) ) {//if could extend
 
                 trA.add(&trA1);
 
-                trA.exons[0][EX_R] -=  trA1.extendL;
-                trA.exons[0][EX_G] -=  trA1.extendL;
-                trA.exons[0][EX_L] +=  trA1.extendL;
-                trA.rStart = trA.exons[0][EX_R];
-                trA.gStart = trA.exons[0][EX_G];
+                trA.exons[0].R -=  trA1.extendL;
+                trA.exons[0].G -=  trA1.extendL;
+                trA.exons[0].L +=  trA1.extendL;
+                trA.rStart = trA.exons[0].R;
+                trA.gStart = trA.exons[0].G;
             };
         };
 
@@ -164,9 +164,9 @@ void ReadAlign::stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R) {
             if ( tR2 < Lread \
                 && extendAlign(R, mapGen.G, tR2, tG2, +1, +1, Lread-tR2,
                 100000, scoreSeedBestMM[iS1], outFilterMismatchNmaxTotal, P.outFilterMismatchNoverLmax, \
-                    P.alignEndsType.ext[trA.exons[trA.nExons-1][EX_iFrag]][1-trA.Str], &trA1) ) {//if could extend
+                    P.alignEndsType.ext[trA.exons[trA.nExons-1].iFrag][1-trA.Str], &trA1) ) {//if could extend
                     trA.add(&trA1);
-                    trA.exons[trA.nExons-1][EX_L] += trA1.extendL;//extend the length of the last exon
+                    trA.exons[trA.nExons-1].L += trA1.extendL;//extend the length of the last exon
             };
         };
 
@@ -176,8 +176,8 @@ void ReadAlign::stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R) {
 //     {
 //         uint nMM1=0;
 //         for (uint iex=0;iex<trA.nExons;iex++) {
-//             for (uint ii=0;ii<trA.exons[iex][EX_L];ii++) {
-//                 if ( R[ii+trA.exons[iex][EX_R]]!=G[ii+trA.exons[iex][EX_G]] && mapGen.G[ii+trA.exons[iex][EX_G]]<4 && R[ii+trA.exons[iex][EX_R]]<4) {
+//             for (uint ii=0;ii<trA.exons[iex].L;ii++) {
+//                 if ( R[ii+trA.exons[iex].R]!=G[ii+trA.exons[iex].G] && mapGen.G[ii+trA.exons[iex].G]<4 && R[ii+trA.exons[iex].R]<4) {
 //                     nMM1++;
 //                 };
 //             };
@@ -190,22 +190,22 @@ void ReadAlign::stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R) {
     {//calculate some final values for the transcript
         trA.rLength = 0;
         for (uint isj=0;isj<trA.nExons;isj++) {
-            trA.rLength += trA.exons[isj][EX_L];
+            trA.rLength += trA.exons[isj].L;
         };
-        trA.gLength = trA.exons[trA.nExons-1][EX_G]+1-trA.gStart;
+        trA.gLength = trA.exons[trA.nExons-1].G+1-trA.gStart;
 
         //calculate some final values for the transcript
         trA.roStart = (trA.roStr == 0) ? trA.rStart : Lread - trA.rStart - trA.rLength;
 
-        if (trA.exons[0][EX_iFrag]==trA.exons[trA.nExons-1][EX_iFrag]) {//mark single fragment transcripts
-            trA.iFrag=trA.exons[0][EX_iFrag];
+        if (trA.exons[0].iFrag==trA.exons[trA.nExons-1].iFrag) {//mark single fragment transcripts
+            trA.iFrag=trA.exons[0].iFrag;
             maxScoreMate[trA.iFrag] = max (maxScoreMate[trA.iFrag] , trA.maxScore);
         } else {
             trA.iFrag=-1;
         };
 
         if (P.scoreGenomicLengthLog2scale!=0) {//add gap length score
-            trA.maxScore += int(ceil( log2( (double) ( trA.exons[trA.nExons-1][EX_G]+trA.exons[trA.nExons-1][EX_L] - trA.exons[0][EX_G]) ) \
+            trA.maxScore += int(ceil( log2( (double) ( trA.exons[trA.nExons-1].G+trA.exons[trA.nExons-1].L - trA.exons[0].G) ) \
                      * P.scoreGenomicLengthLog2scale - 0.5));
             trA.maxScore = max(0,trA.maxScore);
         };
@@ -260,8 +260,8 @@ void ReadAlign::stitchWindowSeeds (uint iW, uint iWrec, bool *WAexcl, char *R) {
         //check exons lengths including repeats, do not report a transcript with short exons
 //        for (uint isj=0;isj<trA.nExons-1;isj++) {//check exons for min length, if they precede a junction
 //            if ( trA.canonSJ[isj]>=0 &&
-//               ( trA.exons[isj][EX_L] < P.alignSJoverhangMin + trA.shiftSJ[isj][0]
-//              || trA.exons[isj+1][EX_L] < P.alignSJoverhangMin + trA.shiftSJ[isj][1]) ) {
+//               ( trA.exons[isj].L < P.alignSJoverhangMin + trA.shiftSJ[isj][0]
+//              || trA.exons[isj+1].L < P.alignSJoverhangMin + trA.shiftSJ[isj][1]) ) {
 //                return;//do not record this transcript in wTr
 //            };
 //        };

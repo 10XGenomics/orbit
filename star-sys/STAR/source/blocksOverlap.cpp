@@ -4,12 +4,12 @@ uint blocksOverlap(Transcript &t1, Transcript &t2) {//calculate overlap between 
 
     uint i1=0, i2=0, nOverlap=0;
     while (i1<t1.nExons && i2<t2.nExons) {//scan through all exons
-        uint rs1=t1.exons[i1][EX_R];
-        uint rs2=t2.exons[i2][EX_R];
-        uint re1=t1.exons[i1][EX_R]+t1.exons[i1][EX_L];//1st base after the end
-        uint re2=t2.exons[i2][EX_R]+t2.exons[i2][EX_L];
-        uint gs1=t1.exons[i1][EX_G];
-        uint gs2=t2.exons[i2][EX_G];
+        uint rs1=t1.exons[i1].R;
+        uint rs2=t2.exons[i2].R;
+        uint re1=t1.exons[i1].R+t1.exons[i1].L;//1st base after the end
+        uint re2=t2.exons[i2].R+t2.exons[i2].L;
+        uint gs1=t1.exons[i1].G;
+        uint gs2=t2.exons[i2].G;
 
         if (rs1>=re2) {//t1 block is on the right to t2, no hope of overlap
             i2++;

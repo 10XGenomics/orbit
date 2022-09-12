@@ -17,15 +17,15 @@ int Transcript::variationAdjust(const Genome &mapGen, const char *R)
     for (uint ie=0; ie<nExons; ie++)
     {
         //binary search to find nearest SNP
-        int32 isnp=binarySearch1b <uint> (exons[ie][EX_G], Var.snp.loci, Var.snp.N);
+        int32 isnp=binarySearch1b <uint> (exons[ie].G, Var.snp.loci, Var.snp.N);
         if (isnp>=0)
         {
-            while ((uint)isnp<Var.snp.N && exons[ie][EX_G]+exons[ie][EX_L]>Var.snp.loci[isnp])
+            while ((uint)isnp<Var.snp.N && exons[ie].G+exons[ie].L>Var.snp.loci[isnp])
             {//these SNPs overlap the block
                 varInd.push_back(isnp); //record snp index
                 varGenCoord.push_back(Var.snp.loci[isnp]-mapGen.chrStart[Chr]);
 
-                varReadCoord.push_back(exons[ie][EX_R]+Var.snp.loci[isnp]-exons[ie][EX_G]);
+                varReadCoord.push_back(exons[ie].R+Var.snp.loci[isnp]-exons[ie].G);
                 char ntR=R[varReadCoord.back()];//nt of the read in the SNP position, already trnasformed to + genome strand
 
                 uint8 igt;

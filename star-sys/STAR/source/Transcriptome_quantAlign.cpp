@@ -6,7 +6,7 @@
 int alignToTranscript(Transcript &aG, uint trS1, uint8 trStr1, uint32 *exSE1, uint32 *exLenCum1, uint16 exN1, Transcript &aT) {
 
     //find exon that overlaps beginning of the read
-    uint32 g1=aG.exons[0][EX_G]-trS1;//start of the transcript
+    uint32 g1=aG.exons[0].G-trS1;//start of the transcript
     uint32 ex1=binarySearch1<uint32>(g1, exSE1, 2*exN1);
     if (ex1>=2*exN1) return 0; //align start is to the right of all exons
 
@@ -24,33 +24,33 @@ int alignToTranscript(Transcript &aG, uint trS1, uint8 trStr1, uint32 *exSE1, ui
 
     aG.canonSJ[aG.nExons-1]=-999; //marks the last exons
     for (uint32 iab=0; iab<aG.nExons; iab++) {//scan through all blocks of the align
-        if (aG.exons[iab][EX_G]+aG.exons[iab][EX_L]>exSE1[2*ex1+1]+trS1+1) {//block extends past exon end
+        if (aG.exons[iab].G+aG.exons[iab].L>exSE1[2*ex1+1]+trS1+1) {//block extends past exon end
             return 0;
         };
 
         if (iab==0 || aG.canonSJ[iab-1]<0) {
-            aT.exons[aT.nExons][EX_R]=aG.exons[iab][EX_R];
-            aT.exons[aT.nExons][EX_G]=aG.exons[iab][EX_G]-trS1-exSE1[2*ex1]+exLenCum1[ex1];
-            aT.exons[aT.nExons][EX_L]=aG.exons[iab][EX_L];
-            aT.exons[aT.nExons][EX_iFrag]=aG.exons[iab][EX_iFrag];
+            aT.exons[aT.nExons].R=aG.exons[iab].R;
+            aT.exons[aT.nExons].G=aG.exons[iab].G-trS1-exSE1[2*ex1]+exLenCum1[ex1];
+            aT.exons[aT.nExons].L=aG.exons[iab].L;
+            aT.exons[aT.nExons].iFrag=aG.exons[iab].iFrag;
             if (aT.nExons>0) aT.canonSJ[aT.nExons-1]=aG.canonSJ[iab-1];
             ++aT.nExons;
         } else {
-            aT.exons[aT.nExons-1][EX_L]+=aG.exons[iab][EX_L];
+            aT.exons[aT.nExons-1].L+=aG.exons[iab].L;
         };
         switch (aG.canonSJ[iab]) {
             case -999: //last exon
                 if (trStr1==2) {//convert align coordinates if on the -strand
                     uint32 trlength=exLenCum1[exN1-1]+exSE1[2*exN1-1]-exSE1[2*exN1-2]+1; //transcript length
                     for (uint32 iex=0; iex<aT.nExons; iex++) {
-                        aT.exons[iex][EX_R]=aG.Lread-(aT.exons[iex][EX_R]+aT.exons[iex][EX_L]);
-                        aT.exons[iex][EX_G]=trlength-(aT.exons[iex][EX_G]+aT.exons[iex][EX_L]);  // slow loop
+                        aT.exons[iex].R=aG.Lread-(aT.exons[iex].R+aT.exons[iex].L);
+                        aT.exons[iex].G=trlength-(aT.exons[iex].G+aT.exons[iex].L);  // slow loop
                     };
                     for (uint32 iex=0; iex<aT.nExons/2; iex++) {
-                        swap(aT.exons[iex][EX_R],aT.exons[aT.nExons-1-iex][EX_R]); // also slow
-                        swap(aT.exons[iex][EX_G],aT.exons[aT.nExons-1-iex][EX_G]);
-                        swap(aT.exons[iex][EX_L],aT.exons[aT.nExons-1-iex][EX_L]);
-                        swap(aT.exons[iex][EX_iFrag],aT.exons[aT.nExons-1-iex][EX_iFrag]);
+                        swap(aT.exons[iex].R,aT.exons[aT.nExons-1-iex].R); // also slow
+                        swap(aT.exons[iex].G,aT.exons[aT.nExons-1-iex].G);
+                        swap(aT.exons[iex].L,aT.exons[aT.nExons-1-iex].L);
+                        swap(aT.exons[iex].iFrag,aT.exons[aT.nExons-1-iex].iFrag);
                     };
                     for (uint32 iex=0; iex<(aT.nExons-1)/2; iex++) {
                         swap(aT.canonSJ[iex],aT.canonSJ[aT.nExons-2-iex]);
@@ -66,7 +66,7 @@ int alignToTranscript(Transcript &aG, uint trS1, uint8 trStr1, uint32 *exSE1, ui
                 return 1; //reached the end of blocks, align is consistent with this transcript
                 break;
             case -3: //mate connection
-                ex1=binarySearch1<uint32>(aG.exons[iab+1][EX_G]-trS1, exSE1, 2*exN1);
+                ex1=binarySearch1<uint32>(aG.exons[iab+1].G-trS1, exSE1, 2*exN1);
                 if (ex1%2==1) {//beginning of the mext mate in the middle of the exon?
                     return 0; //align does not belong to this transcript
                 } else {
@@ -78,7 +78,7 @@ int alignToTranscript(Transcript &aG, uint trS1, uint8 trStr1, uint32 *exSE1, ui
             case -1: //deletion
                 break;
             default://junctions
-                if ( aG.exons[iab][EX_G]+aG.exons[iab][EX_L]==exSE1[2*ex1+1]+trS1+1 && aG.exons[iab+1][EX_G]==exSE1[2*(ex1+1)]+trS1 ) {
+                if ( aG.exons[iab].G+aG.exons[iab].L==exSE1[2*ex1+1]+trS1+1 && aG.exons[iab+1].G==exSE1[2*(ex1+1)]+trS1 ) {
                     //junction matches transcript junction
                     ++ex1;
                 } else {
@@ -93,10 +93,10 @@ uint32 Transcriptome::quantAlign (Transcript &aG, Transcript *aTall, vector<uint
     uint32 nAtr=0; //number of alignments to the transcriptome
 
     //binary search through transcript starts
-    uint32 tr1=binarySearch1a<uint>(aG.exons[0][EX_G], trS, nTr);
+    uint32 tr1=binarySearch1a<uint>(aG.exons[0].G, trS, nTr);
     if (tr1==(uint32) -1) return 0; //alignment outside of range of all transcripts
 
-    uint aGend=aG.exons[aG.nExons-1][EX_G];
+    uint aGend=aG.exons[aG.nExons-1].G;
 
     ++tr1;
     do {//cycle back through all the transcripts

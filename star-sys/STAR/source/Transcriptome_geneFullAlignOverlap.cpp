@@ -10,11 +10,11 @@ void Transcriptome::geneFullAlignOverlap(uint nA, Transcript **aAll, int32 stran
 
          for (int64 ib=a.nExons-1; ib>=0; ib--) {//scan through all blocks of the alignments
 
-             uint64 be1=a.exons[ib][EX_G]+a.exons[ib][EX_L]-1;//end of the block
+             uint64 be1=a.exons[ib].G+a.exons[ib].L-1;//end of the block
              gi1=binarySearch1a<uint64>(be1, geneFull.s, (int32) nGe);
 
-             while (gi1>=0 && geneFull.eMax[gi1]>=a.exons[ib][EX_G]) {//these exons may overlap this block
-                 if (geneFull.e[gi1]>=a.exons[ib][EX_G]) {//this gene overlaps the block
+             while (gi1>=0 && geneFull.eMax[gi1]>=a.exons[ib].G) {//these exons may overlap this block
+                 if (geneFull.e[gi1]>=a.exons[ib].G) {//this gene overlaps the block
                      int32 str1 = geneFull.str[gi1]==1 ? a.Str : 1-a.Str;
                      if (strandType==-1 || strandType==str1)
                          geneOverlap.insert(geneFull.g[gi1]);
