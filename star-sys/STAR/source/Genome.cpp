@@ -195,8 +195,8 @@ void Genome::genomeLoad(){//allocate and load Genome
     uint SAiInBytes=0;
     SAiInBytes += fstreamReadBig(SAiIn,(char*) &pGe.gSAindexNbases, sizeof(pGe.gSAindexNbases));
 
-    genomeSAindexStart = new uint[pGe.gSAindexNbases+1];
-    SAiInBytes += fstreamReadBig(SAiIn,(char*) genomeSAindexStart, sizeof(genomeSAindexStart[0])*(pGe.gSAindexNbases+1));
+    genomeSAindexStart.resize(pGe.gSAindexNbases+1);
+    SAiInBytes += fstreamReadBig(SAiIn,(char*) genomeSAindexStart.data(), sizeof(genomeSAindexStart[0])*genomeSAindexStart.size());
     nSAi=genomeSAindexStart[pGe.gSAindexNbases];
     P.inOut->logMain << "Read from SAindex: pGe.gSAindexNbases=" << pGe.gSAindexNbases <<"  nSAi="<< nSAi <<endl;
 
@@ -321,15 +321,15 @@ void Genome::genomeLoad(){//allocate and load Genome
         sjGstart=chrStart[sjChrStart];
 
         //fill the sj-db to genome translation array
-        sjDstart=new uint [sjdbN];
-        sjAstart=new uint [sjdbN];
-        sjdbStart=new uint [sjdbN];
-        sjdbEnd=new uint [sjdbN];
+        sjDstart.resize(sjdbN);
+        sjAstart.resize(sjdbN);
+        sjdbStart.resize(sjdbN);
+        sjdbEnd.resize(sjdbN);
 
-        sjdbMotif=new uint8 [sjdbN];
-        sjdbShiftLeft=new uint8 [sjdbN];
-        sjdbShiftRight=new uint8 [sjdbN];
-        sjdbStrand=new uint8 [sjdbN];
+        sjdbMotif.resize(sjdbN);
+        sjdbShiftLeft.resize(sjdbN);
+        sjdbShiftRight.resize(sjdbN);
+        sjdbStrand.resize(sjdbN);
 
         for (uint ii=0;ii<sjdbN;ii++) {//get the info about junctions from sjdbInfo.txt
             {
@@ -451,8 +451,8 @@ void Genome::chrInfoLoad() {//find chrStart,Length,nChr from Genome G
 
 //////////////////////////////////////////////////////////
 void Genome::chrBinFill() {
-    chrBinN = chrStart[nChrReal]/genomeChrBinNbases+1;
-    chrBin = new uint [chrBinN];
+    size_t chrBinN = chrStart[nChrReal]/genomeChrBinNbases+1;
+    chrBin.resize(chrBinN);
     for (uint ii=0, ichr=1; ii<chrBinN; ++ii) {
         if (ii*genomeChrBinNbases>=chrStart[ichr]) ichr++;
         chrBin[ii]=ichr-1;

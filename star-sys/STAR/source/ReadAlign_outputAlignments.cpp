@@ -136,7 +136,7 @@ const char* ReadAlign::outputAlignments() {
 
             //transcripts
             if ( P.quant.trSAM.yes ) {//NOTE: the transcripts are changed by this function (soft-clipping extended), cannot be reused
-                quantTranscriptome(chunkTr, nTrOut, trMult,  alignTrAll, readTranscripts, readGene);
+                quantTranscriptome(chunkTr, nTrOut, trMult,  alignTrAll.get(), readTranscripts, readGene);
             };
 
         };

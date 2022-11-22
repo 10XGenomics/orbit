@@ -29,7 +29,7 @@ extern "C" {
 extern "C" {
     pub fn init_star_ref(
         arg1: ::std::os::raw::c_int,
-        arg2: *mut *mut ::std::os::raw::c_char,
+        arg2: *const *const ::std::os::raw::c_char,
     ) -> *const StarRef;
 }
 extern "C" {

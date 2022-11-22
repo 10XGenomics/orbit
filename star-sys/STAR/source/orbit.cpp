@@ -1,35 +1,51 @@
+#include <memory>  // for make_unique
+
 #include "Genome.h"
 #include "Parameters.h"
 #include "ReadAlign.h"
-#include "Transcriptome.h"
 
 #include "orbit.h"
 
-struct StarRef
-{
+using std::make_unique;
+using std::unique_ptr;
+
+struct StarRef {
     public:
-        const Parameters* p;
-        const Genome* g;
-        StarRef(int argInN, char* argIn[])
-        {
-            Parameters* pMut = new Parameters();
-            pMut->inputParameters(argInN, argIn);
-            //pMut->readNmates = 1;
-            Genome* gMut = new Genome(*pMut);
-            gMut->genomeLoad();
-            gMut->Var = NULL; //new Variation(*pMut, gMut->chrStart, gMut->chrNameIndex);
-            p = pMut;
-            g = gMut;
-        }
-        ~StarRef()
-        {
-            delete g;
-            delete p;
-        }
+        const unique_ptr<Parameters> p;
+        const unique_ptr<Genome> g;
+        StarRef(int argInN, const char* const argIn[]);
 };
 
-struct Aligner
-{
+namespace {
+
+unique_ptr<Parameters> make_parameters(int argInN, const char* const argIn[]) {
+    unique_ptr<Parameters> pMut = make_unique<Parameters>();
+    pMut->inputParameters(argInN, argIn);
+    //pMut->readNmates = 1;
+    return pMut;
+}
+
+unique_ptr<Genome> load_genome(Parameters& p) {
+    unique_ptr<Genome> gMut = make_unique<Genome>(p);
+    gMut->genomeLoad();
+    gMut->Var = nullptr; //new Variation(*pMut, gMut->chrStart, gMut->chrNameIndex);
+    return gMut;
+}
+
+unique_ptr<ReadAlign> make_ra(const StarRef *ref) {
+    return make_unique<ReadAlign>(*(ref->p), *(ref->g), nullptr, 0);
+}
+
+}  // namespace
+
+StarRef::StarRef(int argInN, const char* const argIn[])
+    : p(make_parameters(argInN, argIn)), g(load_genome(*p))
+{ }
+
+struct Aligner final {
+    private:
+        const unique_ptr<StarRef> owned_ref;
+
     public:
 
         // A pointer to the built index containing parameters and the
@@ -38,114 +54,78 @@ struct Aligner
 
         // ra represents the ReadAlign object that is used to make any kind of
         // alignment queries
-        ReadAlign *ra;
+        unique_ptr<ReadAlign> ra;
 
-        // isOriginal is true iff the aligner is initialized with init()
-        // instead of init_clone(), and is used for deciding which members
-        // originated in this instance and can be safely freed upon destruction
-        int isOriginal;
+        explicit Aligner(const StarRef* r)
+            : ref(r),
+              ra(make_ra(ref))
+        { }
 
-        Aligner(const StarRef* r)
-        {
-            isOriginal = 0;
-            ref = r;
-            Transcriptome *mainTranscriptome = nullptr;
-            ra = new ReadAlign(*(ref->p), *(ref->g), mainTranscriptome, 0);
-        }
-
-        Aligner(int argInN, char* argIn[])
-        {
-            isOriginal = 1;
-            ref = new StarRef(argInN, argIn);
-            Transcriptome *mainTranscriptome = nullptr;
-            ra = new ReadAlign(*(ref->p), *(ref->g), mainTranscriptome, 0);
-        }
+        Aligner(int argInN, const char* const argIn[])
+            : owned_ref(make_unique<StarRef>(argInN, argIn)),
+              ref(owned_ref.get()),
+              ra(make_ra(ref))
+        { }
 
         // This constructor is used to construct clones of an existing Aligner
         // This allows multi-threaded alignment without each thread
         // constructing its own genome object
-        Aligner(const Aligner* og)
-        {
-            isOriginal = 0;
-            ref = og->ref;
-            Transcriptome *mainTranscriptome = nullptr;
-            ra = new ReadAlign(*(ref->p), *(ref->g), mainTranscriptome, 0);
-        }
-
-        ~Aligner()
-        {
-            delete ra;
-            if(isOriginal)
-            {
-                delete ref;
-            }
-        }
+        explicit Aligner(const Aligner* og)
+            : ref(og->ref),
+              ra(make_ra(ref))
+        { }
 };
 
 
-const char* align_read(Aligner* a, const char* read1Fastq)
-{
-    static char qname[] = "a";
+const char* align_read(Aligner* a, const char* read1Fastq) {
     a->ra->iRead++;
     a->ra->readNmates = 1;
     a->ra->readFastq[0] = read1Fastq;
-    a->ra->readName = qname;
+    a->ra->readName = "a";
     int readStatus = a->ra->oneRead();
-    a->ra->readName[1] = '\0';
-    if(readStatus != 0)
-    {
+    if(readStatus != 0) {
         return nullptr;
     }
     const char* str = a->ra->outputAlignments();
     return str;
 }
 
-const char* align_read_pair(Aligner* a, const char* read1Fastq, const char* read2Fastq)
-{
-    static char qname[] = "a";
+const char* align_read_pair(Aligner* a, const char* read1Fastq, const char* read2Fastq) {
     a->ra->iRead++;
     a->ra->readNmates = 2;
     a->ra->readFastq[0] = read1Fastq;
     a->ra->readFastq[1] = read2Fastq;
-    a->ra->readName = qname;
+    a->ra->readName = "a";
     
     int readStatus = a->ra->oneRead();
-    a->ra->readName[1] = '\0';
-    if(readStatus != 0)
-    {
+    if(readStatus != 0) {
         return nullptr;
     }
     const char* str = a->ra->outputAlignments();
     return str;
 }
 
-Aligner* init_aligner_clone(const Aligner* al)
-{
+Aligner* init_aligner_clone(const Aligner* al) {
     return new Aligner(al);
 }
 
-Aligner* init_aligner(int argc, char* argv[])
-{
+Aligner* init_aligner(int argc, const char* const argv[]) {
     return new Aligner(argc, argv);
 }
 
-const StarRef* init_star_ref(int argc, char* argv[])
-{
+const StarRef* init_star_ref(int argc, const char* const argv[]) {
     return new StarRef(argc, argv);
 }
 
-Aligner* init_aligner_from_ref(const StarRef* sr)
-{
+Aligner* init_aligner_from_ref(const StarRef* sr) {
     return new Aligner(sr);
 }
 
-void destroy_aligner(Aligner *a)
-{
+void destroy_aligner(Aligner *a) {
     delete a;
 }
 
-void destroy_ref(const StarRef* sr)
-{
+void destroy_ref(const StarRef* sr) {
     delete sr;
 }
 

@@ -197,7 +197,7 @@ intScore stitchAlignToTranscript(uint rAend, uint gAend, uint rBstart, uint gBst
                 //score the gap
                 if (mapGen.sjdbN>0) {//check if the junction is annotated
                         uint jS=gAend+jR+1, jE=gBstart1+jR;//intron start/end
-                        int sjdbInd=binarySearch2(jS,jE,mapGen.sjdbStart,mapGen.sjdbEnd,mapGen.sjdbN);
+                        int sjdbInd=binarySearch2(jS,jE,mapGen.sjdbStart.data(),mapGen.sjdbEnd.data(),mapGen.sjdbN);
                         if (sjdbInd<0) {
                             if (Del>=P.alignIntronMin) {
                                 Score += P.scoreGap + jPen; //genome gap penalty + non-canonical penalty
