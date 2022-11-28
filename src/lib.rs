@@ -50,8 +50,7 @@ impl StarReference {
         let nvec = settings
             .args
             .iter()
-            .map(String::as_str)
-            .map(CString::new)
+            .map(|s| CString::new(s.as_str()))
             .collect::<Result<Vec<_>, _>>()?;
         let c_args = nvec.iter().map(|s| s.as_ptr()).collect::<Vec<_>>();
         let length = nvec.len() as c_int;
