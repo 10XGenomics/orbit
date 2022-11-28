@@ -317,7 +317,7 @@ uint localSearchNisMM(const char *x, uint nx, const char *y, uint ny, double pMM
 
 
 
-uint qualitySplit(char* r, char* q, uint L, char Qsplit, uint maxNsplit, uint  minLsplit, uint** splitR) {
+uint qualitySplit(char* r, char* q, uint L, char Qsplit, uint maxNsplit, uint  minLsplit, std::array<vector<uint>, 3>& splitR) {
     //splits the read r[L] by quality scores q[L], outputs in splitR - split coordinate/length - per base
     //returns number of good split regions
     uint iR=0,iS=0,iR1,LgoodMin=0, iFrag=0;

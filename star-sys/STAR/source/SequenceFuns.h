@@ -19,7 +19,7 @@ uint chrFind(uint, uint, uint*); // find chromosome from global locus
 uint localSearch(const char*, uint, const char*, uint, double); //local search to clip adapter
 uint localSearchNisMM(const char *x, uint nx, const char *y, uint ny, double pMM);
 
-uint qualitySplit(char*, char*, uint, char, uint, uint, uint**);
+uint qualitySplit(char*, char*, uint, char, uint, uint, std::array<std::vector<uint>, 3>&);
 
 int32 convertNuclStrToInt32(const string S, uint32 &intOut);
 string convertNuclInt32toString(const uint32 nuclNum, const uint32 L);

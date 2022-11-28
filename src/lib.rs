@@ -47,21 +47,15 @@ impl StarReference {
         let (header, header_view) = generate_header(&settings.reference_path);
 
         // Load reference
-        let mut nvec = Vec::new();
-        for x in settings.args.iter() {
-            let cur_string = CString::new(x.as_str())?;
-            nvec.push(cur_string.into_raw());
-        }
-
-        let c_args = nvec.as_mut_ptr() as *mut *mut c_char;
+        let nvec = settings
+            .args
+            .iter()
+            .map(|s| CString::new(s.as_str()))
+            .collect::<Result<Vec<_>, _>>()?;
+        let c_args = nvec.iter().map(|s| s.as_ptr()).collect::<Vec<_>>();
         let length = nvec.len() as c_int;
 
-        let reference = unsafe { bindings::init_star_ref(length, c_args) };
-
-        // recover stray CStrings to prevent leaked memory
-        nvec.into_iter().for_each(|ptr| unsafe {
-            drop(CString::from_raw(ptr));
-        });
+        let reference = unsafe { bindings::init_star_ref(length, c_args.as_ptr()) };
 
         let inner = InnerStarReference {
             reference,

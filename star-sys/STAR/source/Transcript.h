@@ -24,7 +24,7 @@ public:
     uint Lread, readLengthPairOriginal;
     uint iRead; //read identifier
     uint readNmates;
-    char *readName;
+    char const *readName;
 
     int iFrag; //frag number of the transcript, if the the transcript contains only one frag
 

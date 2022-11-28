@@ -19,11 +19,12 @@ class Genome {
 
         //chr parameters
         vector <uint> chrStart, chrLength, chrLengthAll;
-        uint genomeChrBinNbases, chrBinN, *chrBin;
+        uint genomeChrBinNbases;
+        vector<uint> chrBin;
         vector <string> chrName, chrNameAll;
         map <string,uint> chrNameIndex;
 
-        uint *genomeSAindexStart;//starts of the L-mer indices in the SAindex, 1<=L<=pGe.gSAindexNbases
+        vector<uint> genomeSAindexStart;//starts of the L-mer indices in the SAindex, 1<=L<=pGe.gSAindexNbases
 
         uint nGenome, nSA, nSAbyte, nChrReal;//genome length, SA length, # of chromosomes, vector of chromosome start loci
         uint nGenome2, nSA2, nSAbyte2, nChrReal2; //same for the 2nd pass
@@ -35,10 +36,10 @@ class Genome {
         uint sjdbOverhang, sjdbLength; //length of the donor/acceptor, length of the sj "chromosome" =2*pGe.sjdbOverhang+1 including spacer
         uint sjChrStart,sjdbN; //first sj-db chr
         uint sjGstart; //start of the sj-db genome sequence
-        uint *sjDstart,*sjAstart,*sjStr, *sjdbStart, *sjdbEnd; //sjdb loci
-        uint8 *sjdbMotif; //motifs of annotated junctions
-        uint8 *sjdbShiftLeft, *sjdbShiftRight; //shifts of junctions
-        uint8 *sjdbStrand; //junctions strand, not used yet
+        vector<uint> sjDstart,sjAstart,sjStr, sjdbStart, sjdbEnd; //sjdb loci
+        vector<uint8> sjdbMotif; //motifs of annotated junctions
+        vector<uint8> sjdbShiftLeft, sjdbShiftRight; //shifts of junctions
+        vector<uint8> sjdbStrand; //junctions strand, not used yet
 
        //sequence insert parameters
         uint genomeInsertL; //total length of the sequence to be inserted on the fly

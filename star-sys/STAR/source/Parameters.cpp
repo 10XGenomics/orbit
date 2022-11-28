@@ -277,7 +277,7 @@ Parameters::~Parameters() {
 }
 
 
-void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters: default, from files, from command line
+void Parameters::inputParameters (int argInN, const char* const argIn[]) {//input parameters: default, from files, from command line
 
 ///////// Default parameters
     #include "parametersDefault.xxd"

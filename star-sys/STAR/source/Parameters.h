@@ -332,7 +332,7 @@ class Parameters {
     int readPars(); // read parameters from all files
     int scanOneLine (string &lineIn, int inputLevel, int inputLevelRequested);
     void scanAllLines (istream &streamIn, int inputLevel, int inputLevelRequested);
-    void inputParameters (int argInN, char* argIn[]); //input parameters: default, from files, from command line
+    void inputParameters (int argInN, const char* const argIn[]); //input parameters: default, from files, from command line
     void openReadsFiles();
     void closeReadsFiles();
     void readSAMheader(const string readFilesCommandString, const vector<string> readFilesNames);

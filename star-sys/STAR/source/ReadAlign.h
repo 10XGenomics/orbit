@@ -14,6 +14,10 @@ class ReadAlign {
     public:
          //methods
         ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcriptome *TrIn, int iChunk);//allocate arrays
+        // Disallow copy.
+        ReadAlign(const ReadAlign&) = delete;
+        ReadAlign& operator=(ReadAlign const&) = delete;
+        
         int oneRead();
 
         //vars
@@ -24,7 +28,8 @@ class ReadAlign {
         // input data as fastq strings
         const char *readFastq[2];
 
-        istream* readInStream[MAX_N_MATES];fstream chunkOutChimSAM, *chunkOutChimJunction, chunkOutUnmappedReadsStream[MAX_N_MATES], chunkOutFilterBySJoutFiles[MAX_N_MATES];
+        istream* readInStream[MAX_N_MATES];
+        fstream chunkOutChimSAM, chunkOutChimJunction, chunkOutUnmappedReadsStream[MAX_N_MATES], chunkOutFilterBySJoutFiles[MAX_N_MATES];
 
 
         ostream* outSAMstream;
@@ -43,12 +48,12 @@ class ReadAlign {
         ReadAlign *peMergeRA; //ReadAlign for merged PE mates
 
         uint readNmates;
-        char **Read0;
-        char **Qual0;
-        char **Read1;
-        char **Qual1;
-        char **readNameMates;
-        char *readName;
+        std::array<char*, 2> Read0;
+        std::array<char*, 2> Qual0;
+        std::array<char*, 3> Read1;
+        std::array<char*, 2> Qual1;
+        std::unique_ptr<char *[]> readNameMates;
+        char const *readName;
         void multMapSelect();
         int mapOneRead();
         const char* outputAlignments();
@@ -66,10 +71,17 @@ class ReadAlign {
         std::mt19937 rngMultOrder;//initialize in ReadAlign.cpp
         std::uniform_real_distribution<double> rngUniformReal0to1;//initialize in ReadAlign.cpp
 
+        // Storage for Read0, Qual0, Read1, Qual1.  Allocated as a single slab.
+        std::unique_ptr<std::array<std::array<char, DEF_readSeqLengthMax+1>, 9>> readData;
+        // Storage for readNameMates.
+        std::unique_ptr<std::array<char, DEF_readNameLengthMax>[]> readNameMatesData;
+
         //input,output
 
-        char** outBAMoneAlign;
-        uint* outBAMoneAlignNbytes;
+        // Storage for outBAMoneAlign.
+        std::unique_ptr<std::array<char, BAMoutput_oneAlignMaxBytes>[]> outBAMoneAlignData;
+        std::unique_ptr<char*[]> outBAMoneAlign;
+        std::unique_ptr<uint[]> outBAMoneAlignNbytes;
 
         ostringstream samStreamCIGAR, samStreamSJmotif, samStreamSJintron;
         vector <string> matesCIGAR;
@@ -82,8 +94,8 @@ class ReadAlign {
 //         StatsAll *statsRA;
 
         //transcript
-        Transcript* trArray; //linear array of transcripts to store all of them from all windows
-        Transcript** trArrayPointer; //linear array of transcripts to store all of them from all windows
+        std::unique_ptr<Transcript[]> trArray; //linear array of transcripts to store all of them from all windows
+        std::unique_ptr<Transcript*[]> trArrayPointer; //linear array of transcripts to store all of them from all windows
 
         //read
         uint iReadAll, iMate;
@@ -103,25 +115,25 @@ class ReadAlign {
 
         //uint readNmates;
         //split
-        uint** splitR;
+        std::array<std::vector<uint>, 3> splitR;
         uint Nsplit;
 
 //         uint fragLength[MAX_N_FRAG], fragStart[MAX_N_FRAG]; //fragment Lengths and Starts in read space
 
         //binned alignments
-        uintWinBin **winBin; //binned genome: window ID (number) per bin
+        std::array<std::unique_ptr<uintWinBin[]>, 2> winBin; //binned genome: window ID (number) per bin
 
         //alignments
-        uiPC *PC; //pieces coordinates
-        uiWC *WC; //windows coordinates
-        uiWA **WA; //aligments per window
+        std::unique_ptr<uiPC[]> PC; //pieces coordinates
+        std::unique_ptr<uiWC[]> WC; //windows coordinates
+        std::unique_ptr<std::unique_ptr<uiWA[]>[]> WA; //aligments per window
 
         int unmapType; //marker for why a read is unmapped
 
         uint mapMarker; //alignment marker (typically, if there is something wrong)
         uint nA, nP, nW, nWall, nUM[2]; //number of all alignments,  pieces, windows, U/M,
-        uint *nWA, *nWAP, *WALrec, *WlastAnchor; //number of alignments per window, per window per piece, min recordable length per window
-        bool *WAincl; //alginment inclusion mask
+        std::unique_ptr<uint[]> nWA, nWAP, WALrec, WlastAnchor; //number of alignments per window, per window per piece, min recordable length per window
+        std::unique_ptr<bool[]> WAincl; //alginment inclusion mask
 
         uint *swWinCov, *swWinGleft, *swWinGright, *swWinRleft, *swWinRright; //read coverage per window
         char *swT;
@@ -130,9 +142,10 @@ class ReadAlign {
         uint nTr, nTrMate; // number of transcripts called
         intScore maxScore;//maximum alignment score
 
-        Transcript trA, trA1, *trBest, *trInit; //transcript, best tr, next best tr, initialized tr
-        Transcript ***trAll; //all transcripts for all windows
-        uint *nWinTr; //number of recorded transcripts per window
+        Transcript trA, trA1, *trBest; //transcript, best tr, next best tr
+        std::unique_ptr<Transcript> trInit; // initialized tr
+        std::unique_ptr<Transcript **[]> trAll; //all transcripts for all windows
+        std::unique_ptr<uint[]> nWinTr; //number of recorded transcripts per window
 
         //old chimeric detection
         uint chimN, chimRepeat, chimStr;
@@ -145,7 +158,7 @@ class ReadAlign {
         Transcript *alignC, *extendC, *polyAtailC; //alignment rules/conditions
 
         Transcript* trMult[MAX_N_MULTMAP];//multimapping transcripts
-        Transcript *alignTrAll;//alignments to transcriptome
+        std::unique_ptr<Transcript[]> alignTrAll;//alignments to transcriptome
 
         struct {
             bool yes;

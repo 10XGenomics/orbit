@@ -30,10 +30,10 @@ extern "C" {
 
     // init_aligner: initialize an aligner given the array of parameters which
     // would be passed to STAR
-    struct Aligner* init_aligner(int, char*[]);
+    struct Aligner* init_aligner(int, const char* const[]);
 
     // init_star_ref: build a star reference with a given set of arguments
-    const struct StarRef* init_star_ref(int, char*[]);
+    const struct StarRef* init_star_ref(int, const char* const[]);
 
     // init_aligner_from_ref takes a StarRef struct with an already built
     // genome and builds an aligner around it

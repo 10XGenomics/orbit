@@ -86,14 +86,14 @@ uint ReadAlign::maxMappableLength2strands(uint pieceStartIn, uint pieceLengthIn,
             indStartEnd[0]=indStartEnd[1]=iSA1;
             Nrep=1;
             bool comparRes;
-            maxL=compareSeqToGenome(mapGen, Read1, pieceStart, pieceLength, Lind, iSA1, dirR, comparRes);
+            maxL=compareSeqToGenome(mapGen, Read1.data(), pieceStart, pieceLength, Lind, iSA1, dirR, comparRes);
         } else {//need SA search, pieceLength>maxL
             if (iSA2good && iSA1noN) {
                 maxL = Lind; //Lind bases were already matched
             } else {
                 maxL=0;
             };        
-            Nrep = maxMappableLength(mapGen, Read1, pieceStart, pieceLength, iSA1 & mapGen.SAiMarkNmask, iSA2, dirR, maxL, indStartEnd);
+            Nrep = maxMappableLength(mapGen, Read1.data(), pieceStart, pieceLength, iSA1 & mapGen.SAiMarkNmask, iSA2, dirR, maxL, indStartEnd);
         };
     #endif
 

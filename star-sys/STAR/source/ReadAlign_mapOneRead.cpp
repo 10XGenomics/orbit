@@ -39,7 +39,7 @@ int ReadAlign::mapOneRead() {
     trInit->readNmates=readNmates;
     trInit->readName=readName;
 
-    trBest=trInit;
+    trBest=trInit.get();
 
     uint seedSearchStartLmax=min(P.seedSearchStartLmax, // 50
                                   (uint) (P.seedSearchStartLmaxOverLread*(Lread-1))); // read length
@@ -114,7 +114,7 @@ int ReadAlign::mapOneRead() {
     } else if (Nsplit>0 && nA>0) {//otherwise there are no good pieces, or all pieces map too many times: read cannot be mapped
 //         qsort((void*) PC, nP, sizeof(uint)*PC_SIZE, funCompareUint2);//sort PC by rStart and length
         //printf("stitching\n");
-        stitchPieces(Read1, Lread);
+        stitchPieces(Read1.data(), Lread);
         
     };
 

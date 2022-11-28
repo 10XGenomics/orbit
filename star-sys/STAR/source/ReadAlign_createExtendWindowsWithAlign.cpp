@@ -8,7 +8,7 @@ int ReadAlign::createExtendWindowsWithAlign(uint a1, uint aStr) {
 
     uint aBin = (a1 >> P.winBinNbits); //align's bin
     uint iBinLeft=aBin, iBinRight=aBin;
-    uintWinBin* wB=winBin[aStr];
+    uintWinBin* wB=winBin[aStr].get();
     uint iBin=-1, iWin=-1, iWinRight=-1;
 
     if (wB[aBin]==uintWinBinMax) {//proceed if there is no window at this bin

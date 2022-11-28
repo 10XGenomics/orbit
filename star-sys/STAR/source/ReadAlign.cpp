@@ -9,28 +9,26 @@ ReadAlign::ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcripto
     iRead = 0;
     readFilesIndex = 0;
     readNmates=P.readNmates;
-    winBin = new uintWinBin* [2];
-    winBin[0] = new uintWinBin [P.winBinN];
-    winBin[1] = new uintWinBin [P.winBinN];
-    memset(winBin[0],255,sizeof(winBin[0][0])*P.winBinN);
-    memset(winBin[1],255,sizeof(winBin[0][0])*P.winBinN);
+    winBin[0] = make_unique<uintWinBin[]>(P.winBinN);
+    winBin[1] = make_unique<uintWinBin[]>(P.winBinN);
+    memset(winBin[0].get(),255,sizeof(winBin[0][0])*P.winBinN);
+    memset(winBin[1].get(),255,sizeof(winBin[0][0])*P.winBinN);
     //RNGs
     rngMultOrder.seed(P.runRNGseed*(iChunk+1));
     rngUniformReal0to1=std::uniform_real_distribution<double> (0.0, 1.0);
     //transcriptome
     if ( P.quant.trSAM.yes ) {
-        alignTrAll=new Transcript [P.alignTranscriptsPerReadNmax];
+        alignTrAll=make_unique<Transcript[]>(P.alignTranscriptsPerReadNmax);
     };
     //split
-    splitR=new uint*[3];
-    splitR[0]=new uint[P.maxNsplit]; splitR[1]=new uint[P.maxNsplit]; splitR[2]=new uint[P.maxNsplit];
+    splitR[0].resize(P.maxNsplit); splitR[1].resize(P.maxNsplit); splitR[2].resize(P.maxNsplit);
     //alignments
-    PC=new uiPC[P.seedPerReadNmax];
-    WC=new uiWC[P.alignWindowsPerReadNmax];
-    nWA=new uint[P.alignWindowsPerReadNmax];
-    nWAP=new uint[P.alignWindowsPerReadNmax];
-    WALrec=new uint[P.alignWindowsPerReadNmax];
-    WlastAnchor=new uint[P.alignWindowsPerReadNmax];
+    PC=make_unique<uiPC[]>(P.seedPerReadNmax);
+    WC=make_unique<uiWC[]>(P.alignWindowsPerReadNmax);
+    nWA=make_unique<uint[]>(P.alignWindowsPerReadNmax);
+    nWAP=make_unique<uint[]>(P.alignWindowsPerReadNmax);
+    WALrec=make_unique<uint[]>(P.alignWindowsPerReadNmax);
+    WlastAnchor=make_unique<uint[]>(P.alignWindowsPerReadNmax);
 
 #ifdef COMPILE_FOR_LONG_READS
     swWinCov = new uint[P.alignWindowsPerReadNmax];
@@ -41,43 +39,41 @@ ReadAlign::ReadAlign (const Parameters& Pin, const Genome &genomeIn, Transcripto
     seedChain = new uint [P.seedPerWindowNmax];
 #endif
 
-    WA=new uiWA*[P.alignWindowsPerReadNmax];
+    WA=make_unique<unique_ptr<uiWA[]>[]>(P.alignWindowsPerReadNmax);
     for (uint ii=0;ii<P.alignWindowsPerReadNmax;ii++)
-        WA[ii]=new uiWA[P.seedPerWindowNmax];
-    WAincl = new bool [P.seedPerWindowNmax];
-    trAll = new Transcript**[P.alignWindowsPerReadNmax+1];
-    nWinTr = new uint[P.alignWindowsPerReadNmax];
-    trArray = new Transcript[P.alignTranscriptsPerReadNmax];
-    trArrayPointer =  new Transcript*[P.alignTranscriptsPerReadNmax];
+        WA[ii]=make_unique<uiWA[]>(P.seedPerWindowNmax);
+    WAincl = make_unique<bool[]>(P.seedPerWindowNmax);
+    trAll = make_unique<Transcript**[]>(P.alignWindowsPerReadNmax+1);
+    nWinTr = make_unique<uint[]>(P.alignWindowsPerReadNmax);
+    trArray = make_unique<Transcript[]>(P.alignTranscriptsPerReadNmax);
+    trArrayPointer = make_unique<Transcript*[]>(P.alignTranscriptsPerReadNmax);
     for (uint ii=0;ii<P.alignTranscriptsPerReadNmax;ii++)
         trArrayPointer[ii]= &(trArray[ii]);
-    trInit = new Transcript;
+    trInit = make_unique<Transcript>();
     //read
-    Read0 = new char*[2];
-    Read0[0]  = new char [DEF_readSeqLengthMax+1];
-    Read0[1]  = new char [DEF_readSeqLengthMax+1];
-    Qual0 = new char*[2];
-    Qual0[0]  = new char [DEF_readSeqLengthMax+1];
-    Qual0[1]  = new char [DEF_readSeqLengthMax+1];
-    readNameMates=new char* [P.readNmates];
+    readData = make_unique<std::array<std::array<char, DEF_readSeqLengthMax+1>, 9>>();
+    Read0[0] = std::get<0>(*readData).data();
+    Read0[1] = std::get<1>(*readData).data();
+    Qual0[0] = std::get<2>(*readData).data();
+    Qual0[1] = std::get<3>(*readData).data();
+    readNameMates=make_unique<char*[]>(P.readNmates);
+    readNameMatesData=make_unique<std::array<char, DEF_readNameLengthMax>[]>(P.readNmates);
     for (uint ii=0; ii<P.readNmates; ii++) {
-        readNameMates[ii]=new char [DEF_readNameLengthMax];
+        readNameMates[ii]=readNameMatesData[ii].data();
     };
     readNameExtra.resize(P.readNmates);
     readName = readNameMates[0];
-    Read1 = new char*[3];
-    Read1[0]=new char[DEF_readSeqLengthMax+1]; Read1[1]=new char[DEF_readSeqLengthMax+1]; Read1[2]=new char[DEF_readSeqLengthMax+1];
-    Qual1=new char*[2]; //modified QSs for scoring
-    Qual1[0]=new char[DEF_readSeqLengthMax+1]; Qual1[1]=new char[DEF_readSeqLengthMax+1];
+    Read1[0]=std::get<4>(*readData).data(); Read1[1]=std::get<5>(*readData).data(); Read1[2]=std::get<6>(*readData).data();
+    //modified QSs for scoring
+    Qual1[0]=std::get<7>(*readData).data(); Qual1[1]=std::get<8>(*readData).data();
     //outBAM
-    outBAMoneAlignNbytes = new uint [P.readNmates+2]; //extra piece for chimeric reads
-    outBAMoneAlign = new char* [P.readNmates+2]; //extra piece for chimeric reads
+    outBAMoneAlignNbytes = make_unique<uint[]>(P.readNmates+2); //extra piece for chimeric reads
+    outBAMoneAlign = make_unique<char*[]>(P.readNmates+2); //extra piece for chimeric reads
+    outBAMoneAlignData = make_unique<std::array<char, BAMoutput_oneAlignMaxBytes>[]>(P.readNmates+2); //extra piece for chimeric reads
     for (uint ii=0; ii<P.readNmates+2; ii++) {
-        outBAMoneAlign[ii]=new char [BAMoutput_oneAlignMaxBytes];
+        outBAMoneAlign[ii]=outBAMoneAlignData[ii].data();
     };
     resetN();
-    //chim
-    chunkOutChimJunction = new fstream;
 };
 
 void ReadAlign::resetN () {//reset resets the counters to 0 for a new read

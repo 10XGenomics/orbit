@@ -13,8 +13,8 @@
 void ReadAlign::stitchPieces(char **R, uint Lread) {
 
     //zero-out winBin
-    memset(winBin[0],255,sizeof(winBin[0][0])*P.winBinN);
-    memset(winBin[1],255,sizeof(winBin[0][0])*P.winBinN);
+    memset(winBin[0].get(),255,sizeof(winBin[0][0])*P.winBinN);
+    memset(winBin[1].get(),255,sizeof(winBin[0][0])*P.winBinN);
 
 //     for (uint iWin=0;iWin<nWall;iWin++) {//zero out winBin
 //         if (WC[iWin][WC_gStart]<=WC[iWin][WC_gEnd]) {//otherwise the window is dead
@@ -265,7 +265,7 @@ std::time(&timeStart);
         return;
     #endif
     //generate transcript for each window, choose the best
-    trBest =trInit; //initialize next/best
+    trBest =trInit.get(); //initialize next/best
     uint iW1=0;//index of non-empty windows
     uint trNtotal=0; //total number of recorded transcripts
 
@@ -290,7 +290,7 @@ std::time(&timeStart);
         trA.roStr = revertStrand ? 1-trA.Str : trA.Str; //original strand of the read
         trA.maxScore=0;
         //printf("something something trAll %llu\n", trNtotal);
-        trAll[iW1]=trArrayPointer+trNtotal;
+        trAll[iW1]=trArrayPointer.get()+trNtotal;
         if (trNtotal+P.alignTranscriptsPerWindowNmax >= P.alignTranscriptsPerReadNmax) {
             P.inOut->logMain << "WARNING: not enough space allocated for transcript. Did not process all windows for read "<< readName+1 <<endl;
             P.inOut->logMain <<"   SOLUTION: increase alignTranscriptsPerReadNmax and re-run\n" << flush;
@@ -323,7 +323,7 @@ std::time(&timeStart);
             stitchWindowSeeds(iW, iW1, WAincl, R[trA.roStr==0 ? 0:2]);
         };
     #else
-        stitchWindowAligns(0, nWA[iW], 0, WAincl, 0, 0, trA, Lread, WA[iW], R[trA.roStr==0 ? 0:2], mapGen, P, trAll[iW1], nWinTr+iW1, this);
+        stitchWindowAligns(0, nWA[iW], 0, WAincl.get(), 0, 0, trA, Lread, WA[iW].get(), R[trA.roStr==0 ? 0:2], mapGen, P, trAll[iW1], nWinTr.get()+iW1, this);
     #endif
         if (nWinTr[iW1]==0) {
             continue;
