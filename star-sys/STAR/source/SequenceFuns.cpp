@@ -1,5 +1,7 @@
 #include "SequenceFuns.h"
 
+#include <array>
+
 void complementSeqNumbers(char* ReadsIn, char* ReadsOut, uint Lread) {//complement the numeric sequences
     for (uint jj=0;jj<Lread;jj++) {
         switch (int(ReadsIn[jj])){
