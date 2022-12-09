@@ -122,6 +122,7 @@ fn main() {
         .cpp(true)
         .cpp_link_stdlib(Some(libcxx()))
         .define("COMPILATION_TIME_PLACE", "\"build.rs\"")
+        .define("_LIBCPP_REMOVE_TRANSITIVE_INCLUDES", None)
         .files(FILES)
         .flag("-std=c++17")
         .flag("-Wall")
