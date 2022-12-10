@@ -129,5 +129,6 @@ fn main() {
         .flag("-Wextra")
         .flag("-Werror")
         .flag("-fvisibility=hidden")
+        .flag("-ffunction-sections")
         .compile("orbit");
 }

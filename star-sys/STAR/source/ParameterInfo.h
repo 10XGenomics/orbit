@@ -3,12 +3,17 @@
 
 class ParameterInfoBase {
 public:
-    string nameString; //string that identifies parameter
+    const char* nameString; //string that identifies parameter
     int inputLevel; //where the parameter was defined
     int inputLevelAllowed; //at which inpurt level parameter definition is allowed
     virtual void inputValues(istringstream &streamIn) =0;
     friend std::ostream& operator<< (std::ostream& o, ParameterInfoBase const& b);
-    virtual ~ParameterInfoBase() {};
+    ParameterInfoBase(const char* nameString, int inputLevel, int inputLevelAllowed);
+    virtual ~ParameterInfoBase() = default;
+    ParameterInfoBase(const ParameterInfoBase&) = default;
+    ParameterInfoBase &operator=(const ParameterInfoBase&) = delete;
+    ParameterInfoBase(ParameterInfoBase&&) = default;	
+    ParameterInfoBase& operator=(ParameterInfoBase&&) = default;
 protected:
     virtual void printValues(std::ostream& o) const = 0;
 };
@@ -68,20 +73,16 @@ public:
     parameterType *value;
     vector <parameterType> allowedValues;
 
-    ParameterInfoScalar(int inputLevelIn, int inputLevelAllowedIn, string nameStringIn, parameterType* valueIn) {
-        nameString=nameStringIn;
-        inputLevel=inputLevelIn;
-        inputLevelAllowed=inputLevelAllowedIn;
-        value=valueIn;
-    };
+    ParameterInfoScalar(int inputLevelIn, int inputLevelAllowedIn, const char* nameStringIn, parameterType* valueIn)
+        : ParameterInfoBase(nameStringIn, inputLevelIn, inputLevelAllowedIn),
+          value(valueIn) {};
 
-    void inputValues(istringstream &streamIn) {
+    void inputValues(istringstream &streamIn) override {
         *value=inputOneValue <parameterType> (streamIn);
     };
 
-    ~ParameterInfoScalar() {};
 protected:
-   virtual void printValues(std::ostream& outStr) const {
+   void printValues(std::ostream& outStr) const override {
        printOneValue(value, outStr);
    };
 
@@ -93,14 +94,11 @@ public:
     vector <parameterType> *value;
     vector <parameterType> allowedValues;
 
-    ParameterInfoVector(int inputLevelIn, int inputLevelAllowedIn, string nameStringIn, vector <parameterType> *valueIn) {
-        nameString=nameStringIn;
-        inputLevel=inputLevelIn;
-        inputLevelAllowed=inputLevelAllowedIn;
-        value=valueIn;
-    };
+    ParameterInfoVector(int inputLevelIn, int inputLevelAllowedIn, const char* nameStringIn, vector <parameterType> *valueIn)
+        : ParameterInfoBase(nameStringIn, inputLevelIn, inputLevelAllowedIn),
+          value(valueIn) {};
 
-    void inputValues(istringstream &streamIn) {
+    void inputValues(istringstream &streamIn) override {
         (*value).clear();
         while (streamIn.good()) {
             (*value).push_back(inputOneValue <parameterType> (streamIn));
@@ -108,9 +106,8 @@ public:
         };
     };
 
-    ~ParameterInfoVector() {};
 protected:
-   virtual void printValues(std::ostream& outStr) const {
+   void printValues(std::ostream& outStr) const override {
        for (int ii=0; ii < (int) (*value).size(); ii++) {
            printOneValue(&(*value).at(ii),outStr);
            outStr<<"   ";
