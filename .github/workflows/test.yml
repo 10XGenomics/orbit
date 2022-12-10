@@ -8,7 +8,7 @@ on:
 
 env:
   CR_DENY_VERSION: 0.13.5
-  RUST_VERSION: 1.63.0
+  RUST_VERSION: 1.65.0
 
 jobs:
   rust:
@@ -41,7 +41,6 @@ jobs:
       - name: Run clippy
         uses: 10XGenomics/clippy-check@main
         with:
-          token: ${{secrets.GITHUB_TOKEN}}
           args: |
             --all-targets --locked --
             -D clippy::perf

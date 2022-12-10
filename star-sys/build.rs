@@ -118,7 +118,8 @@ fn main() {
     for file in HEADERS {
         println!("cargo:rerun-if-changed={}", file);
     }
-    cc::Build::new()
+    let mut build = cc::Build::new();
+    build
         .cpp(true)
         .cpp_link_stdlib(Some(libcxx()))
         .define("COMPILATION_TIME_PLACE", "\"build.rs\"")
@@ -128,6 +129,41 @@ fn main() {
         .flag("-Wall")
         .flag("-Wextra")
         .flag("-Werror")
-        .flag("-fvisibility=hidden")
-        .compile("orbit");
+        .flag("-fvisibility=hidden");
+
+    if cfg!(target_feature = "sse3") {
+        build.flag("-msse3");
+    }
+    if cfg!(target_feature = "ssse3") {
+        build.flag("-mssse3");
+    }
+    if cfg!(target_feature = "sse4.1") {
+        build.flag("-msse4.1");
+    }
+    if cfg!(target_feature = "sse4.2") {
+        build.flag("-msse4.2");
+    }
+    if cfg!(target_feature = "popcnt") {
+        build.flag("-mpopcnt");
+    }
+    if cfg!(target_feature = "cmpxchg16b") {
+        build.flag("-mcmpxchg16b");
+    }
+    if cfg!(target_feature = "fma4") {
+        build.flag("-mfma4");
+    }
+    if cfg!(target_feature = "avx") {
+        build.flag("-mavx");
+    }
+    if cfg!(target_feature = "bmi1") && cfg!(target_feature = "bmi2") {
+        build.flag("-mbmi");
+    }
+    if cfg!(target_feature = "lzcnt") {
+        build.flag("-mlzcnt");
+    }
+    if cfg!(target_feature = "movbe") {
+        build.flag("-mmovbe");
+    }
+
+    build.compile("orbit");
 }

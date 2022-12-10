@@ -362,7 +362,7 @@ impl Drop for StarAligner {
 
 /// Read in the lines from a file and store each line as its own string in a vector
 fn get_lines(path: &Path) -> Vec<String> {
-    let file = match File::open(&path) {
+    let file = match File::open(path) {
         Err(error) => panic!("error: {}: {}", path.display(), error),
         Ok(file) => file,
     };
@@ -830,14 +830,14 @@ mod test {
             // this scope closes the BAM writing
         };
 
-        let bam_wrapped = bam::Reader::from_path(&"test/test.bam");
+        let bam_wrapped = bam::Reader::from_path("test/test.bam");
         match bam_wrapped {
             Ok(v) => println!("working with version: {:?}", v),
             Err(e) => println!("error parsing header: {:?}", e),
         }
         // The reading portion is commented out because it's failing for unknown reasons, but the BAM
         // file can be read with samtools and pysam.
-        let mut bam = bam::Reader::from_path(&"test/test.bam").unwrap();
+        let mut bam = bam::Reader::from_path("test/test.bam").unwrap();
         let read_records = bam.records();
         for (record, res) in read_records
             .into_iter()
