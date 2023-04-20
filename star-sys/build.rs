@@ -146,7 +146,9 @@ fn main() {
     if cfg!(target_feature = "popcnt") {
         build.flag("-mpopcnt");
     }
-    if cfg!(target_feature = "cmpxchg16b") {
+    if cfg!(target_feature = "cmpxchg16b") && !cfg!(target_os = "macos") {
+        // Apple clang version 14.0.0 does not support -mcmpxchg16b.
+        // Fix the error: cargo:warning=clang: error: unknown argument: '-mcmpxchg16b'
         build.flag("-mcmpxchg16b");
     }
     if cfg!(target_feature = "fma4") {
