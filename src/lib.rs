@@ -391,8 +391,8 @@ fn generate_header(genome_path: impl AsRef<Path>) -> (Header, HeaderView) {
 /// header
 fn add_ref_to_bam_header(header: &mut Header, seq_name: &str, seq_len: usize) {
     let mut header_rec = HeaderRecord::new(b"SQ");
-    header_rec.push_tag(b"SN", &seq_name);
-    header_rec.push_tag(b"LN", &seq_len);
+    header_rec.push_tag(b"SN", seq_name);
+    header_rec.push_tag(b"LN", seq_len);
     header.push_record(&header_rec);
 }
 
