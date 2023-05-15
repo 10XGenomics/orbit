@@ -205,11 +205,11 @@ impl StarAligner {
         rec
     }
 
-    fn empty_records<'a>(
+    fn empty_records(
         name: &[u8],
         read: &[u8],
         qual: &[u8],
-        alns: AlignedRecords<'a>,
+        alns: AlignedRecords<'_>,
     ) -> Vec<bam::Record> {
         use AlignedRecords::{Read1, Read2};
         let (alns, aln_is_first_in_template) = match alns {
