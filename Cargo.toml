@@ -14,7 +14,7 @@ libc = "0.2"
 star-sys = { version = "0.2", path = "star-sys" }
 
 [dependencies.rust-htslib]
-version = ">=0.38.2, <0.45"
+version = ">=0.38.2, <0.46"
 default-features = false
 features = ["serde_feature"]
 
