@@ -1,19 +1,17 @@
 // Copyright (c) 2019 10x Genomics, Inc. All rights reserved.
 
-use std::ffi::{CStr, CString};
-use std::fs::File;
-use std::io::prelude::*;
-use std::io::BufReader;
-use std::os::raw::c_char;
-use std::os::raw::c_int;
-use std::path::Path;
-use std::sync::Arc;
-
 use anyhow::{format_err, Error};
 use rust_htslib::bam;
 use rust_htslib::bam::header::{Header, HeaderRecord};
 use rust_htslib::bam::HeaderView;
 use star_sys::{self as bindings, Aligner as BindAligner, StarRef as BindRef};
+use std::ffi::{CStr, CString};
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::BufReader;
+use std::os::raw::{c_char, c_int};
+use std::path::Path;
+use std::sync::Arc;
 
 pub struct StarReference {
     inner: Arc<InnerStarReference>,
@@ -141,8 +139,8 @@ impl StarSettings {
         let refpath = Path::new(&self.reference_path);
         ["Genome", "SA", "SAindex"]
             .iter()
-            .fold(Ok(0usize), |acc, file| {
-                Ok(acc? + std::fs::metadata(refpath.join(file))?.len() as usize)
+            .try_fold(0usize, |acc, file| {
+                Ok(acc + std::fs::metadata(refpath.join(file))?.len() as usize)
             })
     }
 }
