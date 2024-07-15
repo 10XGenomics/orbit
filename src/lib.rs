@@ -11,10 +11,10 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::os::raw::{c_char, c_int};
 use std::path::Path;
-use std::sync::Arc;
+use std::rc::Rc;
 
 pub struct StarReference {
-    inner: Arc<InnerStarReference>,
+    inner: Rc<InnerStarReference>,
 }
 
 struct InnerStarReference {
@@ -23,8 +23,6 @@ struct InnerStarReference {
     header: Header,
     header_view: HeaderView,
 }
-
-unsafe impl Sync for InnerStarReference {}
 
 impl Drop for InnerStarReference {
     fn drop(&mut self) {
@@ -63,7 +61,7 @@ impl StarReference {
         };
 
         Ok(StarReference {
-            inner: Arc::new(inner),
+            inner: Rc::new(inner),
         })
     }
 
@@ -149,7 +147,7 @@ impl StarSettings {
 /// rust_htslib Record objects
 pub struct StarAligner {
     aligner: *mut BindAligner,
-    reference: Arc<InnerStarReference>,
+    reference: Rc<InnerStarReference>,
     sam_buf: Vec<u8>,
     aln_buf: Vec<u8>,
     fastq1: Vec<u8>,
@@ -165,7 +163,7 @@ enum AlignedRecords<'a> {
 }
 
 impl StarAligner {
-    fn new(reference: Arc<InnerStarReference>) -> StarAligner {
+    fn new(reference: Rc<InnerStarReference>) -> StarAligner {
         let aligner = unsafe { bindings::init_aligner_from_ref(reference.as_ref().reference) };
         let header_view = reference.as_ref().header_view.clone();
 
