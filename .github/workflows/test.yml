@@ -7,8 +7,8 @@ on:
       - master
 
 env:
-  CR_DENY_VERSION: 0.13.5
-  RUST_VERSION: 1.65.0
+  CR_DENY_VERSION: 0.14.23
+  RUST_VERSION: 1.79.0
 
 jobs:
   rust:
