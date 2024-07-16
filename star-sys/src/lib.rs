@@ -6,8 +6,6 @@ pub struct StarRef {
     _unused: [u8; 0],
 }
 
-unsafe impl Send for StarRef {}
-
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Aligner {

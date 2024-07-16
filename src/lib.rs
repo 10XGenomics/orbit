@@ -24,6 +24,7 @@ struct InnerStarReference {
     header_view: HeaderView,
 }
 
+unsafe impl Send for InnerStarReference {}
 unsafe impl Sync for InnerStarReference {}
 
 impl Drop for InnerStarReference {
