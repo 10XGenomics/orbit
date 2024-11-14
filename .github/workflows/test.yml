@@ -7,7 +7,7 @@ on:
       - master
 
 env:
-  CR_DENY_VERSION: 0.14.23
+  CR_DENY_VERSION: 0.16.1
   RUST_VERSION: 1.79.0
 
 jobs:
