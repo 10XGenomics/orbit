@@ -92,9 +92,19 @@ highlight = "all"
 # List of crates that are allowed. Use with care!
 
 [[bans.skip]]
-# rust-htslib depends on bio-types -> derive-new -> syn 1
-name = "syn"
-version = "1.0.109"
+# rust-htslib depends on bio-types -> thiserror -> thiserror-impl
+name = "thiserror-impl"
+version = "1.0.61"
+
+[[bans.skip]]
+# rust-htslib depends on bio-types -> thiserror
+name = "thiserror"
+version = "1.0.61"
+
+[[bans.skip]]
+# rust-htslib depends on bio-types -> derive-new
+name = "derive-new"
+version = "0.6.0"
 
 # This section is considered when running `cargo deny check sources`.
 # More documentation about the 'sources' section can be found here:
