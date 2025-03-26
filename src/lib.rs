@@ -11,6 +11,7 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::os::raw::{c_char, c_int};
 use std::path::Path;
+use std::slice;
 use std::sync::Arc;
 
 pub struct StarReference {
@@ -254,7 +255,20 @@ impl StarAligner {
 
         Self::prepare_fastq(&mut self.fastq1, name, read, qual);
         align_read_rust(self.aligner, self.fastq1.as_slice(), &mut self.aln_buf).unwrap();
-        self.parse_sam_to_records(name)
+        let mut records = self.parse_sam_to_records(name);
+        // hts_lib parses reads of length 1 with a "*" quality score the same as
+        // no quality score and sets it to a flag value of 255, handle this edge case by
+        // restoring the quality value.  Note aligning reads of length 1 not a great idea...
+        if qual.len() == 1 && qual[0] == 42 {
+            records.iter_mut().for_each(|r| {
+                // Kind of nasty way to mutate data that isn't exposed.
+                let data: &mut [u8] =
+                    unsafe { slice::from_raw_parts_mut(r.inner.data, r.inner.l_data as usize) };
+                data[r.inner.core.l_qname as usize + r.cigar_len() * 4 + (r.seq_len() + 1) / 2..]
+                    [0] = 42 - 33;
+            });
+        }
+        records
     }
 
     /// Aligns a given read and return the resulting SAM string
@@ -443,6 +457,7 @@ fn align_read_pair_rust(
 #[cfg(test)]
 mod test {
     use super::*;
+    use rust_htslib::bam::record::Aux;
     use rust_htslib::bam::Read;
 
     /// References to some commonly used reference genomes for testing purposes
@@ -479,7 +494,28 @@ mod test {
         let recs = aligner.align_read(b"a", b"", b"");
         println!("{:?}", recs);
         let recs = aligner.align_read(b"b", b"A", b"?");
+        let expected_qual: &[u8] = &[63 - 33];
         println!("{:?}", recs);
+        assert_eq!(recs[0].qual(), expected_qual, "Quality value incorrect");
+        let recs = aligner.align_read(b"Hello there", b"C", b"*");
+        let record = &recs[0];
+        let expected_qual: &[u8] = &[42 - 33];
+        assert_eq!(
+            record.qual(),
+            expected_qual,
+            "Quality value was not corrected."
+        );
+        assert_eq!(record.qname(), b"Hello there");
+        let aux_tags: Vec<(&[u8], Aux)> = record.aux_iter().map(|z| z.unwrap()).collect();
+        let expected_aux_tags = ["NH", "HI", "AS", "nM", "uT"];
+        println!("Aux Tags {:?}", aux_tags);
+        for (i, tag) in aux_tags.into_iter().enumerate() {
+            assert_eq!(
+                String::from_utf8(tag.0.into()).unwrap(),
+                expected_aux_tags[i]
+            );
+            println!("TAG {:?}", String::from_utf8(tag.0.into()));
+        }
         let (recs1, recs2) = aligner.align_read_pair(b"a", b"", b"", b"", b"");
         println!("{:?}, {:?}", recs1, recs2);
         let (recs1, recs2) = aligner.align_read_pair(b"b", b"A", b"?", b"", b"");
