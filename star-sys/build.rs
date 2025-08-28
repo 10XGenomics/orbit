@@ -151,6 +151,7 @@ fn main() {
         // Fix the error: cargo:warning=clang: error: unknown argument: '-mcmpxchg16b'
         build.flag("-mcmpxchg16b");
     }
+    #[allow(unexpected_cfgs)]
     if cfg!(target_feature = "fma4") {
         build.flag("-mfma4");
     }
