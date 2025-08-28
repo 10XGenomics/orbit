@@ -113,10 +113,10 @@ const HEADERS: &[&str] = &[
 fn main() {
     // do not rebuild constitutively
     for file in FILES {
-        println!("cargo:rerun-if-changed={}", file);
+        println!("cargo:rerun-if-changed={file}");
     }
     for file in HEADERS {
-        println!("cargo:rerun-if-changed={}", file);
+        println!("cargo:rerun-if-changed={file}");
     }
     let mut build = cc::Build::new();
     build
