@@ -264,7 +264,7 @@ impl StarAligner {
                 // Kind of nasty way to mutate data that isn't exposed.
                 let data: &mut [u8] =
                     unsafe { slice::from_raw_parts_mut(r.inner.data, r.inner.l_data as usize) };
-                data[r.inner.core.l_qname as usize + r.cigar_len() * 4 + (r.seq_len() + 1) / 2..]
+                data[r.inner.core.l_qname as usize + r.cigar_len() * 4 + r.seq_len().div_ceil(2)..]
                     [0] = 42 - 33;
             });
         }
@@ -836,7 +836,7 @@ mod test {
         let name = b"gatactaga";
         let res = aligner.align_read(name, read, qual);
         assert!(!res.is_empty());
-        println!("{:?}", res);
+        println!("{res:?}");
     }
 
     #[test]
