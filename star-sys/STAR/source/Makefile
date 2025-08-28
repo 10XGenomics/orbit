@@ -18,7 +18,7 @@ ifeq ($(UNAME), Darwin)
 else
 	CXXFLAGS_extra :=
 endif
-CXXFLAGS_common := -pipe -std=c++11 -Wall -Wextra -fPIC $(CXXFLAGS_extra) $(COMPTIMEPLACE)
+CXXFLAGS_common := -pipe -std=c++11 -Wall -Wextra -Werror -fPIC $(CXXFLAGS_extra) $(COMPTIMEPLACE)
 
 CXXFLAGS_main := -O3 -g $(CXXFLAGS_common)
 CXXFLAGS_gdb :=  -O0 -g $(CXXFLAGS_common)
