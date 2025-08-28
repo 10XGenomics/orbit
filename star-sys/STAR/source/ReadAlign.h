@@ -9,6 +9,7 @@
 
 #include <time.h>
 #include <random>
+#include <memory>
 
 class ReadAlign {
     public:
