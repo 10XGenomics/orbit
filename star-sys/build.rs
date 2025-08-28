@@ -128,7 +128,6 @@ fn main() {
         .flag("-std=c++17")
         .flag("-Wall")
         .flag("-Wextra")
-        .flag("-Werror")
         .flag("-fvisibility=hidden");
 
     if cfg!(target_feature = "sse3") {
