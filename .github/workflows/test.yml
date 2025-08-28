@@ -8,11 +8,11 @@ on:
 
 env:
   CR_DENY_VERSION: 0.16.1
-  RUST_VERSION: 1.79.0
+  RUST_VERSION: 1.88.0
 
 jobs:
   rust:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout git repository
         uses: actions/checkout@master

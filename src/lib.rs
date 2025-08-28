@@ -264,8 +264,9 @@ impl StarAligner {
                 // Kind of nasty way to mutate data that isn't exposed.
                 let data: &mut [u8] =
                     unsafe { slice::from_raw_parts_mut(r.inner.data, r.inner.l_data as usize) };
-                data[r.inner.core.l_qname as usize + r.cigar_len() * 4 + (r.seq_len() + 1) / 2..]
-                    [0] = 42 - 33;
+                data[r.inner.core.l_qname as usize
+                    + r.cigar_len() * 4
+                    + r.seq_len().div_ceil(2)..][0] = 42 - 33;
             });
         }
         records
@@ -492,10 +493,10 @@ mod test {
         let mut aligner = reference.get_aligner();
 
         let recs = aligner.align_read(b"a", b"", b"");
-        println!("{:?}", recs);
+        println!("{recs:?}");
         let recs = aligner.align_read(b"b", b"A", b"?");
         let expected_qual: &[u8] = &[63 - 33];
-        println!("{:?}", recs);
+        println!("{recs:?}");
         assert_eq!(recs[0].qual(), expected_qual, "Quality value incorrect");
         let recs = aligner.align_read(b"Hello there", b"C", b"*");
         let record = &recs[0];
@@ -508,7 +509,7 @@ mod test {
         assert_eq!(record.qname(), b"Hello there");
         let aux_tags: Vec<(&[u8], Aux)> = record.aux_iter().map(|z| z.unwrap()).collect();
         let expected_aux_tags = ["NH", "HI", "AS", "nM", "uT"];
-        println!("Aux Tags {:?}", aux_tags);
+        println!("Aux Tags {aux_tags:?}");
         for (i, tag) in aux_tags.into_iter().enumerate() {
             assert_eq!(
                 String::from_utf8(tag.0.into()).unwrap(),
@@ -517,13 +518,13 @@ mod test {
             println!("TAG {:?}", String::from_utf8(tag.0.into()));
         }
         let (recs1, recs2) = aligner.align_read_pair(b"a", b"", b"", b"", b"");
-        println!("{:?}, {:?}", recs1, recs2);
+        println!("{recs1:?}, {recs2:?}");
         let (recs1, recs2) = aligner.align_read_pair(b"b", b"A", b"?", b"", b"");
-        println!("{:?}, {:?}", recs1, recs2);
+        println!("{recs1:?}, {recs2:?}");
         let (recs1, recs2) = aligner.align_read_pair(b"c", b"", b"", b"C", b"?");
-        println!("{:?}, {:?}", recs1, recs2);
+        println!("{recs1:?}, {recs2:?}");
         let (recs1, recs2) = aligner.align_read_pair(b"d", b"A", b"?", b"C", b"?");
-        println!("{:?}, {:?}", recs1, recs2);
+        println!("{recs1:?}, {recs2:?}");
     }
 
     #[test]
@@ -536,13 +537,13 @@ mod test {
         assert_eq!(recs.len(), 1);
         assert_eq!(recs[0].pos(), 50);
         assert_eq!(recs[0].tid(), 0);
-        println!("{:?}", recs);
+        println!("{recs:?}");
 
         let recs = aligner.align_read(NAME, ERCC_READ_2, ERCC_QUAL_2);
         assert_eq!(recs.len(), 1);
         assert_eq!(recs[0].tid(), 0);
         assert_eq!(recs[0].pos(), 500);
-        println!("{:?}", recs);
+        println!("{recs:?}");
 
         let recs = aligner.align_read(NAME, ERCC_READ_3, ERCC_QUAL_3);
         assert_eq!(recs.len(), 2);
@@ -554,10 +555,10 @@ mod test {
         assert_eq!(recs[1].tid(), 72);
         assert_eq!(recs[1].pos(), 553);
         assert_eq!(recs[1].mapq(), 3);
-        println!("{:?}", recs);
+        println!("{recs:?}");
 
         let recs = aligner.align_read(NAME, ERCC_READ_4, ERCC_QUAL_4);
-        println!("{:?}", recs);
+        println!("{recs:?}");
         assert_eq!(recs.len(), 2);
         assert_eq!(recs[0].flags(), 0);
         assert_eq!(recs[0].tid(), 72);
@@ -581,7 +582,7 @@ mod test {
         assert_eq!(recs[0].tid(), -1);
         assert_eq!(recs[0].pos(), -1);
         assert_eq!(recs[0].mapq(), 0);
-        println!("{:?}", recs);
+        println!("{recs:?}");
     }
 
     #[test]
@@ -714,7 +715,7 @@ mod test {
             for read_test in SEQ {
                 let qual = vec![b'I'; read_test.len()];
                 let res = aligner.align_read_sam(b"asdf", read_test, &qual);
-                println!("res: {}", res);
+                println!("res: {res}");
             }
         }
     }
@@ -733,7 +734,7 @@ mod test {
         let qual = b"GGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG";
 
         let res = aligner.align_read_sam(b"name", read, qual);
-        println!("res: {}", res);
+        println!("res: {res}");
         assert!(res == "\t0\thg19_6\t30038251\t255\t98M\t*\t0\t0\tGTGCGGGGAGAAGTTTCAAGAAGGTTCTTATGGAAAAAAGGCTGTGAGCATAGAAAGCAGTCATAGGAGGTTGGGGAACTAGCTTGTCCCTCCCCACC\tGGGAGIGIIIGIIGGGGIIGGIGGAGGAGGAAG.GGIIIG<AGGAGGGIGGGGIIIIIGGIGGGGGIGIIGGAGGGGGIGGGIGIIGGGGIIGGGIIG\tNH:i:1\tHI:i:1\tAS:i:96\tnM:i:0\n");
     }
 
@@ -836,7 +837,7 @@ mod test {
         let name = b"gatactaga";
         let res = aligner.align_read(name, read, qual);
         assert!(!res.is_empty());
-        println!("{:?}", res);
+        println!("{res:?}");
     }
 
     #[test]
@@ -867,8 +868,8 @@ mod test {
 
         let bam_wrapped = bam::Reader::from_path("test/test.bam");
         match bam_wrapped {
-            Ok(v) => println!("working with version: {:?}", v),
-            Err(e) => println!("error parsing header: {:?}", e),
+            Ok(v) => println!("working with version: {v:?}"),
+            Err(e) => println!("error parsing header: {e:?}"),
         }
         // The reading portion is commented out because it's failing for unknown reasons, but the BAM
         // file can be read with samtools and pysam.

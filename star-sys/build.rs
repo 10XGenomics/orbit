@@ -113,10 +113,10 @@ const HEADERS: &[&str] = &[
 fn main() {
     // do not rebuild constitutively
     for file in FILES {
-        println!("cargo:rerun-if-changed={}", file);
+        println!("cargo:rerun-if-changed={file}");
     }
     for file in HEADERS {
-        println!("cargo:rerun-if-changed={}", file);
+        println!("cargo:rerun-if-changed={file}");
     }
     let mut build = cc::Build::new();
     build
@@ -151,7 +151,7 @@ fn main() {
         // Fix the error: cargo:warning=clang: error: unknown argument: '-mcmpxchg16b'
         build.flag("-mcmpxchg16b");
     }
-    if cfg!(target_feature = "fma4") {
+    if cfg!(target_feature = "fma") {
         build.flag("-mfma4");
     }
     if cfg!(target_feature = "avx") {
