@@ -39,3 +39,37 @@ extern "C" {
 extern "C" {
     pub fn destroy_ref(arg1: *const StarRef);
 }
+
+#[cfg(test)]
+#[path = "../flags.rs"]
+mod flags;
+
+#[cfg(test)]
+mod tests {
+    use super::flags::compiler_flags;
+
+    #[test]
+    fn x86_64_v3_features_map_to_flags() {
+        let features = "sse,sse2,sse3,ssse3,sse4.1,sse4.2,popcnt,cmpxchg16b,avx,avx2,fma,bmi1,bmi2,lzcnt,movbe,f16c,fxsr,xsave";
+        assert_eq!(
+            compiler_flags(features.split(',')),
+            [
+                "-msse3", "-mssse3", "-msse4.1", "-msse4.2", "-mpopcnt", "-mcx16", "-mavx",
+                "-mavx2", "-mfma", "-mbmi", "-mbmi2", "-mlzcnt", "-mmovbe", "-mf16c",
+            ]
+        );
+    }
+
+    #[test]
+    fn unknown_and_empty_features_emit_no_flags() {
+        assert!(compiler_flags("".split(',')).is_empty());
+        assert!(compiler_flags(["neon", "fxsr", "avx512f"]).is_empty());
+    }
+
+    #[test]
+    fn flags_unsupported_by_clang_and_gcc_are_never_emitted() {
+        let flags = compiler_flags(["cmpxchg16b", "fma"]);
+        assert!(!flags.contains(&"-mcmpxchg16b"));
+        assert!(!flags.contains(&"-mfma4"));
+    }
+}

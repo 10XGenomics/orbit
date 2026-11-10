@@ -110,6 +110,8 @@ const HEADERS: &[&str] = &[
     "STAR/source/Transcriptome.h",
 ];
 
+mod flags;
+
 fn main() {
     // do not rebuild constitutively
     for file in FILES {
@@ -131,40 +133,12 @@ fn main() {
         .flag("-Werror")
         .flag("-fvisibility=hidden");
 
-    if cfg!(target_feature = "sse3") {
-        build.flag("-msse3");
-    }
-    if cfg!(target_feature = "ssse3") {
-        build.flag("-mssse3");
-    }
-    if cfg!(target_feature = "sse4.1") {
-        build.flag("-msse4.1");
-    }
-    if cfg!(target_feature = "sse4.2") {
-        build.flag("-msse4.2");
-    }
-    if cfg!(target_feature = "popcnt") {
-        build.flag("-mpopcnt");
-    }
-    if cfg!(target_feature = "cmpxchg16b") && !cfg!(target_os = "macos") {
-        // Apple clang version 14.0.0 does not support -mcmpxchg16b.
-        // Fix the error: cargo:warning=clang: error: unknown argument: '-mcmpxchg16b'
-        build.flag("-mcmpxchg16b");
-    }
-    if cfg!(target_feature = "fma") {
-        build.flag("-mfma4");
-    }
-    if cfg!(target_feature = "avx") {
-        build.flag("-mavx");
-    }
-    if cfg!(target_feature = "bmi1") && cfg!(target_feature = "bmi2") {
-        build.flag("-mbmi");
-    }
-    if cfg!(target_feature = "lzcnt") {
-        build.flag("-mlzcnt");
-    }
-    if cfg!(target_feature = "movbe") {
-        build.flag("-mmovbe");
+    // The features of the target, which differ from those of this build script when
+    // cross compiling or when rustflags are not applied to build scripts.
+    println!("cargo:rerun-if-env-changed=CARGO_CFG_TARGET_FEATURE");
+    let features = std::env::var("CARGO_CFG_TARGET_FEATURE").unwrap();
+    for flag in flags::compiler_flags(features.split(',')) {
+        build.flag(flag);
     }
 
     build.compile("orbit");
